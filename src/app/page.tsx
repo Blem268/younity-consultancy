@@ -212,11 +212,11 @@ export default function Home() {
             </div>
 
             <a
-              href="/contact"
-              className="rounded-xl bg-[#06111f] px-8 py-4 font-black uppercase tracking-wide text-white transition hover:bg-white hover:text-[#06111f]"
-            >
-              Contact Us Today
-            </a>
+  href="/contact"
+  className="inline-flex items-center justify-center rounded-xl bg-[#06111f] px-8 py-4 text-center text-sm font-black uppercase tracking-wide text-white transition hover:bg-white hover:text-[#06111f] sm:text-base"
+>
+  Contact Us Today
+</a>
           </div>
         </FadeIn>
       </section>
