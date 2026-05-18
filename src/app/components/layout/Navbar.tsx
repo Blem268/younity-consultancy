@@ -52,7 +52,7 @@ export default function Navbar() {
 
         <Link
           href="/contact"
-          className="hidden rounded-xl bg-[#50A9C0] px-8 py-4 text-base font-black uppercase tracking-[0.12em] text-[#06111f] transition hover:bg-white xl:inline-flex"
+          className="hidden items-center justify-center rounded-xl bg-[#50A9C0] px-8 py-4 text-base font-black uppercase tracking-[0.12em] text-[#06111f] shadow-md transition hover:bg-white hover:text-[#06111f] xl:inline-flex"
         >
           Contact Us
         </Link>
