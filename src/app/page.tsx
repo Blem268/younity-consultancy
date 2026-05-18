@@ -213,7 +213,7 @@ export default function Home() {
 
             <a
   href="/contact"
-  className="inline-flex items-center justify-center rounded-xl bg-[#06111f] px-8 py-4 text-center text-sm font-black uppercase tracking-wide text-white transition hover:bg-white hover:text-[#06111f] sm:text-base"
+  className="inline-flex items-center justify-center rounded-xl border-2 border-[#06111f] bg-[#06111f] px-8 py-4 text-center text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:bg-white hover:text-[#06111f] sm:text-base"
 >
   Contact Us Today
 </a>
