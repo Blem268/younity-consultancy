@@ -1,0 +1,274 @@
+import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
+import { createClickUpPortalRequestTask } from "@/lib/integrations/clickup";
+import { sendPortalRequestNotificationEmail } from "@/lib/integrations/email";
+import { sendInternalWhatsAppPortalRequestNotification } from "@/lib/integrations/whatsapp";
+
+const allowedServices = new Set([
+  "Bookkeeping Services",
+  "Payroll Services",
+  "General Administration",
+  "HR Support",
+  "Strategic Management & Advisory",
+  "Tax Services",
+  "Compliance Services",
+  "Other",
+]);
+
+const allowedUrgencies = new Set(["Low", "Normal", "High"]);
+const allowedContactMethods = new Set([
+  "Email",
+  "Phone Call",
+  "WhatsApp",
+  "No Preference",
+]);
+
+type ClientProfile = {
+  id: string;
+  full_name: string;
+  email: string;
+  phone: string | null;
+  company: string | null;
+};
+
+type RequestBody = {
+  service?: unknown;
+  message?: unknown;
+  preferredContactMethod?: unknown;
+  urgency?: unknown;
+  billingNotes?: unknown;
+};
+
+type InsertedRequest = {
+  id: string;
+};
+
+function getString(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+export async function POST(request: Request) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+  }
+
+  const { data: clientProfile, error: clientProfileError } = await supabase
+    .from("clients")
+    .select("id, full_name, email, phone, company")
+    .eq("user_id", user.id)
+    .maybeSingle<ClientProfile>();
+
+  if (clientProfileError) {
+    console.error("Client profile lookup failed:", clientProfileError);
+    return NextResponse.json(
+      { message: "Unable to verify your portal profile." },
+      { status: 500 }
+    );
+  }
+
+  if (!clientProfile) {
+    return NextResponse.json(
+      { message: "Portal profile has not been set up." },
+      { status: 403 }
+    );
+  }
+
+  const body = (await request.json()) as RequestBody;
+  const service = getString(body.service);
+  const message = getString(body.message);
+  const preferredContactMethod =
+    getString(body.preferredContactMethod) || "No Preference";
+  const urgency = getString(body.urgency) || "Normal";
+  const billingNotes = getString(body.billingNotes);
+
+  if (!service) {
+    return NextResponse.json(
+      { message: "Service is required." },
+      { status: 400 }
+    );
+  }
+
+  if (!message) {
+    return NextResponse.json(
+      { message: "Message is required." },
+      { status: 400 }
+    );
+  }
+
+  if (!allowedServices.has(service)) {
+    return NextResponse.json(
+      { message: "Selected service is not valid." },
+      { status: 400 }
+    );
+  }
+
+  if (!allowedUrgencies.has(urgency)) {
+    return NextResponse.json(
+      { message: "Selected urgency is not valid." },
+      { status: 400 }
+    );
+  }
+
+  if (!allowedContactMethods.has(preferredContactMethod)) {
+    return NextResponse.json(
+      { message: "Selected contact method is not valid." },
+      { status: 400 }
+    );
+  }
+
+  const supabaseAdmin = createAdminClient();
+  const { data: insertedRequest, error: requestInsertError } =
+    await supabaseAdmin
+      .from("client_requests")
+      .insert({
+        client_id: clientProfile.id,
+        service,
+        status: "Submitted",
+        message,
+        source: "Client Portal",
+        billing_type: "To Be Reviewed",
+        estimated_fee: null,
+        deposit_required: null,
+        amount_paid: 0,
+        balance_due: null,
+        invoice_status: "Not Ready",
+      })
+      .select("id")
+      .single<InsertedRequest>();
+
+  if (requestInsertError) {
+    console.error(
+      "Client request insert failed:",
+      JSON.stringify(requestInsertError, null, 2)
+    );
+    return NextResponse.json(
+      { message: "Request could not be submitted." },
+      { status: 500 }
+    );
+  }
+
+  const warnings: string[] = [];
+  let clickUpTaskId = "";
+
+  try {
+    const clickUpTask = await createClickUpPortalRequestTask({
+      clientName: clientProfile.full_name,
+      clientEmail: clientProfile.email,
+      clientPhone: clientProfile.phone,
+      company: clientProfile.company,
+      service,
+      message,
+      preferredContactMethod,
+      urgency,
+      billingNotes,
+      portalRequestId: insertedRequest.id,
+    });
+
+    clickUpTaskId = clickUpTask.id;
+
+    const { error: clickUpUpdateError } = await supabaseAdmin
+      .from("client_requests")
+      .update({
+        clickup_task_id: clickUpTask.id,
+      })
+      .eq("id", insertedRequest.id)
+      .eq("client_id", clientProfile.id);
+
+    if (clickUpUpdateError) {
+      console.error(
+        "Client request ClickUp task update failed:",
+        JSON.stringify(clickUpUpdateError, null, 2)
+      );
+      warnings.push("ClickUp task ID could not be saved to the portal request.");
+    }
+  } catch (error) {
+    console.error("ClickUp portal request task creation failed:", error);
+    warnings.push(
+      error instanceof Error
+        ? error.message
+        : "Internal task creation needs review."
+    );
+  }
+
+  const timelineEntries = [
+    {
+      client_id: clientProfile.id,
+      request_id: insertedRequest.id,
+      title: "Request submitted",
+      message: "Your request has been submitted and is now under review.",
+      created_by: "Younity Consultancy",
+    },
+  ];
+
+  if (!clickUpTaskId) {
+    timelineEntries.push({
+      client_id: clientProfile.id,
+      request_id: insertedRequest.id,
+      title: "Request received",
+      message: "Your request was received. Our team will review it shortly.",
+      created_by: "Younity Consultancy",
+    });
+  }
+
+  const { error: updateInsertError } = await supabaseAdmin
+    .from("client_updates")
+    .insert(timelineEntries);
+
+  if (updateInsertError) {
+    console.error(
+      "Client request timeline insert failed:",
+      JSON.stringify(updateInsertError, null, 2)
+    );
+    warnings.push("Portal timeline update could not be saved.");
+  }
+
+  const notificationInput = {
+    clientName: clientProfile.full_name,
+    clientEmail: clientProfile.email,
+    clientPhone: clientProfile.phone,
+    company: clientProfile.company,
+    service,
+    urgency,
+    preferredContactMethod,
+    message,
+    billingNotes,
+    portalRequestId: insertedRequest.id,
+    clickUpTaskId,
+  };
+
+  try {
+    await sendPortalRequestNotificationEmail(notificationInput);
+  } catch (error) {
+    console.error("Portal request email notification failed:", error);
+    warnings.push(
+      error instanceof Error
+        ? error.message
+        : "Portal request email notification failed."
+    );
+  }
+
+  try {
+    await sendInternalWhatsAppPortalRequestNotification(notificationInput);
+  } catch (error) {
+    console.error("Portal request WhatsApp notification failed:", error);
+    warnings.push(
+      error instanceof Error
+        ? error.message
+        : "Portal request WhatsApp notification failed."
+    );
+  }
+
+  return NextResponse.json({
+    success: true,
+    message: "Request submitted successfully.",
+    requestId: insertedRequest.id,
+    clickUpTaskId,
+    ...(warnings.length ? { warnings } : {}),
+  });
+}
