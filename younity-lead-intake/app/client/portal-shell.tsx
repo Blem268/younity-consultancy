@@ -31,15 +31,15 @@ export function ClientPortalShell({ children }: { children: ReactNode }) {
 
   if (isLoginPage) {
     return (
-      <section className="min-h-screen bg-slate-50 text-slate-950">
+      <section className="min-h-screen bg-[#f7faf8] text-slate-950">
         {children}
       </section>
     );
   }
 
   return (
-    <section className="min-h-screen bg-slate-50 text-slate-950">
-      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <section className="min-h-screen bg-[#f7faf8] text-slate-950">
+      <header className="sticky top-0 z-20 border-b border-teal-900/10 bg-white/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Link href="/client/dashboard" className="w-fit">
@@ -64,8 +64,8 @@ export function ClientPortalShell({ children }: { children: ReactNode }) {
                     aria-current={active ? "page" : undefined}
                     className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
                       active
-                        ? "bg-slate-950 text-white shadow-sm"
-                        : "text-slate-700 hover:bg-slate-100 hover:text-slate-950"
+                        ? "bg-teal-700 text-white shadow-sm"
+                        : "text-slate-700 hover:bg-teal-50 hover:text-teal-900"
                     }`}
                   >
                     {link.label}

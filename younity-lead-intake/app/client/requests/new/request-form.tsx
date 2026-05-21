@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import Link from "next/link";
+import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { documentTypes } from "../../documents/upload-form";
 
 const serviceOptions = [
   "Bookkeeping Services",
@@ -32,15 +34,20 @@ export function RequestForm() {
   );
   const [urgency, setUrgency] = useState("Normal");
   const [billingNotes, setBillingNotes] = useState("");
+  const [documentType, setDocumentType] = useState(documentTypes[0]);
+  const [documentNotes, setDocumentNotes] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [createdRequestId, setCreatedRequestId] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setStatusMessage("");
     setIsError(false);
     setIsSubmitting(true);
+    setCreatedRequestId("");
 
     const response = await fetch("/api/client/requests/create", {
       method: "POST",
@@ -57,8 +64,10 @@ export function RequestForm() {
     });
 
     const result = (await response.json()) as {
+      success?: boolean;
       message?: string;
       requestId?: string;
+      clickUpTaskId?: string;
       warnings?: string[];
     };
 
@@ -69,14 +78,44 @@ export function RequestForm() {
       return;
     }
 
-    setStatusMessage(result.message || "Request submitted successfully.");
+    const uploadFile = fileInputRef.current?.files?.[0];
 
     if (result.requestId) {
+      if (uploadFile) {
+        const formData = new FormData();
+        formData.append("file", uploadFile);
+        formData.append("documentType", documentType);
+        formData.append("requestId", result.requestId);
+        formData.append("notes", documentNotes);
+
+        const uploadResponse = await fetch("/api/client/documents/upload", {
+          method: "POST",
+          body: formData,
+        });
+        const uploadResult = (await uploadResponse.json().catch(() => ({}))) as {
+          message?: string;
+        };
+
+        if (!uploadResponse.ok) {
+          setStatusMessage(
+            `Request was created, but document upload failed. You can upload it from the request detail page.${
+              uploadResult.message ? ` ${uploadResult.message}` : ""
+            }`
+          );
+          setIsError(true);
+          setIsSubmitting(false);
+          setCreatedRequestId(result.requestId);
+          router.refresh();
+          return;
+        }
+      }
+
       router.replace(`/client/requests/${result.requestId}`);
-    } else {
-      router.replace("/client/requests");
+      router.refresh();
+      return;
     }
 
+    router.replace("/client/requests");
     router.refresh();
   }
 
@@ -176,16 +215,87 @@ export function RequestForm() {
         />
       </div>
 
+      <fieldset className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+        <legend className="px-1 text-sm font-semibold text-slate-950">
+          Optional Document
+        </legend>
+        <p className="mt-1 text-sm leading-6 text-slate-600">
+          Add a supporting file now and it will be linked to this request.
+        </p>
+
+        <div className="mt-4 grid gap-5 sm:grid-cols-2">
+          <div>
+            <label
+              htmlFor="documentType"
+              className="block text-sm font-medium text-slate-800"
+            >
+              Document Type
+            </label>
+            <select
+              id="documentType"
+              name="documentType"
+              value={documentType}
+              onChange={(event) => setDocumentType(event.target.value)}
+              className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            >
+              {documentTypes.map((type) => (
+                <option key={type} value={type}>
+                  {type}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label htmlFor="file" className="block text-sm font-medium text-slate-800">
+              File
+            </label>
+            <input
+              ref={fileInputRef}
+              id="file"
+              name="file"
+              type="file"
+              className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+            />
+          </div>
+        </div>
+
+        <div className="mt-5">
+          <label
+            htmlFor="documentNotes"
+            className="block text-sm font-medium text-slate-800"
+          >
+            Document Notes
+          </label>
+          <textarea
+            id="documentNotes"
+            name="documentNotes"
+            value={documentNotes}
+            onChange={(event) => setDocumentNotes(event.target.value)}
+            rows={3}
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          />
+        </div>
+      </fieldset>
+
       <div aria-live="polite" className={isError ? "text-red-700" : "text-teal-700"}>
         {statusMessage ? (
           <p className="text-sm font-medium">{statusMessage}</p>
+        ) : null}
+        {createdRequestId ? (
+          <Link
+            href={`/client/requests/${createdRequestId}`}
+            className="mt-2 inline-flex text-sm font-semibold text-teal-800 transition hover:text-teal-950"
+          >
+            View request details
+          </Link>
         ) : null}
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Submitting..." : "Submit Request"}
       </button>

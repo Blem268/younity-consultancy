@@ -20,6 +20,8 @@ Supabase provides client portal authentication, client-facing tables, request re
 
 ClickUp is the main operations application. Website leads and portal requests create ClickUp tasks. Internal task status and billing preparation fields sync back into Supabase for portal visibility.
 
+ClickUp remains the source of truth for operational task status, subtasks, and checklists. Client request detail pages pull a safe, client-facing task progress view from ClickUp without exposing private ClickUp links or API details.
+
 ### Zoho CRM
 
 Zoho CRM stores lead and client relationship records created from public lead intake.
@@ -91,4 +93,13 @@ ClickUp status/billing updates
 -> Supabase client_requests updated
 -> client_updates timeline entries
 -> Client sees latest portal status/billing
+```
+
+### E. Client Task Progress
+
+```text
+Client opens request detail
+-> Portal verifies Supabase request ownership
+-> ClickUp parent task, subtasks, and checklists are read server-side
+-> Portal displays client-facing progress and task steps
 ```

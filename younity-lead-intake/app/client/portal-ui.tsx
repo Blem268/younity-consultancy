@@ -23,7 +23,7 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex flex-col gap-5 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <header className="flex flex-col gap-5 border-b border-teal-900/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div>
         {eyebrow ? <div className="mb-3">{eyebrow}</div> : null}
         <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
@@ -49,7 +49,7 @@ export function Card({
 }) {
   return (
     <section
-      className={`rounded-lg border border-slate-200 bg-white p-5 shadow-sm sm:p-6 ${className}`}
+      className={`rounded-lg border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/50 sm:p-6 ${className}`}
     >
       {children}
     </section>
@@ -66,7 +66,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-5">
+    <div className="rounded-lg border border-dashed border-teal-900/20 bg-teal-50/40 p-5">
       <p className="text-sm font-semibold text-slate-950">{title}</p>
       {description ? (
         <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
@@ -106,7 +106,7 @@ export function PrimaryButtonLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+      className="inline-flex min-h-11 items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
     >
       {children}
     </Link>
@@ -123,7 +123,7 @@ export function SecondaryButtonLink({
   return (
     <Link
       href={href}
-      className="inline-flex min-h-11 items-center justify-center rounded-md border border-slate-300 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-slate-400 hover:bg-slate-100"
+      className="inline-flex min-h-11 items-center justify-center rounded-md border border-teal-900/20 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-teal-300 hover:bg-teal-50"
     >
       {children}
     </Link>

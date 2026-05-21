@@ -14,6 +14,11 @@ type SyncResult = {
   }>;
 };
 
+type SyncErrorResponse = {
+  message?: string;
+  error?: string;
+};
+
 type SyncState = {
   isLoading: boolean;
   result: SyncResult | null;
@@ -36,7 +41,7 @@ function SyncResultPanel({ state }: { state: SyncState }) {
   }
 
   return (
-    <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4">
+    <div className="mt-4 rounded-md border border-teal-900/10 bg-teal-50/40 p-4">
       <div className="grid gap-3 text-sm text-slate-700 sm:grid-cols-3">
         <p>
           <span className="font-semibold text-slate-950">Checked:</span>{" "}
@@ -87,13 +92,22 @@ export function SyncButtons() {
       const response = await fetch(endpoint, {
         method: "POST",
       });
-      const result = await response.json();
+      const result = (await response.json().catch(() => ({}))) as
+        | SyncResult
+        | SyncErrorResponse;
 
       if (!response.ok) {
+        const errorMessage =
+          "message" in result
+            ? result.message
+            : "error" in result
+              ? result.error
+              : "";
+
         setState({
           isLoading: false,
           result: null,
-          error: result.message || "Sync failed.",
+          error: errorMessage || "Sync failed.",
         });
         return;
       }
@@ -114,7 +128,7 @@ export function SyncButtons() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50">
         <h2 className="text-xl font-semibold tracking-tight text-slate-950">
           ClickUp Status Sync
         </h2>
@@ -125,14 +139,14 @@ export function SyncButtons() {
           type="button"
           disabled={statusSync.isLoading}
           onClick={() => runSync("/api/internal/run-status-sync", setStatusSync)}
-          className="mt-5 inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="mt-5 inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           {statusSync.isLoading ? "Running..." : "Run Status Sync"}
         </button>
         <SyncResultPanel state={statusSync} />
       </section>
 
-      <section className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+      <section className="rounded-lg border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50">
         <h2 className="text-xl font-semibold tracking-tight text-slate-950">
           ClickUp Billing Sync
         </h2>
@@ -146,7 +160,7 @@ export function SyncButtons() {
           onClick={() =>
             runSync("/api/internal/run-billing-sync", setBillingSync)
           }
-          className="mt-5 inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="mt-5 inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           {billingSync.isLoading ? "Running..." : "Run Billing Sync"}
         </button>

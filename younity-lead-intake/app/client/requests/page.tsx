@@ -106,8 +106,8 @@ export default async function ClientRequestsPage() {
 
       <section className="py-8">
         {clientRequests.length ? (
-          <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm">
-            <div className="hidden grid-cols-[1.2fr_0.8fr_0.9fr_0.8fr_0.8fr_0.7fr] gap-4 border-b border-slate-200 bg-slate-100 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 lg:grid">
+          <div className="overflow-hidden rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/50">
+            <div className="hidden grid-cols-[1.2fr_0.8fr_0.9fr_0.8fr_0.8fr_0.7fr] gap-4 border-b border-teal-900/10 bg-teal-50/70 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 lg:grid">
               <span>Service</span>
               <span>Status</span>
               <span>Invoice Status</span>

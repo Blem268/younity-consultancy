@@ -12,6 +12,30 @@ type DocumentUploadCommentInput = {
   requestService?: string | null;
   requestStatus?: string | null;
   documentId?: string;
+  clickUpAttachmentSucceeded?: boolean;
+};
+
+type TaskItemClientUpdateCommentInput = {
+  parentTaskId: string;
+  taskItemId: string;
+  type: "subtask" | "checklist";
+  requestService: string;
+  taskItemName?: string | null;
+  clientName: string;
+  clientEmail: string;
+  notes?: string | null;
+  fileName?: string | null;
+  documentId?: string | null;
+  markedComplete: boolean;
+  clickUpAttachmentSucceeded?: boolean | null;
+};
+
+type CompleteTaskItemInput = {
+  parentTaskId: string;
+  taskItemId: string;
+  type: "subtask" | "checklist";
+  checklistId?: string | null;
+  statusName?: string | null;
 };
 
 type PortalRequestTaskInput = {
@@ -30,10 +54,48 @@ type PortalRequestTaskInput = {
 type ClickUpTaskResponse = {
   id?: string;
   name?: string;
-  status?: {
-    status?: string;
-  } | string;
+  status?: ClickUpStatusInput;
   custom_fields?: ClickUpCustomField[];
+  subtasks?: Array<ClickUpTaskItem | string>;
+  checklists?: ClickUpChecklist[];
+};
+
+type ClickUpTaskItem = {
+  id?: string;
+  name?: string;
+  status?: ClickUpStatusInput;
+};
+
+type ClickUpStatusInput =
+  | string
+  | {
+      status?: unknown;
+      name?: unknown;
+      type?: unknown;
+    }
+  | null
+  | undefined;
+
+type ClickUpChecklist = {
+  id?: string;
+  name?: string;
+  items?: Array<{
+    id?: string;
+    name?: string;
+    resolved?: boolean;
+    checked?: boolean;
+    status?: string;
+  }>;
+};
+
+type ClickUpTaskProgressItem = {
+  id: string;
+  name: string;
+  status: string;
+  type: "subtask" | "checklist";
+  completed: boolean;
+  parentTaskId: string;
+  checklistId?: string | null;
 };
 
 type ClickUpCustomFieldOption = {
@@ -49,6 +111,15 @@ type ClickUpCustomField = {
   type_config?: {
     options?: ClickUpCustomFieldOption[];
   };
+};
+
+export type ClickUpTaskProgress = {
+  parentTaskId: string;
+  parentTaskName?: string;
+  parentStatus?: string;
+  parentStatusType?: string | null;
+  progressPercent: number;
+  items: ClickUpTaskProgressItem[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -118,6 +189,194 @@ function normalizeNumberFromField(field: ClickUpCustomField | undefined) {
         : NaN;
 
   return Number.isFinite(parsed) ? parsed : null;
+}
+
+export function normalizeClickUpStatus(statusInput: ClickUpStatusInput) {
+  if (!statusInput) {
+    return "";
+  }
+
+  if (typeof statusInput === "string") {
+    return statusInput;
+  }
+
+  const status =
+    statusInput.status ?? statusInput.name ?? statusInput.type ?? undefined;
+
+  return typeof status === "string" || typeof status === "number"
+    ? String(status)
+    : "";
+}
+
+function normalizeClickUpStatusType(statusInput: ClickUpStatusInput) {
+  if (!statusInput || typeof statusInput === "string") {
+    return null;
+  }
+
+  return typeof statusInput.type === "string" ? statusInput.type : null;
+}
+
+export function isCompletedStatus(status: string) {
+  const normalized = status.toLowerCase();
+
+  return (
+    normalized.includes("complete") ||
+    normalized.includes("closed") ||
+    normalized.includes("done")
+  );
+}
+
+function isInProgressStatus(status: string) {
+  const normalized = status.toLowerCase();
+
+  return (
+    normalized.includes("in progress") ||
+    normalized.includes("review") ||
+    normalized.includes("internal review") ||
+    normalized.includes("working")
+  );
+}
+
+function isWaitingStatus(status: string) {
+  const normalized = status.toLowerCase();
+
+  return (
+    normalized.includes("waiting") ||
+    normalized.includes("waiting on client") ||
+    normalized.includes("blocked")
+  );
+}
+
+function isNewStatus(status: string) {
+  const normalized = status.toLowerCase();
+
+  return (
+    normalized.includes("new") ||
+    normalized.includes("submitted") ||
+    normalized.includes("to do") ||
+    normalized.includes("todo") ||
+    normalized.includes("open")
+  );
+}
+
+function clampProgressPercent(value: number) {
+  if (!Number.isFinite(value)) {
+    return 0;
+  }
+
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
+
+function getProgressFromParentStatus(status: string) {
+  const normalized = status.toLowerCase();
+
+  if (isCompletedStatus(normalized)) {
+    return 100;
+  }
+
+  if (isInProgressStatus(normalized)) {
+    return 50;
+  }
+
+  if (isWaitingStatus(normalized)) {
+    return 35;
+  }
+
+  if (isNewStatus(normalized)) {
+    return 10;
+  }
+
+  return status ? 25 : 0;
+}
+
+async function fetchClickUpTask(clickUpTaskId: string, includeSubtasks = false) {
+  const searchParams = new URLSearchParams();
+
+  if (includeSubtasks) {
+    searchParams.set("include_subtasks", "true");
+  }
+
+  const queryString = searchParams.toString();
+  const response = await fetch(
+    `https://api.clickup.com/api/v2/task/${clickUpTaskId}${queryString ? `?${queryString}` : ""}`,
+    {
+      method: "GET",
+      headers: {
+        Authorization: process.env.CLICKUP_API_TOKEN!,
+        "Content-Type": "application/json",
+      },
+    }
+  );
+
+  const data = (await response.json()) as ClickUpTaskResponse;
+
+  if (!response.ok) {
+    throw new Error(`ClickUp task fetch failed: ${JSON.stringify(data)}`);
+  }
+
+  return data;
+}
+
+async function createClickUpTaskComment(taskId: string, commentText: string) {
+  const response = await fetch(
+    `https://api.clickup.com/api/v2/task/${taskId}/comment`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: process.env.CLICKUP_API_TOKEN!,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        comment_text: commentText,
+        notify_all: false,
+      }),
+    }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(`ClickUp comment creation failed: ${JSON.stringify(data)}`);
+  }
+
+  return data;
+}
+
+export async function attachFileToClickUpTask({
+  taskId,
+  file,
+}: {
+  taskId: string;
+  file: File;
+}) {
+  if (!taskId) {
+    throw new Error("Missing ClickUp task ID.");
+  }
+
+  if (!process.env.CLICKUP_API_TOKEN) {
+    throw new Error("Missing CLICKUP_API_TOKEN");
+  }
+
+  const formData = new FormData();
+  formData.append("attachment", file, file.name);
+
+  const response = await fetch(
+    `https://api.clickup.com/api/v2/task/${taskId}/attachment`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: process.env.CLICKUP_API_TOKEN,
+      },
+      body: formData,
+    }
+  );
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(`ClickUp file attachment failed: ${JSON.stringify(data)}`);
+  }
+
+  return data;
 }
 
 export async function createClickUpLeadTask(params: {
@@ -268,6 +527,7 @@ export async function addClickUpDocumentUploadComment({
   requestService,
   requestStatus,
   documentId,
+  clickUpAttachmentSucceeded,
 }: DocumentUploadCommentInput) {
   if (!clickUpTaskId) {
     throw new Error("Missing ClickUp task ID.");
@@ -292,33 +552,17 @@ export async function addClickUpDocumentUploadComment({
     `Request Status: ${requestStatus || "Not available"}`,
     "",
     `Notes: ${notes || "None"}`,
+    fileName
+      ? clickUpAttachmentSucceeded
+        ? "File was also attached to this ClickUp task."
+        : "File is stored securely in the Younity Client Portal storage, but ClickUp attachment failed."
+      : "",
     "",
     `Document ID: ${documentId || "Not available"}`,
     "Stored securely in the Younity Client Portal storage.",
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 
-  const response = await fetch(
-    `https://api.clickup.com/api/v2/task/${clickUpTaskId}/comment`,
-    {
-      method: "POST",
-      headers: {
-        Authorization: process.env.CLICKUP_API_TOKEN,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        comment_text: commentText,
-        notify_all: false,
-      }),
-    }
-  );
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(`ClickUp comment creation failed: ${JSON.stringify(data)}`);
-  }
-
-  return data;
+  return createClickUpTaskComment(clickUpTaskId, commentText);
 }
 
 export async function getClickUpTaskStatus(clickUpTaskId: string) {
@@ -330,25 +574,8 @@ export async function getClickUpTaskStatus(clickUpTaskId: string) {
     throw new Error("Missing CLICKUP_API_TOKEN");
   }
 
-  const response = await fetch(
-    `https://api.clickup.com/api/v2/task/${clickUpTaskId}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: process.env.CLICKUP_API_TOKEN,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  const data = (await response.json()) as ClickUpTaskResponse;
-
-  if (!response.ok) {
-    throw new Error(`ClickUp task fetch failed: ${JSON.stringify(data)}`);
-  }
-
-  const status =
-    typeof data.status === "string" ? data.status : data.status?.status;
+  const data = await fetchClickUpTask(clickUpTaskId);
+  const status = normalizeClickUpStatus(data.status);
 
   if (!status) {
     throw new Error(`ClickUp task status missing for task ${clickUpTaskId}.`);
@@ -370,23 +597,7 @@ export async function getClickUpTaskBillingFields(clickUpTaskId: string) {
     throw new Error("Missing CLICKUP_API_TOKEN");
   }
 
-  const response = await fetch(
-    `https://api.clickup.com/api/v2/task/${clickUpTaskId}`,
-    {
-      method: "GET",
-      headers: {
-        Authorization: process.env.CLICKUP_API_TOKEN,
-        "Content-Type": "application/json",
-      },
-    }
-  );
-
-  const data = (await response.json()) as ClickUpTaskResponse;
-
-  if (!response.ok) {
-    throw new Error(`ClickUp task fetch failed: ${JSON.stringify(data)}`);
-  }
-
+  const data = await fetchClickUpTask(clickUpTaskId);
   const customFields = data.custom_fields;
 
   return {
@@ -413,4 +624,254 @@ export async function getClickUpTaskBillingFields(clickUpTaskId: string) {
       getCustomFieldValueByName(customFields, "Zoho Books Invoice ID")
     ),
   };
+}
+
+async function normalizeSubtaskItems(
+  subtasks: Array<ClickUpTaskItem | string>,
+  parentTaskId: string
+) {
+  const normalizedItems = await Promise.all(
+    subtasks.map(async (subtask) => {
+      if (typeof subtask === "string") {
+        try {
+          const subtaskData = await fetchClickUpTask(subtask);
+          const status = normalizeClickUpStatus(subtaskData.status);
+
+          return {
+            id: subtaskData.id || subtask,
+            name: subtaskData.name || "Untitled subtask",
+            status: status || "Not started",
+            type: "subtask" as const,
+            completed: isCompletedStatus(status),
+            parentTaskId,
+            checklistId: null,
+          };
+        } catch (error) {
+          console.error(`ClickUp subtask ${subtask} fetch failed:`, error);
+          return null;
+        }
+      }
+
+      const status = normalizeClickUpStatus(subtask.status);
+
+      return {
+        id: subtask.id || subtask.name || "unknown-subtask",
+        name: subtask.name || "Untitled subtask",
+        status: status || "Not started",
+        type: "subtask" as const,
+        completed: isCompletedStatus(status),
+        parentTaskId,
+        checklistId: null,
+      };
+    })
+  );
+
+  return normalizedItems.filter(
+    (item): item is NonNullable<(typeof normalizedItems)[number]> => {
+      if (!item) {
+        return false;
+      }
+
+      return item.id !== "unknown-subtask" || item.name !== "Untitled subtask";
+    }
+  );
+}
+
+function normalizeChecklistItems(
+  checklists: ClickUpChecklist[],
+  parentTaskId: string
+) {
+  return checklists
+    .flatMap((checklist) =>
+      (Array.isArray(checklist.items) ? checklist.items : []).map((item) => {
+        const completed = Boolean(item.resolved || item.checked);
+        const status = item.status || (completed ? "Completed" : "Open");
+
+        return {
+          id:
+            item.id ||
+            `${checklist.id || checklist.name || "checklist"}-${item.name || "item"}`,
+          name: item.name || "Untitled checklist item",
+          status,
+          type: "checklist" as const,
+          completed: completed || isCompletedStatus(status),
+          parentTaskId,
+          checklistId: checklist.id || null,
+        };
+      })
+    )
+    .filter((item) => item.id && item.name);
+}
+
+export async function getClickUpTaskProgress(
+  clickUpTaskId: string
+): Promise<ClickUpTaskProgress> {
+  if (!clickUpTaskId) {
+    throw new Error("Missing ClickUp task ID.");
+  }
+
+  if (!process.env.CLICKUP_API_TOKEN) {
+    throw new Error("Missing CLICKUP_API_TOKEN");
+  }
+
+  const data = await fetchClickUpTask(clickUpTaskId, true);
+  const parentStatus = normalizeClickUpStatus(data.status);
+  const parentStatusType = normalizeClickUpStatusType(data.status);
+  const parentTaskId = data.id || clickUpTaskId;
+  const subtaskItems = await normalizeSubtaskItems(
+    Array.isArray(data.subtasks) ? data.subtasks : [],
+    parentTaskId
+  );
+  const checklistItems = normalizeChecklistItems(
+    Array.isArray(data.checklists) ? data.checklists : [],
+    parentTaskId
+  );
+  const items = [...subtaskItems, ...checklistItems];
+  const progressPercent = items.length
+    ? clampProgressPercent(
+        (items.filter((item) => item.completed).length / items.length) * 100
+      )
+    : clampProgressPercent(getProgressFromParentStatus(parentStatus));
+
+  return {
+    parentTaskId,
+    parentTaskName: data.name,
+    parentStatus,
+    parentStatusType,
+    items,
+    progressPercent,
+  };
+}
+
+export async function getClickUpTaskSubtasksOrChecklist(clickUpTaskId: string) {
+  return getClickUpTaskProgress(clickUpTaskId);
+}
+
+export async function addClickUpTaskItemClientUpdateComment({
+  parentTaskId,
+  taskItemId,
+  type,
+  requestService,
+  taskItemName,
+  clientName,
+  clientEmail,
+  notes,
+  fileName,
+  documentId,
+  markedComplete,
+  clickUpAttachmentSucceeded,
+}: TaskItemClientUpdateCommentInput) {
+  if (!process.env.CLICKUP_API_TOKEN) {
+    throw new Error("Missing CLICKUP_API_TOKEN");
+  }
+
+  const warnings: string[] = [];
+  const commentText = [
+    "Client task update submitted.",
+    "",
+    `Request: ${requestService}`,
+    `Task Item: ${taskItemName || "Not available"}`,
+    `Item Type: ${type}`,
+    `Client: ${clientName}`,
+    `Email: ${clientEmail}`,
+    "",
+    `Notes: ${notes || "None"}`,
+    `Document Uploaded: ${fileName || "None"}`,
+    fileName
+      ? clickUpAttachmentSucceeded
+        ? "File was also attached to this ClickUp task."
+        : "File is stored securely in the Younity Client Portal storage, but ClickUp attachment failed."
+      : "",
+    `Document ID: ${documentId || "Not available"}`,
+    `Marked Complete: ${markedComplete ? "Yes" : "No"}`,
+    "",
+    "Stored securely in Younity Client Portal storage.",
+  ].filter(Boolean).join("\n");
+
+  if (type === "subtask") {
+    try {
+      await createClickUpTaskComment(taskItemId, commentText);
+      return { warnings };
+    } catch (error) {
+      console.error("ClickUp subtask comment failed:", error);
+      warnings.push(
+        "Could not add the comment directly to the subtask, so it was added to the parent task."
+      );
+    }
+  }
+
+  await createClickUpTaskComment(parentTaskId, commentText);
+  return { warnings };
+}
+
+export async function completeClickUpTaskItem({
+  taskItemId,
+  type,
+  checklistId,
+  statusName,
+}: CompleteTaskItemInput) {
+  if (!process.env.CLICKUP_API_TOKEN) {
+    throw new Error("Missing CLICKUP_API_TOKEN");
+  }
+
+  if (type === "checklist") {
+    if (!checklistId) {
+      throw new Error("Checklist completion is not supported for this item yet.");
+    }
+
+    const response = await fetch(
+      `https://api.clickup.com/api/v2/checklist/${checklistId}/checklist_item/${taskItemId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: process.env.CLICKUP_API_TOKEN,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ resolved: true }),
+      }
+    );
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(
+        `Checklist completion update failed: ${JSON.stringify(data)}`
+      );
+    }
+
+    return;
+  }
+
+  const candidateStatuses = [
+    statusName,
+    "complete",
+    "completed",
+    "closed",
+    "done",
+  ].filter((status): status is string => Boolean(status));
+  let lastError = "";
+
+  for (const status of candidateStatuses) {
+    const response = await fetch(
+      `https://api.clickup.com/api/v2/task/${taskItemId}`,
+      {
+        method: "PUT",
+        headers: {
+          Authorization: process.env.CLICKUP_API_TOKEN,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status }),
+      }
+    );
+    const data = await response.json();
+
+    if (response.ok) {
+      return;
+    }
+
+    lastError = JSON.stringify(data);
+  }
+
+  throw new Error(
+    `ClickUp subtask completion update failed.${lastError ? ` ${lastError}` : ""}`
+  );
 }

@@ -25,8 +25,8 @@ export default async function InternalSyncPage() {
 
   if (!allowedEmails.length) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6 py-8">
-        <header className="border-b border-slate-200 pb-8">
+      <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col bg-[#f7faf8] px-6 py-8">
+        <header className="border-b border-teal-900/10 pb-8">
           <Link
             href="/client/dashboard"
             className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
@@ -48,8 +48,8 @@ export default async function InternalSyncPage() {
 
   if (!allowedEmails.includes(userEmail)) {
     return (
-      <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6 py-8">
-        <header className="border-b border-slate-200 pb-8">
+      <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col bg-[#f7faf8] px-6 py-8">
+        <header className="border-b border-teal-900/10 pb-8">
           <Link
             href="/client/dashboard"
             className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
@@ -70,8 +70,8 @@ export default async function InternalSyncPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col px-6 py-8">
-      <header className="border-b border-slate-200 pb-8">
+    <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col bg-[#f7faf8] px-6 py-8">
+      <header className="border-b border-teal-900/10 pb-8">
         <Link
           href="/client/dashboard"
           className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"

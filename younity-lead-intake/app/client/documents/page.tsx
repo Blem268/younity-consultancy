@@ -1,14 +1,13 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
-  BackLinks,
   Card,
   DocumentStatusBadge,
   EmptyState,
   PageHeader,
   PortalPage,
 } from "../portal-ui";
-import { UploadForm } from "./upload-form";
 
 type ClientProfile = {
   id: string;
@@ -42,11 +41,7 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
-export default async function ClientDocumentsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ requestId?: string | string[] }>;
-}) {
+export default async function ClientDocumentsPage() {
   const supabase = await createClient();
   const {
     data: { user },
@@ -55,9 +50,6 @@ export default async function ClientDocumentsPage({
   if (!user) {
     redirect("/client/login");
   }
-
-  const { requestId } = await searchParams;
-  const requestedRequestId = Array.isArray(requestId) ? requestId[0] : requestId;
 
   const { data: clientProfile, error: clientProfileError } = await supabase
     .from("clients")
@@ -73,10 +65,7 @@ export default async function ClientDocumentsPage({
     return (
       <PortalPage>
         <PageHeader
-          eyebrow={
-            <BackLinks links={[{ href: "/client/dashboard", label: "Back to Dashboard" }]} />
-          }
-          title="Documents"
+          title="Document Library"
           description={`Signed in as ${user.email}`}
         />
 
@@ -116,33 +105,18 @@ export default async function ClientDocumentsPage({
   const documents = documentsResult.data ?? [];
   const requests = requestsResult.data ?? [];
   const requestMap = new Map(requests.map((request) => [request.id, request]));
-  const initialRequestId = requests.some(
-    (request) => request.id === requestedRequestId
-  )
-    ? requestedRequestId
-    : "";
 
   return (
     <PortalPage>
       <PageHeader
-        title="Documents"
-        description="Upload and review documents shared with Younity Consultancy."
+        title="Document Library"
+        description="Open files submitted through request workflows. Documents are stored privately and access links expire shortly after opening."
       />
 
-      <section className="grid gap-6 py-8 lg:grid-cols-[0.9fr_1.1fr]">
+      <section className="py-8">
         <Card>
           <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-            Upload New Document
-          </h2>
-          <p className="mt-2 text-sm leading-6 text-slate-600">
-            Files are stored securely and linked to your portal profile.
-          </p>
-          <UploadForm requests={requests} initialRequestId={initialRequestId} />
-        </Card>
-
-        <Card>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-            Uploaded Documents
+            Uploaded Files
           </h2>
 
           {documents.length ? (
@@ -155,14 +129,14 @@ export default async function ClientDocumentsPage({
                 return (
                   <article
                     key={document.id}
-                    className="grid gap-4 py-5 first:pt-0 last:pb-0 md:grid-cols-[1fr_auto]"
+                    className="grid gap-4 py-5 first:pt-0 last:pb-0 lg:grid-cols-[1.2fr_0.8fr_0.6fr_auto]"
                   >
                     <div>
                       <p className="text-sm font-semibold text-slate-950">
-                        {document.document_type}
-                      </p>
-                      <p className="mt-1 break-words text-sm text-slate-600">
                         {document.file_name}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {document.document_type}
                       </p>
                       {document.notes ? (
                         <p className="mt-2 text-sm leading-6 text-slate-600">
@@ -177,9 +151,31 @@ export default async function ClientDocumentsPage({
                             : "General / Not linked to a request"}
                       </p>
                     </div>
-                    <div className="flex flex-col gap-2 text-sm text-slate-600 md:items-end md:text-right">
+                    <div className="text-sm text-slate-600">
+                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:hidden">
+                        Related Request
+                      </p>
+                      <p className="mt-1 lg:mt-0">
+                        {relatedRequest
+                          ? `${relatedRequest.service} (${relatedRequest.status})`
+                          : document.request_id
+                            ? "Request details unavailable"
+                            : "Not linked"}
+                      </p>
+                    </div>
+                    <div className="flex flex-col gap-2 text-sm text-slate-600 lg:items-end lg:text-right">
                       <DocumentStatusBadge status={document.status} />
                       <p>{formatDate(document.uploaded_at)}</p>
+                    </div>
+                    <div className="lg:text-right">
+                      <Link
+                        href={`/api/client/documents/${document.id}/open`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100"
+                      >
+                        Open
+                      </Link>
                     </div>
                   </article>
                 );
@@ -187,7 +183,10 @@ export default async function ClientDocumentsPage({
             </div>
           ) : (
             <div className="mt-5">
-              <EmptyState title="No documents have been uploaded yet." />
+              <EmptyState
+                title="No documents are available yet."
+                description="Files will appear here after they are uploaded from a request."
+              />
             </div>
           )}
         </Card>

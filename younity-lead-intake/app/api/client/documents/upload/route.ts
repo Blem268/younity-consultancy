@@ -1,7 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { addClickUpDocumentUploadComment } from "@/lib/integrations/clickup";
+import {
+  addClickUpDocumentUploadComment,
+  attachFileToClickUpTask,
+} from "@/lib/integrations/clickup";
 import { sendDocumentUploadNotificationEmail } from "@/lib/integrations/email";
 import { sendInternalWhatsAppDocumentUploadNotification } from "@/lib/integrations/whatsapp";
 
@@ -242,11 +245,29 @@ export async function POST(request: Request) {
   }
 
   if (linkedRequest?.clickup_task_id) {
+    let clickUpAttachmentSucceeded = false;
+
+    try {
+      await attachFileToClickUpTask({
+        taskId: linkedRequest.clickup_task_id,
+        file: fileValue,
+      });
+      clickUpAttachmentSucceeded = true;
+    } catch (error) {
+      console.error("ClickUp document attachment failed:", error);
+      notificationWarnings.push(
+        error instanceof Error
+          ? error.message
+          : "ClickUp document attachment failed."
+      );
+    }
+
     try {
       await addClickUpDocumentUploadComment({
         ...notificationInput,
         clickUpTaskId: linkedRequest.clickup_task_id,
         documentId: insertedDocument.id,
+        clickUpAttachmentSucceeded,
       });
     } catch (error) {
       console.error("ClickUp document upload comment failed:", error);

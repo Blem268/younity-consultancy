@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { runClickUpStatusSync } from "@/lib/internal/sync";
 import { createClient } from "@/lib/supabase/server";
 
 function getAllowedAdminEmails() {
@@ -35,24 +36,16 @@ export async function POST() {
     return error;
   }
 
-  const syncSecret = process.env.INTERNAL_SYNC_SECRET;
-
-  if (!syncSecret) {
+  try {
+    const result = await runClickUpStatusSync();
+    return NextResponse.json(result);
+  } catch (syncError) {
     return NextResponse.json(
-      { message: "Internal sync is not configured." },
+      {
+        message:
+          syncError instanceof Error ? syncError.message : "Status sync failed.",
+      },
       { status: 500 }
     );
   }
-
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
-  const syncUrl = new URL("/api/internal/sync-clickup-status", siteUrl);
-  const response = await fetch(syncUrl, {
-    method: "POST",
-    headers: {
-      "x-internal-sync-secret": syncSecret,
-    },
-  });
-  const result = await response.json();
-
-  return NextResponse.json(result, { status: response.status });
 }

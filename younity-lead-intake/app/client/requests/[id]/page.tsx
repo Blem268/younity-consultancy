@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import {
   BackLinks,
@@ -9,9 +10,10 @@ import {
   InvoiceStatusBadge,
   PageHeader,
   PortalPage,
-  PrimaryButtonLink,
   RequestStatusBadge,
 } from "../../portal-ui";
+import { UploadForm } from "../../documents/upload-form";
+import { TaskProgress } from "./task-progress";
 
 type ClientProfile = {
   id: string;
@@ -24,13 +26,6 @@ type ClientRequest = {
   message: string | null;
   source: string | null;
   clickup_task_id: string | null;
-  billing_type: string | null;
-  estimated_fee: number | null;
-  deposit_required: number | null;
-  amount_paid: number | null;
-  balance_due: number | null;
-  invoice_status: string | null;
-  zoho_books_invoice_id: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -58,6 +53,32 @@ type ClientInvoice = {
   due_date: string | null;
 };
 
+type SupabaseLogError = {
+  message?: string;
+  details?: string;
+  hint?: string;
+  code?: string;
+};
+
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+function logSupabaseError(label: string, error: SupabaseLogError | null) {
+  console.error(label, {
+    message: error?.message,
+    details: error?.details,
+    hint: error?.hint,
+    code: error?.code,
+  });
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
 function formatDate(value: string | null) {
   if (!value) {
     return "Not available";
@@ -81,24 +102,6 @@ function formatMoney(value: number | null | undefined | "") {
   }).format(value)}`;
 }
 
-function getBillingNote(status: string) {
-  switch (status) {
-    case "Ready for Billing":
-      return "Your request is ready for billing. An invoice will be prepared shortly.";
-    case "Invoice Sent":
-      return "Your invoice has been sent. Please check your email or contact Younity Consultancy if you need assistance.";
-    case "Paid":
-      return "Payment has been received. Thank you.";
-    case "Partially Paid":
-      return "A partial payment has been recorded. Please review the remaining balance.";
-    case "Overdue":
-      return "This invoice appears to be overdue. Please contact Younity Consultancy for assistance.";
-    case "Not Ready":
-    default:
-      return "Your billing information is still being reviewed. An invoice is not available yet.";
-  }
-}
-
 function DetailRow({
   label,
   value,
@@ -118,12 +121,42 @@ function DetailRow({
   );
 }
 
-export default async function ClientRequestDetailPage({
-  params,
+function RequestNotFoundState({
+  title,
 }: {
-  params: Promise<{ id: string }>;
+  title: string;
 }) {
+  return (
+    <PortalPage>
+      <PageHeader
+        eyebrow={
+          <BackLinks
+            links={[
+              { href: "/client/dashboard", label: "Back to Dashboard" },
+              { href: "/client/requests", label: "Back to Requests" },
+            ]}
+          />
+        }
+        title="Request Details"
+      />
+
+      <Card className="mt-8">
+        <EmptyState title={title} />
+      </Card>
+    </PortalPage>
+  );
+}
+
+export default async function ClientRequestDetailPage({ params }: PageProps) {
   const { id } = await params;
+  const requestId = typeof id === "string" ? id.trim() : "";
+
+  if (!requestId || !isUuid(requestId)) {
+    return (
+      <RequestNotFoundState title="Request not found or you do not have access to this request." />
+    );
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -140,7 +173,7 @@ export default async function ClientRequestDetailPage({
     .maybeSingle<ClientProfile>();
 
   if (clientProfileError) {
-    console.error("Client profile lookup failed:", clientProfileError);
+    logSupabaseError("Client profile lookup failed:", clientProfileError);
   }
 
   if (!clientProfile) {
@@ -167,35 +200,22 @@ export default async function ClientRequestDetailPage({
   const { data: request, error: requestError } = await supabase
     .from("client_requests")
     .select(
-      "id, service, status, message, source, clickup_task_id, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, invoice_status, zoho_books_invoice_id, created_at, updated_at"
+      "id, service, status, message, source, clickup_task_id, created_at, updated_at"
     )
-    .eq("id", id)
+    .eq("id", requestId)
     .eq("client_id", clientProfile.id)
     .maybeSingle<ClientRequest>();
 
   if (requestError) {
-    console.error("Client request lookup failed:", requestError);
+    logSupabaseError("Client request lookup failed:", requestError);
+    return (
+      <RequestNotFoundState title="We could not load this request right now. Please try again or contact Younity Consultancy." />
+    );
   }
 
   if (!request) {
     return (
-      <PortalPage>
-        <PageHeader
-          eyebrow={
-            <BackLinks
-              links={[
-                { href: "/client/dashboard", label: "Back to Dashboard" },
-                { href: "/client/requests", label: "Back to Requests" },
-              ]}
-            />
-          }
-          title="Request Details"
-        />
-
-        <Card className="mt-8">
-          <EmptyState title="Request not found or you do not have access to this request." />
-        </Card>
-      </PortalPage>
+      <RequestNotFoundState title="Request not found or you do not have access to this request." />
     );
   }
 
@@ -225,21 +245,20 @@ export default async function ClientRequestDetailPage({
   ]);
 
   if (updatesResult.error) {
-    console.error("Request updates lookup failed:", updatesResult.error);
+    logSupabaseError("Request updates lookup failed:", updatesResult.error);
   }
 
   if (documentsResult.error) {
-    console.error("Request documents lookup failed:", documentsResult.error);
+    logSupabaseError("Request documents lookup failed:", documentsResult.error);
   }
 
   if (invoicesResult.error) {
-    console.error("Request invoices lookup failed:", invoicesResult.error);
+    logSupabaseError("Request invoices lookup failed:", invoicesResult.error);
   }
 
   const updates = updatesResult.data ?? [];
   const documents = documentsResult.data ?? [];
   const invoices = invoicesResult.data ?? [];
-  const invoiceStatus = getInvoiceStatus(request.invoice_status);
 
   return (
     <PortalPage>
@@ -254,11 +273,6 @@ export default async function ClientRequestDetailPage({
         }
         title={request.service}
         description={<RequestStatusBadge status={request.status} />}
-        actions={
-          <PrimaryButtonLink href={`/client/documents?requestId=${request.id}`}>
-            Upload Document
-          </PrimaryButtonLink>
-        }
       />
 
       <section className="grid gap-6 py-8 lg:grid-cols-[1.1fr_0.9fr]">
@@ -293,50 +307,14 @@ export default async function ClientRequestDetailPage({
 
         <div className="space-y-6">
           <Card>
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-                  Billing Information
-                </h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {getBillingNote(invoiceStatus)}
-                </p>
-              </div>
-              <InvoiceStatusBadge status={invoiceStatus} />
-            </div>
-
-            <dl className="mt-4">
-              <DetailRow
-                label="Billing Type"
-                value={request.billing_type || "To Be Reviewed"}
-              />
-              <DetailRow
-                label="Estimated Fee"
-                value={formatMoney(request.estimated_fee)}
-              />
-              <DetailRow
-                label="Deposit Required"
-                value={formatMoney(request.deposit_required)}
-              />
-              <DetailRow
-                label="Amount Paid"
-                value={formatMoney(request.amount_paid)}
-              />
-              <DetailRow
-                label="Balance Due"
-                value={formatMoney(request.balance_due)}
-              />
-              <DetailRow
-                label="Invoice Status"
-                value={<InvoiceStatusBadge status={invoiceStatus} />}
-              />
-              {request.zoho_books_invoice_id ? (
-                <DetailRow
-                  label="Zoho Books Invoice ID"
-                  value={request.zoho_books_invoice_id}
-                />
-              ) : null}
-            </dl>
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+              Work Progress
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Track the operational tasks connected to this request. Click a
+              task item to submit notes, upload documents, or mark it complete.
+            </p>
+            <TaskProgress requestId={request.id} />
           </Card>
 
           <Card>
@@ -374,6 +352,21 @@ export default async function ClientRequestDetailPage({
 
           <Card>
             <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+              Upload Document for this Request
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              Supporting files are stored securely and linked directly to this
+              request.
+            </p>
+            <UploadForm
+              requests={[{ id: request.id, service: request.service, status: request.status }]}
+              fixedRequestId={request.id}
+              compact
+            />
+          </Card>
+
+          <Card>
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
               Related Documents
             </h2>
 
@@ -395,6 +388,14 @@ export default async function ClientRequestDetailPage({
                     <div className="flex flex-col gap-2 text-sm text-slate-600 sm:items-end sm:text-right">
                       <DocumentStatusBadge status={document.status} />
                       <p>{formatDate(document.uploaded_at)}</p>
+                      <Link
+                        href={`/api/client/documents/${document.id}/open`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="font-semibold text-teal-700 transition hover:text-teal-900"
+                      >
+                        Open
+                      </Link>
                     </div>
                   </article>
                 ))}
@@ -439,7 +440,7 @@ export default async function ClientRequestDetailPage({
               </div>
             ) : (
               <div className="mt-5">
-                <EmptyState title="No invoices are available yet." />
+                <EmptyState title="No invoices are available for this request yet." />
               </div>
             )}
           </Card>

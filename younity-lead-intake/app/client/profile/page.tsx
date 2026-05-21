@@ -93,7 +93,7 @@ export default async function ClientProfilePage() {
           <BackLinks
             links={[
               { href: "/client/requests", label: "View Requests" },
-              { href: "/client/documents", label: "Upload Documents" },
+              { href: "/client/documents", label: "Document Library" },
             ]}
           />
         }
