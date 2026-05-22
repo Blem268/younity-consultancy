@@ -38,7 +38,10 @@ Do not commit real values. `NEXT_PUBLIC_` variables can be visible in the browse
 | Variable | Purpose | Used By | Visibility |
 | --- | --- | --- | --- |
 | `RESEND_API_KEY` | Resend API key for email delivery. | Email integration. | Server-only |
+| `RESEND_FROM_EMAIL` | Verified Resend sender address, for example `Younity Consultancy <hello@younityanu.com>`. Must use a verified Resend domain in production. | Email integration. | Server-only |
 | `LEAD_NOTIFICATION_EMAIL` | Internal recipient for lead, request, and document notifications. | Email integration. | Server-only |
+
+`onboarding@resend.dev` is for Resend testing only and should not be used in production. Verify the sending domain in Resend before sending client emails to real recipients.
 
 ## Twilio WhatsApp
 

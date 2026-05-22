@@ -18,7 +18,7 @@ Supabase provides client portal authentication, client-facing tables, request re
 
 ### ClickUp
 
-ClickUp is the main operations application. Website leads and portal requests create ClickUp tasks. Internal task status and billing preparation fields sync back into Supabase for portal visibility.
+ClickUp is the main operations and billing preparation hub. Website leads and portal requests create ClickUp tasks. Internal task status and billing preparation fields sync back into Supabase for portal visibility.
 
 ClickUp remains the source of truth for operational task status, subtasks, and checklists. Client request detail pages pull a safe, client-facing task progress view from ClickUp without exposing private ClickUp links or API details.
 
@@ -28,7 +28,7 @@ Zoho CRM stores lead and client relationship records created from public lead in
 
 ### Zoho Books
 
-Zoho Books is reserved for future official invoicing and billing workflows. Current billing fields are preparation data synced from ClickUp into Supabase.
+Zoho Books integration is not active. Billing preparation remains ClickUp-based, Supabase displays client-facing billing/invoice status synced from ClickUp, and any actual invoicing is handled manually or outside the portal for now.
 
 ### Google Sheets
 

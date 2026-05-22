@@ -620,8 +620,8 @@ export async function getClickUpTaskBillingFields(clickUpTaskId: string) {
     invoiceStatus: normalizeTextFromField(
       getCustomFieldValueByName(customFields, "Invoice Status")
     ),
-    zohoBooksInvoiceId: normalizeTextFromField(
-      getCustomFieldValueByName(customFields, "Zoho Books Invoice ID")
+    invoiceId: normalizeTextFromField(
+      getCustomFieldValueByName(customFields, "Invoice ID")
     ),
   };
 }

@@ -207,7 +207,7 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
         amount_paid: billingFields.amountPaid ?? null,
         balance_due: billingFields.balanceDue ?? null,
         invoice_status: billingFields.invoiceStatus ?? null,
-        zoho_books_invoice_id: billingFields.zohoBooksInvoiceId ?? null,
+        zoho_books_invoice_id: billingFields.invoiceId ?? null,
       };
 
       const hasChanges =

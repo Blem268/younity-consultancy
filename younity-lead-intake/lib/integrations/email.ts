@@ -54,6 +54,16 @@ function getResendClient() {
   return new Resend(resendApiKey);
 }
 
+function getResendFromEmail() {
+  const resendFromEmail = process.env.RESEND_FROM_EMAIL;
+
+  if (!resendFromEmail) {
+    throw new Error("Missing RESEND_FROM_EMAIL.");
+  }
+
+  return resendFromEmail;
+}
+
 export async function sendLeadNotificationEmail({
   lead,
   zohoLeadId,
@@ -67,9 +77,10 @@ export async function sendLeadNotificationEmail({
   }
 
   const resend = getResendClient();
+  const fromEmail = getResendFromEmail();
 
   const result = await resend.emails.send({
-    from: "Younity Website <onboarding@resend.dev>",
+    from: fromEmail,
     to: notificationEmail,
     subject: `New Website Lead: ${lead.service}`,
     html: `
@@ -111,9 +122,10 @@ export async function sendClientConfirmationEmail({ lead }: { lead: Lead }) {
   }
 
   const resend = getResendClient();
+  const fromEmail = getResendFromEmail();
 
   const result = await resend.emails.send({
-    from: "Younity Consultancy <onboarding@resend.dev>",
+    from: fromEmail,
     to: lead.email,
     subject: "We received your request — Younity Consultancy",
     html: `
@@ -175,9 +187,10 @@ export async function sendDocumentUploadNotificationEmail({
   }
 
   const resend = getResendClient();
+  const fromEmail = getResendFromEmail();
 
   const result = await resend.emails.send({
-    from: "Younity Client Portal <onboarding@resend.dev>",
+    from: fromEmail,
     to: notificationEmail,
     subject: `New Client Document Upload: ${documentType}`,
     html: `
@@ -238,9 +251,10 @@ export async function sendPortalRequestNotificationEmail({
   }
 
   const resend = getResendClient();
+  const fromEmail = getResendFromEmail();
 
   const result = await resend.emails.send({
-    from: "Younity Client Portal <onboarding@resend.dev>",
+    from: fromEmail,
     to: notificationEmail,
     subject: `New Client Portal Request: ${service}`,
     html: `

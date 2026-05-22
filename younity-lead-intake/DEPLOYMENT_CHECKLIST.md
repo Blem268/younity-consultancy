@@ -32,6 +32,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 ### Resend
 
 - `RESEND_API_KEY`
+- `RESEND_FROM_EMAIL`
 - `LEAD_NOTIFICATION_EMAIL`
 
 ### Twilio WhatsApp
@@ -86,7 +87,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 ### D. Resend
 
 - Verify the production sending domain.
-- Replace `onboarding@resend.dev` sender addresses in code after domain verification.
+- Set `RESEND_FROM_EMAIL` to a sender on the verified Resend domain, for example `Younity Consultancy <hello@younityanu.com>`.
+- Do not use `onboarding@resend.dev` in production. It is for Resend testing only.
 - Confirm `LEAD_NOTIFICATION_EMAIL` is correct.
 
 ### E. Twilio
@@ -115,6 +117,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Upload portal document.
 - Run internal status sync.
 - Run internal billing sync.
+- Confirm client-facing billing/invoice status reflects ClickUp billing sync data.
 
 ## Supabase
 
@@ -135,6 +138,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm `CLICKUP_API_TOKEN` belongs to an account or workspace member with access to the target list.
 - Confirm `CLICKUP_LIST_ID` points to the production operations list.
 - Confirm ClickUp custom fields used by billing sync still match the field names expected by the app.
+- Confirm ClickUp remains the operations and billing preparation hub.
+- Confirm any actual invoicing is handled manually or outside the portal for now.
 
 ## Google Sheets
 
@@ -144,7 +149,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 ## Resend
 
 - Verify the sending domain in Resend before sending to real client emails.
-- Replace the default onboarding sender addresses when the production sending domain is ready.
+- Set `RESEND_FROM_EMAIL` to a sender address on the verified domain before sending to real client emails.
+- Confirm `onboarding@resend.dev` is not used in production.
 - Confirm `LEAD_NOTIFICATION_EMAIL` points to the correct internal inbox or distribution list.
 
 ## Twilio WhatsApp
@@ -175,3 +181,4 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Submit a test client portal request.
 - Upload a test document and confirm it remains private in Supabase Storage.
 - Run internal status and billing sync from an authorized admin account.
+- Confirm Supabase displays client-facing billing/invoice status synced from ClickUp.

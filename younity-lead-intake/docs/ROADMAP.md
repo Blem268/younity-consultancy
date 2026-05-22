@@ -27,9 +27,10 @@
 
 ## Next Recommended Work
 
-- Verify Resend domain and replace onboarding sender emails.
+- Verify Resend domain and set `RESEND_FROM_EMAIL` to a production sender on that verified domain.
 - Move Twilio from sandbox to production WhatsApp setup.
-- Add Zoho Books invoice creation from ClickUp billing data.
+- Keep billing preparation in ClickUp and display synced billing/invoice status in Supabase.
+- Handle actual invoicing manually or outside the portal for now.
 - Add ClickUp webhook automation instead of manual sync.
 - Add client document download via signed URLs.
 - Build an admin portal for managing clients.
