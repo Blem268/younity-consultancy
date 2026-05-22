@@ -20,6 +20,21 @@ const allowedExtensions = new Set([
   "xlsx",
   "csv",
 ]);
+const allowedMimeTypesByExtension: Record<string, Set<string>> = {
+  pdf: new Set(["application/pdf"]),
+  jpg: new Set(["image/jpeg"]),
+  jpeg: new Set(["image/jpeg"]),
+  png: new Set(["image/png"]),
+  doc: new Set(["application/msword"]),
+  docx: new Set([
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ]),
+  xls: new Set(["application/vnd.ms-excel"]),
+  xlsx: new Set([
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ]),
+  csv: new Set(["text/csv", "application/csv", "application/vnd.ms-excel"]),
+};
 const allowedTaskItemTypes = new Set(["subtask", "checklist"]);
 
 type ClientProfile = {
@@ -77,6 +92,14 @@ function getSafeFileName(fileName: string) {
     .replace(/-+/g, "-");
 
   return cleaned || "document";
+}
+
+function isAllowedMimeType(extension: string, mimeType: string) {
+  if (!mimeType || mimeType === "application/octet-stream") {
+    return true;
+  }
+
+  return allowedMimeTypesByExtension[extension]?.has(mimeType) ?? false;
 }
 
 export async function POST(
@@ -200,7 +223,16 @@ export async function POST(
     );
   }
 
-  if (file && !allowedExtensions.has(getFileExtension(file.name))) {
+  const fileExtension = file ? getFileExtension(file.name) : "";
+
+  if (file && !allowedExtensions.has(fileExtension)) {
+    return NextResponse.json(
+      { success: false, message: "This file type is not allowed." },
+      { status: 400 }
+    );
+  }
+
+  if (file && !isAllowedMimeType(fileExtension, file.type)) {
     return NextResponse.json(
       { success: false, message: "This file type is not allowed." },
       { status: 400 }
@@ -252,10 +284,9 @@ export async function POST(
       });
 
     if (uploadError) {
-      console.error(
-        "Supabase task document upload failed:",
-        JSON.stringify(uploadError, null, 2)
-      );
+      console.error("Supabase task document upload failed:", {
+        message: uploadError.message,
+      });
       return NextResponse.json(
         { success: false, message: "Document upload failed." },
         { status: 500 }
@@ -351,11 +382,7 @@ export async function POST(
       });
     } catch (error) {
       console.error("ClickUp task item completion failed:", error);
-      warnings.push(
-        error instanceof Error
-          ? error.message
-          : "Completion could not be applied automatically."
-      );
+      warnings.push("Completion could not be applied automatically.");
     }
   }
 

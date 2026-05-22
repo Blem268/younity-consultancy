@@ -24,6 +24,7 @@
 - Client profile update.
 - Vercel deployment readiness.
 - System documentation and testing checklist.
+- Phase 10 security review, data protection, and access control audit.
 
 ## Next Recommended Work
 
@@ -31,9 +32,12 @@
 - Move Twilio from sandbox to production WhatsApp setup.
 - Keep billing preparation in ClickUp and display synced billing/invoice status in Supabase.
 - Handle actual invoicing manually or outside the portal for now.
+- Add rate limiting to public and write-heavy API routes.
+- Add CAPTCHA or Turnstile to the public contact form if spam volume increases.
 - Add ClickUp webhook automation instead of manual sync.
 - Add client document download via signed URLs.
 - Build an admin portal for managing clients.
 - Perform multi-client testing.
 - Add duplicate Zoho handling.
 - Add production monitoring and error tracking.
+- Establish periodic key rotation for Supabase, ClickUp, Zoho CRM, Resend, Twilio, and Google Sheets credentials.

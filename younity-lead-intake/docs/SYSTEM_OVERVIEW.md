@@ -46,6 +46,16 @@ Twilio sends internal WhatsApp alerts for new public leads, portal requests, and
 
 Vercel hosts and deploys the Next.js application.
 
+## Security Posture
+
+Client portal routes use Supabase Auth and resolve each portal user through `clients.user_id`. Client-facing request, document, invoice, update, and task data is scoped to that client profile before display or mutation.
+
+Private documents are stored in the private `client-documents` Supabase bucket. The portal opens documents through a server route that verifies ownership before issuing a short-lived signed URL.
+
+Internal sync controls require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
+
+Zoho Books is not active. ClickUp remains the operations and billing preparation hub, while Supabase displays synced client-facing billing and invoice status. Actual invoicing is handled manually or outside the portal for now.
+
 ## High-Level Workflows
 
 ### A. Public Lead Intake

@@ -40,11 +40,9 @@ export async function POST() {
     const result = await runClickUpStatusSync();
     return NextResponse.json(result);
   } catch (syncError) {
+    console.error("Status sync failed:", syncError);
     return NextResponse.json(
-      {
-        message:
-          syncError instanceof Error ? syncError.message : "Status sync failed.",
-      },
+      { message: "Status sync failed." },
       { status: 500 }
     );
   }

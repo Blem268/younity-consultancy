@@ -308,10 +308,10 @@ async function fetchClickUpTask(clickUpTaskId: string, includeSubtasks = false) 
     }
   );
 
-  const data = (await response.json()) as ClickUpTaskResponse;
+  const data = (await response.json().catch(() => ({}))) as ClickUpTaskResponse;
 
   if (!response.ok) {
-    throw new Error(`ClickUp task fetch failed: ${JSON.stringify(data)}`);
+    throw new Error(`ClickUp task fetch failed with status ${response.status}.`);
   }
 
   return data;
@@ -333,10 +333,12 @@ async function createClickUpTaskComment(taskId: string, commentText: string) {
     }
   );
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(`ClickUp comment creation failed: ${JSON.stringify(data)}`);
+    throw new Error(
+      `ClickUp comment creation failed with status ${response.status}.`
+    );
   }
 
   return data;
@@ -370,10 +372,12 @@ export async function attachFileToClickUpTask({
       body: formData,
     }
   );
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(`ClickUp file attachment failed: ${JSON.stringify(data)}`);
+    throw new Error(
+      `ClickUp file attachment failed with status ${response.status}.`
+    );
   }
 
   return data;
@@ -424,10 +428,10 @@ export async function createClickUpLeadTask(params: {
     }
   );
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
-    throw new Error(`ClickUp task creation failed: ${JSON.stringify(data)}`);
+    throw new Error(`ClickUp task creation failed with status ${response.status}.`);
   }
 
   return {
@@ -501,11 +505,11 @@ export async function createClickUpPortalRequestTask({
     }
   );
 
-  const data = await response.json();
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     throw new Error(
-      `ClickUp portal request task creation failed: ${JSON.stringify(data)}`
+      `ClickUp portal request task creation failed with status ${response.status}.`
     );
   }
 
@@ -830,11 +834,11 @@ export async function completeClickUpTaskItem({
         body: JSON.stringify({ resolved: true }),
       }
     );
-    const data = await response.json();
+    await response.json().catch(() => ({}));
 
     if (!response.ok) {
       throw new Error(
-        `Checklist completion update failed: ${JSON.stringify(data)}`
+        `Checklist completion update failed with status ${response.status}.`
       );
     }
 
@@ -848,7 +852,7 @@ export async function completeClickUpTaskItem({
     "closed",
     "done",
   ].filter((status): status is string => Boolean(status));
-  let lastError = "";
+  let lastStatus: number | null = null;
 
   for (const status of candidateStatuses) {
     const response = await fetch(
@@ -862,16 +866,18 @@ export async function completeClickUpTaskItem({
         body: JSON.stringify({ status }),
       }
     );
-    const data = await response.json();
+    await response.json().catch(() => ({}));
 
     if (response.ok) {
       return;
     }
 
-    lastError = JSON.stringify(data);
+    lastStatus = response.status;
   }
 
   throw new Error(
-    `ClickUp subtask completion update failed.${lastError ? ` ${lastError}` : ""}`
+    `ClickUp subtask completion update failed${
+      lastStatus ? ` with status ${lastStatus}` : ""
+    }.`
   );
 }

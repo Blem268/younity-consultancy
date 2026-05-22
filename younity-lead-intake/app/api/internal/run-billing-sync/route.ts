@@ -40,11 +40,9 @@ export async function POST() {
     const result = await runClickUpBillingSync();
     return NextResponse.json(result);
   } catch (syncError) {
+    console.error("Billing sync failed:", syncError);
     return NextResponse.json(
-      {
-        message:
-          syncError instanceof Error ? syncError.message : "Billing sync failed.",
-      },
+      { message: "Billing sync failed." },
       { status: 500 }
     );
   }

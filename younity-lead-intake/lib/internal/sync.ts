@@ -62,10 +62,10 @@ export async function runClickUpStatusSync(): Promise<SyncResult> {
     .returns<ClientRequestStatusRecord[]>();
 
   if (requestsError) {
-    console.error(
-      "ClickUp status sync query failed:",
-      JSON.stringify(requestsError, null, 2)
-    );
+    console.error("ClickUp status sync query failed:", {
+      message: requestsError.message,
+      code: requestsError.code,
+    });
     throw new Error("Unable to load requests for sync.");
   }
 
@@ -106,9 +106,11 @@ export async function runClickUpStatusSync(): Promise<SyncResult> {
         .eq("id", clientRequest.id);
 
       if (updateError) {
-        throw new Error(
-          `Supabase request status update failed: ${JSON.stringify(updateError)}`
-        );
+        console.error("Supabase request status update failed:", {
+          message: updateError.message,
+          code: updateError.code,
+        });
+        throw new Error("Supabase request status update failed.");
       }
 
       const { error: timelineError } = await supabaseAdmin
@@ -122,9 +124,11 @@ export async function runClickUpStatusSync(): Promise<SyncResult> {
         });
 
       if (timelineError) {
-        throw new Error(
-          `Supabase status timeline insert failed: ${JSON.stringify(timelineError)}`
-        );
+        console.error("Supabase status timeline insert failed:", {
+          message: timelineError.message,
+          code: timelineError.code,
+        });
+        throw new Error("Supabase status timeline insert failed.");
       }
 
       updated += 1;
@@ -132,11 +136,11 @@ export async function runClickUpStatusSync(): Promise<SyncResult> {
         `ClickUp status sync updated request ${clientRequest.id}: ${oldStatus} -> ${newStatus}`
       );
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Unknown sync error.";
+      const message = "Status sync failed for this request.";
 
       console.error(
         `ClickUp status sync error for request ${clientRequest.id}:`,
-        message
+        error instanceof Error ? error.message : "Unknown sync error."
       );
 
       errors.push({
@@ -172,10 +176,10 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
     .returns<ClientRequestBillingRecord[]>();
 
   if (requestsError) {
-    console.error(
-      "ClickUp billing sync query failed:",
-      JSON.stringify(requestsError, null, 2)
-    );
+    console.error("ClickUp billing sync query failed:", {
+      message: requestsError.message,
+      code: requestsError.code,
+    });
     throw new Error("Unable to load requests for billing sync.");
   }
 
@@ -238,7 +242,11 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
         .eq("id", clientRequest.id);
 
       if (updateError) {
-        throw new Error(`Supabase billing update failed: ${JSON.stringify(updateError)}`);
+        console.error("Supabase billing update failed:", {
+          message: updateError.message,
+          code: updateError.code,
+        });
+        throw new Error("Supabase billing update failed.");
       }
 
       const { error: timelineError } = await supabaseAdmin
@@ -252,9 +260,11 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
         });
 
       if (timelineError) {
-        throw new Error(
-          `Supabase billing timeline insert failed: ${JSON.stringify(timelineError)}`
-        );
+        console.error("Supabase billing timeline insert failed:", {
+          message: timelineError.message,
+          code: timelineError.code,
+        });
+        throw new Error("Supabase billing timeline insert failed.");
       }
 
       updated += 1;
@@ -262,12 +272,11 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
         `ClickUp billing sync updated request ${clientRequest.id} (${clientRequest.service}).`
       );
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Unknown billing sync error.";
+      const message = "Billing sync failed for this request.";
 
       console.error(
         `ClickUp billing sync error for request ${clientRequest.id}:`,
-        message
+        error instanceof Error ? error.message : "Unknown billing sync error."
       );
 
       errors.push({

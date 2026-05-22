@@ -118,6 +118,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Run internal status sync.
 - Run internal billing sync.
 - Confirm client-facing billing/invoice status reflects ClickUp billing sync data.
+- Run multi-client access tests for request, document, invoice, update, and task detail isolation.
+- Confirm Zoho Books is not active and no `ZOHO_BOOKS_*` variables are configured.
 
 ## Supabase
 
@@ -172,6 +174,16 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Request detail pages verify the request belongs to the logged-in client.
 - Document metadata is shown only for the owning client.
 - `/internal/sync` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
+
+## Security Review
+
+- Confirm `docs/SECURITY_AUDIT.md` has been reviewed before production changes.
+- Confirm only `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_SITE_URL` are browser-visible.
+- Confirm server-only secrets are not referenced in client components.
+- Confirm public lead-intake and authenticated write routes return safe errors only.
+- Confirm public lead-intake has rate limiting and spam protection on the security roadmap.
+- Confirm monitoring/error tracking is configured with secret redaction before broad production use.
+- Confirm API keys and OAuth refresh tokens have an owner and rotation cadence.
 
 ## Final Verification
 

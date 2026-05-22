@@ -13,7 +13,7 @@ import {
 import { sendInternalWhatsAppLeadNotification } from "@/lib/integrations/whatsapp";
 
 export async function POST(request: Request) {
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
 
   const parsed = leadSchema.safeParse(body);
 
@@ -47,8 +47,12 @@ export async function POST(request: Request) {
       company: lead.company,
       serviceRequested: lead.service,
       message: lead.message,
-      preferredContactMethod: body.preferredContactMethod || "No Preference",
-      natureOfBusiness: body.natureOfBusiness || "",
+      preferredContactMethod:
+        typeof body?.preferredContactMethod === "string"
+          ? body.preferredContactMethod
+          : "No Preference",
+      natureOfBusiness:
+        typeof body?.natureOfBusiness === "string" ? body.natureOfBusiness : "",
       websiteFormId: "website-lead-form",
       sourcePage: "/contact",
     });
@@ -56,10 +60,7 @@ export async function POST(request: Request) {
     zohoLeadId = zohoResult?.data?.[0]?.details?.id || "";
   } catch (error) {
     console.error("Zoho lead creation failed:", error);
-
-    integrationErrors.push(
-      error instanceof Error ? error.message : "Zoho lead creation failed."
-    );
+    integrationErrors.push("Zoho lead creation failed.");
   }
 
   try {
@@ -73,10 +74,7 @@ export async function POST(request: Request) {
     clickUpTaskUrl = clickUpTask.url || "";
   } catch (error) {
     console.error("ClickUp task creation failed:", error);
-
-    integrationErrors.push(
-      error instanceof Error ? error.message : "ClickUp task creation failed."
-    );
+    integrationErrors.push("ClickUp task creation failed.");
   }
 
   try {
@@ -91,10 +89,7 @@ export async function POST(request: Request) {
     console.log("Google Sheet log successful.");
   } catch (error) {
     console.error("Google Sheet log failed:", error);
-
-    integrationErrors.push(
-      error instanceof Error ? error.message : "Google Sheet log failed."
-    );
+    integrationErrors.push("Google Sheet log failed.");
   }
 
   try {
@@ -110,10 +105,7 @@ export async function POST(request: Request) {
     console.log("Email notification sent.");
   } catch (error) {
     console.error("Email notification failed:", error);
-
-    integrationErrors.push(
-      error instanceof Error ? error.message : "Email notification failed."
-    );
+    integrationErrors.push("Email notification failed.");
   }
 
   try {
@@ -128,12 +120,7 @@ export async function POST(request: Request) {
     console.log("Client confirmation email sent.");
   } catch (error) {
     console.error("Client confirmation email failed:", error);
-
-    integrationErrors.push(
-      error instanceof Error
-        ? error.message
-        : "Client confirmation email failed."
-    );
+    integrationErrors.push("Client confirmation email failed.");
   }
 
   try {
@@ -150,12 +137,7 @@ export async function POST(request: Request) {
     console.log("WhatsApp notification sent.");
   } catch (error) {
     console.error("WhatsApp notification failed:", error);
-
-    integrationErrors.push(
-      error instanceof Error
-        ? error.message
-        : "WhatsApp notification failed."
-    );
+    integrationErrors.push("WhatsApp notification failed.");
   }
 
   try {
@@ -173,12 +155,7 @@ export async function POST(request: Request) {
     console.log("Zoho integration status updated.");
   } catch (error) {
     console.error("Zoho integration status update failed:", error);
-
-    integrationErrors.push(
-      error instanceof Error
-        ? error.message
-        : "Zoho integration status update failed."
-    );
+    integrationErrors.push("Zoho integration status update failed.");
   }
 
   if (integrationErrors.length) {
@@ -198,10 +175,9 @@ export async function POST(request: Request) {
       name: lead.name,
       email: lead.email,
       service: lead.service,
-      zohoLeadId,
-      clickUpTaskId,
-      clickUpTaskUrl,
     },
-    warnings: integrationErrors.length ? integrationErrors : undefined,
+    warnings: integrationErrors.length
+      ? ["One or more internal follow-up steps need review."]
+      : undefined,
   });
 }

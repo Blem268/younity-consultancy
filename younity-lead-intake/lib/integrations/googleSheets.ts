@@ -29,10 +29,10 @@ export async function appendLeadToSheet(params: {
     }),
   });
 
-  const result = await response.json();
+  const result = await response.json().catch(() => ({}));
 
   if (!response.ok || !result.success) {
-    throw new Error(`Google Sheet log failed: ${JSON.stringify(result)}`);
+    throw new Error(`Google Sheet log failed with status ${response.status}.`);
   }
 
   return result;

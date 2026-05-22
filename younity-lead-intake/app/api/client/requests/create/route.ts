@@ -79,7 +79,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as RequestBody;
+  const body = (await request.json().catch(() => ({}))) as RequestBody;
   const service = getString(body.service);
   const message = getString(body.message);
   const preferredContactMethod =
@@ -143,10 +143,10 @@ export async function POST(request: Request) {
       .single<InsertedRequest>();
 
   if (requestInsertError) {
-    console.error(
-      "Client request insert failed:",
-      JSON.stringify(requestInsertError, null, 2)
-    );
+    console.error("Client request insert failed:", {
+      message: requestInsertError.message,
+      code: requestInsertError.code,
+    });
     return NextResponse.json(
       { message: "Request could not be submitted." },
       { status: 500 }
@@ -181,19 +181,15 @@ export async function POST(request: Request) {
       .eq("client_id", clientProfile.id);
 
     if (clickUpUpdateError) {
-      console.error(
-        "Client request ClickUp task update failed:",
-        JSON.stringify(clickUpUpdateError, null, 2)
-      );
+      console.error("Client request ClickUp task update failed:", {
+        message: clickUpUpdateError.message,
+        code: clickUpUpdateError.code,
+      });
       warnings.push("ClickUp task ID could not be saved to the portal request.");
     }
   } catch (error) {
     console.error("ClickUp portal request task creation failed:", error);
-    warnings.push(
-      error instanceof Error
-        ? error.message
-        : "Internal task creation needs review."
-    );
+    warnings.push("Internal task creation needs review.");
   }
 
   const timelineEntries = [
@@ -221,10 +217,10 @@ export async function POST(request: Request) {
     .insert(timelineEntries);
 
   if (updateInsertError) {
-    console.error(
-      "Client request timeline insert failed:",
-      JSON.stringify(updateInsertError, null, 2)
-    );
+    console.error("Client request timeline insert failed:", {
+      message: updateInsertError.message,
+      code: updateInsertError.code,
+    });
     warnings.push("Portal timeline update could not be saved.");
   }
 
@@ -246,22 +242,14 @@ export async function POST(request: Request) {
     await sendPortalRequestNotificationEmail(notificationInput);
   } catch (error) {
     console.error("Portal request email notification failed:", error);
-    warnings.push(
-      error instanceof Error
-        ? error.message
-        : "Portal request email notification failed."
-    );
+    warnings.push("Email notification needs review.");
   }
 
   try {
     await sendInternalWhatsAppPortalRequestNotification(notificationInput);
   } catch (error) {
     console.error("Portal request WhatsApp notification failed:", error);
-    warnings.push(
-      error instanceof Error
-        ? error.message
-        : "Portal request WhatsApp notification failed."
-    );
+    warnings.push("WhatsApp notification needs review.");
   }
 
   return NextResponse.json({

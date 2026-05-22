@@ -11,11 +11,23 @@ type ClientDocument = {
   file_path: string;
 };
 
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const documentId = typeof id === "string" ? id.trim() : "";
+
+  if (!documentId || !isUuid(documentId)) {
+    return NextResponse.json({ message: "Invalid document ID." }, { status: 400 });
+  }
+
   const supabase = await createClient();
   const {
     data: { user },
@@ -49,7 +61,7 @@ export async function GET(
   const { data: document, error: documentError } = await supabase
     .from("client_documents")
     .select("id, file_path")
-    .eq("id", id)
+    .eq("id", documentId)
     .eq("client_id", clientProfile.id)
     .maybeSingle<ClientDocument>();
 

@@ -54,7 +54,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const body = (await request.json()) as ProfileUpdateBody;
+  const body = (await request.json().catch(() => ({}))) as ProfileUpdateBody;
   const fullName = getString(body.fullName);
   const phone = getString(body.phone);
   const company = getString(body.company);
@@ -88,10 +88,10 @@ export async function POST(request: Request) {
     .eq("user_id", user.id);
 
   if (updateError) {
-    console.error(
-      "Client profile update failed:",
-      JSON.stringify(updateError, null, 2)
-    );
+    console.error("Client profile update failed:", {
+      message: updateError.message,
+      code: updateError.code,
+    });
     return NextResponse.json(
       { message: "Profile could not be updated." },
       { status: 500 }

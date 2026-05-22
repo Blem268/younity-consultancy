@@ -20,6 +20,21 @@ const allowedExtensions = new Set([
   "xlsx",
   "csv",
 ]);
+const allowedMimeTypesByExtension: Record<string, Set<string>> = {
+  pdf: new Set(["application/pdf"]),
+  jpg: new Set(["image/jpeg"]),
+  jpeg: new Set(["image/jpeg"]),
+  png: new Set(["image/png"]),
+  doc: new Set(["application/msword"]),
+  docx: new Set([
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  ]),
+  xls: new Set(["application/vnd.ms-excel"]),
+  xlsx: new Set([
+    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  ]),
+  csv: new Set(["text/csv", "application/csv", "application/vnd.ms-excel"]),
+};
 
 type ClientProfile = {
   id: string;
@@ -57,6 +72,20 @@ function getSafeFileName(fileName: string) {
     .replace(/-+/g, "-");
 
   return cleaned || "document";
+}
+
+function isUuid(value: string) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+    value
+  );
+}
+
+function isAllowedMimeType(extension: string, mimeType: string) {
+  if (!mimeType || mimeType === "application/octet-stream") {
+    return true;
+  }
+
+  return allowedMimeTypesByExtension[extension]?.has(mimeType) ?? false;
 }
 
 export async function POST(request: Request) {
@@ -126,9 +155,23 @@ export async function POST(request: Request) {
     );
   }
 
+  if (!isAllowedMimeType(extension, fileValue.type)) {
+    return NextResponse.json(
+      { message: "This file type is not allowed." },
+      { status: 400 }
+    );
+  }
+
   let linkedRequest: LinkedRequest | null = null;
 
   if (requestId) {
+    if (!isUuid(requestId)) {
+      return NextResponse.json(
+        { message: "Selected request was not found." },
+        { status: 404 }
+      );
+    }
+
     const { data, error: linkedRequestError } = await supabase
       .from("client_requests")
       .select("id, service, status, clickup_task_id")
@@ -172,10 +215,9 @@ export async function POST(request: Request) {
     });
 
   if (uploadError) {
-    console.error(
-      "Supabase storage upload failed:",
-      JSON.stringify(uploadError, null, 2)
-    );
+    console.error("Supabase storage upload failed:", {
+      message: uploadError.message,
+    });
     return NextResponse.json(
       { message: "Document upload failed." },
       { status: 500 }
@@ -198,10 +240,10 @@ export async function POST(request: Request) {
     .single<InsertedDocument>();
 
   if (insertError) {
-    console.error(
-      "Client document metadata insert failed:",
-      JSON.stringify(insertError, null, 2)
-    );
+    console.error("Client document metadata insert failed:", {
+      message: insertError.message,
+      code: insertError.code,
+    });
     return NextResponse.json(
       { message: "Document metadata could not be saved." },
       { status: 500 }
@@ -226,22 +268,14 @@ export async function POST(request: Request) {
     await sendDocumentUploadNotificationEmail(notificationInput);
   } catch (error) {
     console.error("Document upload email notification failed:", error);
-    notificationWarnings.push(
-      error instanceof Error
-        ? error.message
-        : "Document upload email notification failed."
-    );
+    notificationWarnings.push("Document uploaded, but the email notification failed.");
   }
 
   try {
     await sendInternalWhatsAppDocumentUploadNotification(notificationInput);
   } catch (error) {
     console.error("Document upload WhatsApp notification failed:", error);
-    notificationWarnings.push(
-      error instanceof Error
-        ? error.message
-        : "Document upload WhatsApp notification failed."
-    );
+    notificationWarnings.push("Document uploaded, but the WhatsApp notification failed.");
   }
 
   if (linkedRequest?.clickup_task_id) {
@@ -255,11 +289,7 @@ export async function POST(request: Request) {
       clickUpAttachmentSucceeded = true;
     } catch (error) {
       console.error("ClickUp document attachment failed:", error);
-      notificationWarnings.push(
-        error instanceof Error
-          ? error.message
-          : "ClickUp document attachment failed."
-      );
+      notificationWarnings.push("Document saved, but the ClickUp file attachment failed.");
     }
 
     try {
@@ -271,11 +301,7 @@ export async function POST(request: Request) {
       });
     } catch (error) {
       console.error("ClickUp document upload comment failed:", error);
-      notificationWarnings.push(
-        error instanceof Error
-          ? error.message
-          : "ClickUp document upload comment failed."
-      );
+      notificationWarnings.push("Document saved, but the ClickUp comment failed.");
     }
   }
 
