@@ -35,8 +35,7 @@ export default function Home() {
 
               <p className="mt-6 max-w-2xl text-base leading-7 text-white/75 sm:text-lg sm:leading-8">
                 Younity Consultancy helps organizations solve complex business
-                challenges, accelerate transformation, and convert strategy into
-                measurable enterprise value.
+                challenges into strategic planning while remainiing competitively affordable.
               </p>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:flex-wrap sm:gap-5">
@@ -66,12 +65,12 @@ export default function Home() {
 
                   <div className="grid gap-5 sm:grid-cols-2">
                     <div className="rounded-3xl bg-[#244285] p-6">
-                      <h3 className="text-4xl font-black">50+</h3>
+                      <h3 className="text-4xl font-black">10+</h3>
                       <p className="mt-2 text-white/70">Clients Served</p>
                     </div>
 
                     <div className="rounded-3xl bg-[#50A9C0] p-6 text-[#06111f]">
-                      <h3 className="text-4xl font-black">150+</h3>
+                      <h3 className="text-4xl font-black">20+</h3>
                       <p className="mt-2 font-semibold">Projects Delivered</p>
                     </div>
                   </div>
@@ -81,7 +80,7 @@ export default function Home() {
                       Strategy → Execution → Results
                     </h3>
                     <p className="mt-3 text-white/65">
-                      A practical consulting model designed for measurable
+                      A one click solution for measurable,
                       operational and strategic outcomes.
                     </p>
                   </div>
@@ -213,7 +212,19 @@ export default function Home() {
 
             <a
   href="/contact"
-  className="inline-flex items-center justify-center rounded-xl border-2 border-[#06111f] bg-[#06111f] px-8 py-4 text-center text-sm font-black uppercase tracking-wide text-white shadow-lg transition hover:bg-white hover:text-[#06111f] sm:text-base"
+  style={{
+    backgroundColor: "#06111f",
+    color: "#ffffff",
+    padding: "16px 32px",
+    borderRadius: "16px",
+    fontWeight: 900,
+    textTransform: "uppercase",
+    letterSpacing: "0.12em",
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    textDecoration: "none",
+  }}
 >
   Contact Us Today
 </a>
