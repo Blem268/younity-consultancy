@@ -28,7 +28,7 @@ export default function ClientLoginPage() {
       return;
     }
 
-    router.replace("/client/dashboard");
+    router.push("/client/dashboard");
     router.refresh();
   }
 

@@ -42,7 +42,7 @@ export function ClientPortalShell({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-20 border-b border-teal-900/10 bg-white/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Link href="/client/dashboard" className="w-fit">
+            <Link href="/client/dashboard" prefetch={false} className="w-fit">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
                 Younity Consultancy
               </p>
@@ -61,6 +61,7 @@ export function ClientPortalShell({ children }: { children: ReactNode }) {
                   <Link
                     key={link.href}
                     href={link.href}
+                    prefetch={false}
                     aria-current={active ? "page" : undefined}
                     className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
                       active

@@ -170,6 +170,7 @@ export default async function ClientDocumentsPage() {
                     <div className="lg:text-right">
                       <Link
                         href={`/api/client/documents/${document.id}/open`}
+                        prefetch={false}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex min-h-10 items-center justify-center rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100"

@@ -205,6 +205,7 @@ export default async function ClientDashboardPage() {
           <Link
             key={card.title}
             href={card.href}
+            prefetch={false}
             className="rounded-lg border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/50 transition hover:border-teal-300 hover:shadow-md"
           >
             <p className="text-sm font-medium text-slate-600">{card.title}</p>

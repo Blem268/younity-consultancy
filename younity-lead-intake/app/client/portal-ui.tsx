@@ -87,6 +87,7 @@ export function BackLinks({
         <Link
           key={link.href}
           href={link.href}
+          prefetch={false}
           className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
         >
           {link.label}
@@ -106,6 +107,7 @@ export function PrimaryButtonLink({
   return (
     <Link
       href={href}
+      prefetch={false}
       className="inline-flex min-h-11 items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
     >
       {children}
@@ -123,6 +125,7 @@ export function SecondaryButtonLink({
   return (
     <Link
       href={href}
+      prefetch={false}
       className="inline-flex min-h-11 items-center justify-center rounded-md border border-teal-900/20 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-teal-300 hover:bg-teal-50"
     >
       {children}

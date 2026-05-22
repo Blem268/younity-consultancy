@@ -173,6 +173,7 @@ export default async function ClientRequestsPage() {
                     <div className="lg:text-right">
                       <Link
                         href={`/client/requests/${request.id}`}
+                        prefetch={false}
                         className="inline-flex min-h-10 items-center text-sm font-semibold text-teal-700 transition hover:text-teal-900"
                       >
                         View Details

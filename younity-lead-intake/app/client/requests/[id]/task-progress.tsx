@@ -165,6 +165,7 @@ export function TaskProgress({ requestId }: { requestId: string }) {
               href={`/client/requests/${requestId}/tasks/${encodeURIComponent(
                 item.id
               )}?type=${item.type}`}
+              prefetch={false}
               className="grid gap-3 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto] sm:items-center"
             >
               <div>

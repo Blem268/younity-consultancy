@@ -390,6 +390,7 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                       <p>{formatDate(document.uploaded_at)}</p>
                       <Link
                         href={`/api/client/documents/${document.id}/open`}
+                        prefetch={false}
                         target="_blank"
                         rel="noreferrer"
                         className="font-semibold text-teal-700 transition hover:text-teal-900"

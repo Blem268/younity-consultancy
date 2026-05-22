@@ -285,6 +285,7 @@ export function RequestForm() {
         {createdRequestId ? (
           <Link
             href={`/client/requests/${createdRequestId}`}
+            prefetch={false}
             className="mt-2 inline-flex text-sm font-semibold text-teal-800 transition hover:text-teal-950"
           >
             View request details
