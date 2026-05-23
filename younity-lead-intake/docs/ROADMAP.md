@@ -29,6 +29,7 @@
 - Phase 11B Supabase-backed production rate limiting.
 - Phase 12A Supabase-backed workflow error logging.
 - Phase 12B workflow error resolution controls and retry readiness documentation.
+- Phase 12C controlled retry actions for safe retryable workflow errors.
 
 ## Next Recommended Work
 
@@ -44,6 +45,6 @@
 - Add duplicate Zoho handling.
 - Add production monitoring and error tracking.
 - Consider Sentry for alerting, release tracking, and error correlation.
-- Add controlled retry buttons for safe retryable failures only, such as Google Sheets logging, Resend notifications, Twilio notifications, and ClickUp comments or attachments.
-- Keep Zoho CRM lead creation, ClickUp task creation, Supabase document metadata inserts, auth/authorization failures, and validation failures out of automatic retry flows unless a future design adds explicit safeguards.
+- Expand retry payload capture only where it can be done safely without storing secrets.
+- Keep Zoho CRM lead creation, ClickUp task creation, Supabase storage uploads, Supabase document metadata inserts, request creation, auth/authorization failures, and validation failures out of automatic retry flows unless a future design adds explicit safeguards.
 - Establish periodic key rotation for Supabase, ClickUp, Zoho CRM, Resend, Twilio, and Google Sheets credentials.

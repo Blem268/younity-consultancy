@@ -121,6 +121,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm workflow errors can be reviewed at `/internal/errors` by an authorized admin.
 - Confirm authorized admins can mark workflow errors resolved with an optional note.
 - Confirm authorized admins can reopen resolved workflow errors.
+- Confirm authorized admins see retry metadata and can retry only open errors marked retryable.
 - Confirm client-facing billing/invoice status reflects ClickUp billing sync data.
 - Confirm public lead-intake rate limiting returns a safe 429 response after repeated submissions.
 - Confirm portal request, document upload, task update, and internal sync rate limits return safe 429 responses after repeated submissions.
@@ -139,6 +140,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm `public.workflow_errors` exists with RLS enabled and no public/client policies.
 - Run `supabase/workflow_errors_resolution.sql` manually in the Supabase SQL Editor.
 - Confirm `public.workflow_errors` includes `resolved_by`, `resolution_note`, `reopened_at`, and `reopened_by`.
+- Run `supabase/workflow_errors_retry.sql` manually in the Supabase SQL Editor.
+- Confirm `public.workflow_errors` includes `retryable`, `retry_status`, `retry_attempts`, `last_retry_at`, `last_retry_by`, and `last_retry_message`.
 - Confirm the Supabase Storage bucket `client-documents` exists.
 - Confirm `client-documents` is private.
 - Confirm document uploads store private storage paths only and do not expose public file URLs or signed download links.
@@ -204,6 +207,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - `/internal/sync` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/internal/errors` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/errors/[id]/resolve` and `/api/internal/errors/[id]/reopen` require an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
+- `/api/internal/errors/[id]/retry` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 
 ## Security Review
 
@@ -216,8 +220,10 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm monitoring/error tracking is configured with secret redaction before broad production use.
 - Confirm workflow error logs are sanitized and never include secrets.
 - Confirm workflow error resolution notes do not include secrets or raw provider payloads.
-- Confirm retry actions are not automatic. Future retry controls should be limited to Google Sheets logging, Resend notifications, Twilio notifications, and ClickUp comment/attachment failures.
-- Confirm Zoho CRM lead creation, ClickUp task creation, Supabase document metadata inserts, auth/authorization failures, and validation failures are not configured for automatic retry.
+- Confirm retry actions are admin-triggered only and limited to Google Sheets logging, Resend notifications, Twilio notifications, and ClickUp comment/attachment failures.
+- Confirm retries require safe stored `context.retryPayload` and do not store secrets in workflow error context.
+- Confirm retry responses do not expose raw provider errors.
+- Confirm Zoho CRM lead creation, ClickUp task creation, Supabase storage uploads, Supabase document metadata inserts, request creation, auth/authorization failures, and validation failures are not configured for automatic retry.
 - Keep Sentry or another external error tracker as a future monitoring option.
 - Confirm API keys and OAuth refresh tokens have an owner and rotation cadence.
 

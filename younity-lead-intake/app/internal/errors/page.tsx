@@ -15,6 +15,12 @@ type WorkflowErrorRecord = {
   resolved_by: string | null;
   resolution_note: string | null;
   created_at: string | null;
+  retryable: boolean;
+  retry_status: string | null;
+  retry_attempts: number;
+  last_retry_at: string | null;
+  last_retry_by: string | null;
+  last_retry_message: string | null;
 };
 
 type PageProps = {
@@ -122,7 +128,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
   let query = supabaseAdmin
     .from("workflow_errors")
     .select(
-      "id, source, severity, message, context, resolved, resolved_at, resolved_by, resolution_note, created_at"
+      "id, source, severity, message, context, resolved, resolved_at, resolved_by, resolution_note, created_at, retryable, retry_status, retry_attempts, last_retry_at, last_retry_by, last_retry_message"
     );
 
   if (statusFilter === "open") {
@@ -255,6 +261,15 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
                         <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
                           {workflowError.resolved ? "Resolved" : "Open"}
                         </span>
+                        {workflowError.retryable ? (
+                          <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
+                            Retryable
+                          </span>
+                        ) : (
+                          <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
+                            Manual
+                          </span>
+                        )}
                       </div>
                       <h2 className="mt-3 text-base font-semibold text-slate-950">
                         {workflowError.message}
@@ -278,6 +293,37 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
                           {workflowError.resolution_note}
                         </p>
                       ) : null}
+                      <div className="mt-3 grid gap-1 text-sm text-slate-600">
+                        <p>
+                          Retry status:{" "}
+                          <span className="font-medium text-slate-800">
+                            {workflowError.retry_status || "Not attempted"}
+                          </span>
+                        </p>
+                        <p>
+                          Retry attempts:{" "}
+                          <span className="font-medium text-slate-800">
+                            {workflowError.retry_attempts}
+                          </span>
+                        </p>
+                        {workflowError.last_retry_at ||
+                        workflowError.last_retry_by ? (
+                          <p>
+                            Last retry{" "}
+                            {workflowError.last_retry_at
+                              ? formatDate(workflowError.last_retry_at)
+                              : ""}
+                            {workflowError.last_retry_by
+                              ? ` by ${workflowError.last_retry_by}`
+                              : ""}
+                          </p>
+                        ) : null}
+                        {workflowError.last_retry_message ? (
+                          <p className="rounded-md border border-slate-200 bg-slate-50 p-3 leading-6 text-slate-700">
+                            {workflowError.last_retry_message}
+                          </p>
+                        ) : null}
+                      </div>
                     </div>
                     <p className="text-sm text-slate-500">
                       {formatDate(workflowError.created_at)}
@@ -298,6 +344,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
                   <ErrorActions
                     errorId={workflowError.id}
                     resolved={workflowError.resolved}
+                    retryable={workflowError.retryable}
                   />
                 </article>
               );

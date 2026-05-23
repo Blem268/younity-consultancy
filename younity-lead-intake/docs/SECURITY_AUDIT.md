@@ -1,6 +1,6 @@
 # Security Audit
 
-Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase. Phase 12A added sanitized workflow error logging backed by Supabase. Phase 12B added admin resolution and reopen controls for workflow errors.
+Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase. Phase 12A added sanitized workflow error logging backed by Supabase. Phase 12B added admin resolution and reopen controls for workflow errors. Phase 12C added controlled admin retries for safe retryable workflow errors.
 
 ## Summary
 
@@ -209,16 +209,17 @@ Fixes applied:
 - Client request/document/task routes no longer return raw provider error messages in warning arrays.
 - Added `logWorkflowError()` helper that redacts token, secret, authorization, cookie, password, refresh, bearer, and session-shaped context keys.
 - Added `/internal/errors` for admin-only review of latest sanitized workflow errors.
-- Added admin-only resolve and reopen actions for workflow errors.
+- Added admin-only resolve, reopen, and controlled retry actions for workflow errors.
 
 ## Workflow Error Logging
 
-Phase 12A added a Supabase-backed workflow error log. Phase 12B added admin resolution controls.
+Phase 12A added a Supabase-backed workflow error log. Phase 12B added admin resolution controls. Phase 12C added controlled retry metadata and an admin-only retry route.
 
 Implementation notes:
 
 - Manual setup is required: run `supabase/workflow_errors.sql` in the Supabase SQL Editor.
 - Resolution setup is required: run `supabase/workflow_errors_resolution.sql` in the Supabase SQL Editor.
+- Retry setup is required: run `supabase/workflow_errors_retry.sql` in the Supabase SQL Editor.
 - `public.workflow_errors` has RLS enabled and no public/client policies.
 - The app writes workflow logs only through server-side service-role/admin client code.
 - `logWorkflowError()` never throws to callers; if logging fails, the original workflow continues with existing behavior.
@@ -227,10 +228,15 @@ Implementation notes:
 - `/internal/errors` supports unresolved/resolved/all, source, and severity filters.
 - Admins can mark workflow errors resolved, store optional resolution notes, and reopen resolved errors.
 - Resolution metadata is stored in `public.workflow_errors` as `resolved_by`, `resolution_note`, `reopened_at`, and `reopened_by`.
+- Admins can retry only open errors marked `retryable = true`.
+- Retry metadata is stored as `retryable`, `retry_status`, `retry_attempts`, `last_retry_at`, `last_retry_by`, and `last_retry_message`.
+- Retry actions require Supabase auth and `INTERNAL_ADMIN_EMAILS`; clients and non-admin users cannot call the retry route.
+- Supported retry categories are Google Sheets logging, Resend email notifications, Twilio WhatsApp notifications, ClickUp comments, and ClickUp attachments.
+- A retry requires explicit safe stored context in `context.retryPayload`; the route returns a safe blocked message when the original log has only partial context.
+- Workflow error context must not store secrets, tokens, authorization headers, cookies, or raw provider credentials.
+- Retry responses do not expose raw provider errors.
 - Context is hidden by default and shown only in a collapsible preformatted block.
-- Automatic retry actions are not active yet.
-- Future retry controls should be limited to safe retryable categories: Google Sheets logging failures, Resend notification failures, Twilio notification failures, and ClickUp comment/attachment failures.
-- Zoho CRM lead creation, ClickUp task creation, Supabase document metadata inserts, auth/authorization failures, and validation failures are not automatically retryable in the current design.
+- Zoho CRM lead creation, ClickUp task creation, Supabase storage uploads, Supabase document metadata inserts, request creation, auth/authorization failures, and validation failures remain manual and are not configured for automatic retry.
 - Sentry or another external error tracker remains a future recommendation for broader monitoring, alerting, and release correlation.
 
 ## Issues Found
@@ -256,6 +262,7 @@ Implementation notes:
 - Added a hidden public contact form honeypot.
 - Added Supabase-backed workflow error logging and an admin-only `/internal/errors` page.
 - Added admin-only workflow error resolve/reopen controls with optional resolution notes.
+- Added admin-only workflow error retry controls for safe retryable failures.
 - Kept ClickUp billing sync and Supabase billing display active.
 - Confirmed Zoho Books integration is not active.
 

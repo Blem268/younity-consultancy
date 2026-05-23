@@ -10,6 +10,8 @@ type LogWorkflowErrorInput = {
   relatedClientId?: string | null;
   relatedRequestId?: string | null;
   relatedDocumentId?: string | null;
+  retryable?: boolean;
+  retryStatus?: string | null;
 };
 
 const sensitiveKeyPattern =
@@ -20,7 +22,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function sanitizeValue(value: unknown, depth = 0): unknown {
-  if (depth > 3) {
+  if (depth > 6) {
     return "[Max depth reached]";
   }
 
@@ -40,7 +42,7 @@ function sanitizeValue(value: unknown, depth = 0): unknown {
   }
 
   if (typeof value === "string") {
-    return value.length > 500 ? `${value.slice(0, 500)}...` : value;
+    return value.length > 2000 ? `${value.slice(0, 2000)}...` : value;
   }
 
   if (Array.isArray(value)) {
@@ -79,6 +81,8 @@ export async function logWorkflowError({
   relatedClientId,
   relatedRequestId,
   relatedDocumentId,
+  retryable = false,
+  retryStatus,
 }: LogWorkflowErrorInput) {
   try {
     const supabaseAdmin = createAdminClient();
@@ -90,6 +94,8 @@ export async function logWorkflowError({
       related_client_id: relatedClientId || null,
       related_request_id: relatedRequestId || null,
       related_document_id: relatedDocumentId || null,
+      retryable,
+      retry_status: retryStatus || null,
     });
 
     if (error) {

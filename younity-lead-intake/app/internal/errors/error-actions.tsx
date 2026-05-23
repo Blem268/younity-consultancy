@@ -6,21 +6,24 @@ import { useState } from "react";
 type ErrorActionsProps = {
   errorId: string;
   resolved: boolean;
+  retryable: boolean;
 };
 
 type ActionResponse = {
   message?: string;
 };
 
-export function ErrorActions({ errorId, resolved }: ErrorActionsProps) {
+export function ErrorActions({ errorId, resolved, retryable }: ErrorActionsProps) {
   const router = useRouter();
   const [resolutionNote, setResolutionNote] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeAction, setActiveAction] = useState<
+    "resolve" | "reopen" | "retry" | null
+  >(null);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function runAction(action: "resolve" | "reopen") {
-    setIsLoading(true);
+  async function runAction(action: "resolve" | "reopen" | "retry") {
+    setActiveAction(action);
     setMessage("");
     setError("");
 
@@ -50,7 +53,7 @@ export function ErrorActions({ errorId, resolved }: ErrorActionsProps) {
     } catch (actionError) {
       setError(actionError instanceof Error ? actionError.message : "Action failed.");
     } finally {
-      setIsLoading(false);
+      setActiveAction(null);
     }
   }
 
@@ -59,11 +62,11 @@ export function ErrorActions({ errorId, resolved }: ErrorActionsProps) {
       <div className="mt-4 flex flex-col gap-2">
         <button
           type="button"
-          disabled={isLoading}
+          disabled={Boolean(activeAction)}
           onClick={() => runAction("reopen")}
           className="w-fit rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm font-semibold text-amber-800 transition hover:border-amber-300 hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isLoading ? "Reopening..." : "Reopen"}
+          {activeAction === "reopen" ? "Reopening..." : "Reopen"}
         </button>
         {message ? <p className="text-sm font-medium text-green-700">{message}</p> : null}
         {error ? <p className="text-sm font-medium text-red-700">{error}</p> : null}
@@ -86,12 +89,22 @@ export function ErrorActions({ errorId, resolved }: ErrorActionsProps) {
       </label>
       <button
         type="button"
-        disabled={isLoading}
+        disabled={Boolean(activeAction)}
         onClick={() => runAction("resolve")}
         className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
       >
-        {isLoading ? "Resolving..." : "Mark Resolved"}
+        {activeAction === "resolve" ? "Resolving..." : "Mark Resolved"}
       </button>
+      {retryable ? (
+        <button
+          type="button"
+          disabled={Boolean(activeAction)}
+          onClick={() => runAction("retry")}
+          className="w-fit rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {activeAction === "retry" ? "Retrying..." : "Retry"}
+        </button>
+      ) : null}
       {message ? <p className="text-sm font-medium text-green-700">{message}</p> : null}
       {error ? <p className="text-sm font-medium text-red-700">{error}</p> : null}
     </div>
