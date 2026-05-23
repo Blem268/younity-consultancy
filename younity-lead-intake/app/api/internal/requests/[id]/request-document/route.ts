@@ -18,11 +18,15 @@ const allowedDocumentTypes = new Set([
 type RequestRecord = {
   id: string;
   client_id: string;
+  clients: {
+    id: string;
+  } | null;
 };
 
 type DocumentRequestBody = {
   documentType?: unknown;
   message?: unknown;
+  required?: unknown;
 };
 
 function isUuid(value: string) {
@@ -39,7 +43,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { errorResponse } = await getInternalAdminUser();
+  const { user, errorResponse } = await getInternalAdminUser();
 
   if (errorResponse) {
     return errorResponse;
@@ -55,6 +59,7 @@ export async function POST(
   const body = (await request.json().catch(() => ({}))) as DocumentRequestBody;
   const documentType = getString(body.documentType);
   const message = getString(body.message).slice(0, 2000);
+  const required = body.required === false ? false : true;
 
   if (!allowedDocumentTypes.has(documentType)) {
     return NextResponse.json(
@@ -66,7 +71,7 @@ export async function POST(
   const supabaseAdmin = createAdminClient();
   const { data: existingRequest, error: lookupError } = await supabaseAdmin
     .from("client_requests")
-    .select("id, client_id")
+    .select("id, client_id, clients(id)")
     .eq("id", requestId)
     .maybeSingle<RequestRecord>();
 
@@ -91,23 +96,32 @@ export async function POST(
     return NextResponse.json({ message: "Request not found." }, { status: 404 });
   }
 
-  const { error: insertError } = await supabaseAdmin.from("client_updates").insert({
-    client_id: existingRequest.client_id,
-    request_id: existingRequest.id,
-    title: "Document requested",
-    message: message || `Please upload: ${documentType}.`,
-    created_by: "Younity Consultancy",
-  });
+  const { error: documentInsertError } = await supabaseAdmin
+    .from("client_documents")
+    .insert({
+      client_id: existingRequest.client_id,
+      request_id: existingRequest.id,
+      document_type: documentType,
+      file_name: "Pending upload",
+      file_path: "pending",
+      file_url: null,
+      notes: message || null,
+      status: "Requested",
+      uploaded_at: null,
+      required,
+      requested_by: user.email || null,
+      requested_at: new Date().toISOString(),
+    });
 
-  if (insertError) {
+  if (documentInsertError) {
     console.error("Internal document request insert failed:", {
-      message: insertError.message,
-      code: insertError.code,
+      message: documentInsertError.message,
+      code: documentInsertError.code,
     });
     await logWorkflowError({
       source: "internal_document_request",
-      message: "Document request timeline update failed.",
-      context: { error: insertError, requestId, documentType },
+      message: "Requested document row insert failed.",
+      context: { error: documentInsertError, requestId, documentType },
       relatedClientId: existingRequest.client_id,
       relatedRequestId: existingRequest.id,
     });
@@ -117,8 +131,40 @@ export async function POST(
     );
   }
 
+  const { error: updateInsertError } = await supabaseAdmin
+    .from("client_updates")
+    .insert({
+      client_id: existingRequest.client_id,
+      request_id: existingRequest.id,
+      title: "Document requested",
+      message: message || `Please upload: ${documentType}.`,
+      created_by: "Younity Consultancy",
+    });
+
+  if (updateInsertError) {
+    console.error("Internal document request timeline insert failed:", {
+      message: updateInsertError.message,
+      code: updateInsertError.code,
+    });
+    await logWorkflowError({
+      source: "internal_document_request",
+      severity: "warning",
+      message: "Document request was created, but client timeline update failed.",
+      context: { error: updateInsertError, requestId, documentType },
+      relatedClientId: existingRequest.client_id,
+      relatedRequestId: existingRequest.id,
+    });
+    return NextResponse.json(
+      {
+        success: true,
+        message: "Document request created, but the timeline note could not be saved.",
+      },
+      { status: 207 }
+    );
+  }
+
   return NextResponse.json({
     success: true,
-    message: "Document request added to the client timeline.",
+    message: "Document request created.",
   });
 }

@@ -118,6 +118,8 @@ export default async function InternalDashboardPage() {
     openWorkflowErrorsCard,
     recentClientRequestsCard,
     documentsUploadedCard,
+    documentsNeededCard,
+    documentsNeedingReviewCard,
     activeClientRequestsCard,
     readyForBillingCard,
     rateLimitRecordsCard,
@@ -148,6 +150,23 @@ export default async function InternalDashboardPage() {
         .from("client_documents")
         .select("id", { count: "exact", head: true })
         .gte("uploaded_at", sevenDaysAgo)
+        .neq("file_path", "pending")
+    ),
+    getCountCard(
+      "Documents Needed",
+      "Structured document requests still waiting on client upload or replacement.",
+      supabaseAdmin
+        .from("client_documents")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["Requested", "Needs Replacement"])
+    ),
+    getCountCard(
+      "Documents Needing Review",
+      "Submitted or received client files waiting for internal review.",
+      supabaseAdmin
+        .from("client_documents")
+        .select("id", { count: "exact", head: true })
+        .in("status", ["Submitted", "Received"])
     ),
     getCountCard(
       "Active Client Requests",
@@ -198,6 +217,8 @@ export default async function InternalDashboardPage() {
     openWorkflowErrorsCard,
     recentClientRequestsCard,
     documentsUploadedCard,
+    documentsNeededCard,
+    documentsNeedingReviewCard,
     activeClientRequestsCard,
     readyForBillingCard,
     rateLimitRecordsCard,

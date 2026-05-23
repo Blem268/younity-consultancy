@@ -25,16 +25,24 @@ export function UploadForm({
   requests,
   initialRequestId,
   fixedRequestId,
+  documentRequestId,
+  initialDocumentType,
+  lockDocumentType = false,
   compact = false,
 }: {
   requests: RequestOption[];
   initialRequestId?: string;
   fixedRequestId?: string;
+  documentRequestId?: string;
+  initialDocumentType?: string;
+  lockDocumentType?: boolean;
   compact?: boolean;
 }) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [documentType, setDocumentType] = useState(documentTypes[0]);
+  const [documentType, setDocumentType] = useState(
+    initialDocumentType || documentTypes[0]
+  );
   const [requestId, setRequestId] = useState(fixedRequestId || initialRequestId || "");
   const [notes, setNotes] = useState("");
   const [message, setMessage] = useState("");
@@ -60,6 +68,7 @@ export function UploadForm({
     formData.append("file", file);
     formData.append("documentType", documentType);
     formData.append("requestId", fixedRequestId || requestId);
+    formData.append("documentRequestId", documentRequestId || "");
     formData.append("notes", notes);
 
     const response = await fetch("/api/client/documents/upload", {
@@ -103,6 +112,7 @@ export function UploadForm({
           name="documentType"
           value={documentType}
           onChange={(event) => setDocumentType(event.target.value)}
+          disabled={lockDocumentType}
           className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
         >
           {documentTypes.map((type) => (

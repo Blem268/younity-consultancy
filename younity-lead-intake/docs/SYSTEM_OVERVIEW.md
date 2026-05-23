@@ -14,7 +14,7 @@ The Next.js website provides the public homepage, contact form, and client porta
 
 ### Supabase
 
-Supabase provides client portal authentication, client-facing tables, request records, update timelines, private document storage, production rate limiting, sanitized internal workflow error logs, and controlled internal admin mutations for lightweight portal visibility updates.
+Supabase provides client portal authentication, client-facing tables, request records, structured document request records, update timelines, private document storage, production rate limiting, sanitized internal workflow error logs, and controlled internal admin mutations for lightweight portal visibility updates.
 
 ### ClickUp
 
@@ -50,7 +50,7 @@ Vercel hosts and deploys the Next.js application.
 
 Client portal routes use Supabase Auth and resolve each portal user through `clients.user_id`. Client-facing request, document, invoice, update, and task data is scoped to that client profile before display or mutation.
 
-Private documents are stored in the private `client-documents` Supabase bucket. The portal opens documents through a server route that verifies ownership before issuing a short-lived signed URL.
+Private documents are stored in the private `client-documents` Supabase bucket. The portal opens documents through a server route that verifies ownership before issuing a short-lived signed URL. Requested documents are stored as `client_documents` rows with `status = Requested`, `file_name = Pending upload`, and `file_path = pending` until the client uploads the real file.
 
 The central internal dashboard at `/internal`, internal client/request/document management pages, internal sync controls, webhook registration controls, and workflow error review pages require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Internal pages share a mobile-friendly admin navigation shell for Dashboard, Clients, Requests, Documents, Sync Controls, and Workflow Errors. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
 
@@ -101,6 +101,23 @@ Client uploads document
 -> ClickUp task comment
 ```
 
+### C1. Structured Document Requests
+
+```text
+Admin requests document from an internal request page
+-> client_documents row is created with status Requested
+-> client_updates timeline note is added
+-> Client sees the item under Documents Needed
+-> Client uploads against the requested document row
+-> Existing row is updated with private storage path and status Submitted
+-> Existing internal upload notifications, WhatsApp alerts, ClickUp comments, and ClickUp attachments run
+-> Admin reviews in /internal/documents or /internal/requests/[id]
+-> Status becomes Under Review, Approved, Rejected, or Needs Replacement
+-> Client sees the review status in the portal
+```
+
+Requested document placeholders never expose public URLs or signed URLs. If a replacement is needed, the same document row can remain visible under Documents Needed while preserving the prior file metadata.
+
 ### D. Operations Sync
 
 ```text
@@ -134,7 +151,7 @@ Admin opens /internal
 -> Short-lived signed Supabase Storage URL is issued after admin check
 ```
 
-Phase 18 added ClickUp webhook automation without changing public lead intake, client portal behavior, ClickUp task creation, Zoho CRM integrations, Resend/Twilio behavior, or workflow retry behavior. ClickUp remains the operations and billing preparation hub. Email-dependent notification work remains paused until the production Younity email domain is reactivated and verified.
+Phase 18 added ClickUp webhook automation without changing public lead intake, client portal behavior, ClickUp task creation, Zoho CRM integrations, Resend/Twilio behavior, or workflow retry behavior. Phase 19 adds structured document request rows and upload-against-request behavior without adding email-dependent client notifications. ClickUp remains the operations and billing preparation hub. Email-dependent notification work remains paused until the production Younity email domain is reactivated and verified.
 
 ### D3. Controlled Internal Admin Actions
 
@@ -147,7 +164,7 @@ Admin opens an internal management page
 -> Relevant client_updates timeline entries are added for client-visible updates
 ```
 
-Phase 15 added controlled admin actions for portal visibility and lightweight management only. Request status, manual billing/invoice status, client-visible update notes, selected client profile fields, document review status, and additional document requests are handled through admin-only API routes. ClickUp remains the operations and billing preparation hub. Zoho Books remains inactive and no Zoho Books calls are made.
+Phase 15 added controlled admin actions for portal visibility and lightweight management only. Request status, manual billing/invoice status, client-visible update notes, selected client profile fields, document review status, and additional document requests are handled through admin-only API routes. Phase 19 upgrades additional document requests from timeline-only notes into structured `client_documents` workflow rows with requested, submitted, and review metadata. ClickUp remains the operations and billing preparation hub. Zoho Books remains inactive and no Zoho Books calls are made.
 
 ### E. Workflow Error Review
 

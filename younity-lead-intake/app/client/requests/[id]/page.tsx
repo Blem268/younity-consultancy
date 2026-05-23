@@ -41,8 +41,11 @@ type ClientDocument = {
   id: string;
   document_type: string;
   file_name: string;
+  file_path: string;
   status: string;
+  notes: string | null;
   uploaded_at: string | null;
+  requested_at: string | null;
 };
 
 type ClientInvoice = {
@@ -100,6 +103,19 @@ function formatMoney(value: number | null | undefined | "") {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   }).format(value)}`;
+}
+
+function isDocumentNeeded(document: ClientDocument) {
+  return (
+    document.status === "Requested" ||
+    document.status === "Needs Replacement" ||
+    document.file_path === "pending" ||
+    document.file_name === "Pending upload"
+  );
+}
+
+function isRealUploadedDocument(document: ClientDocument) {
+  return document.file_path !== "pending" && document.file_name !== "Pending upload";
 }
 
 function DetailRow({
@@ -230,7 +246,9 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
       .returns<ClientUpdate[]>(),
     supabase
       .from("client_documents")
-      .select("id, document_type, file_name, status, uploaded_at")
+      .select(
+        "id, document_type, file_name, file_path, status, notes, uploaded_at, requested_at"
+      )
       .eq("client_id", clientProfile.id)
       .eq("request_id", request.id)
       .order("uploaded_at", { ascending: false })
@@ -259,6 +277,10 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
   const updates = updatesResult.data ?? [];
   const documents = documentsResult.data ?? [];
   const invoices = invoicesResult.data ?? [];
+  const documentsNeeded = documents.filter(isDocumentNeeded);
+  const uploadedDocuments = documents.filter(
+    (document) => document.status !== "Requested" || isRealUploadedDocument(document)
+  );
 
   return (
     <PortalPage>
@@ -352,7 +374,56 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
 
           <Card>
             <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Upload Document for this Request
+              Documents Needed
+            </h2>
+
+            {documentsNeeded.length ? (
+              <div className="mt-5 divide-y divide-slate-200">
+                {documentsNeeded.map((document) => (
+                  <article key={document.id} className="py-5 first:pt-0 last:pb-0">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-slate-950">
+                        {document.document_type}
+                      </p>
+                      <DocumentStatusBadge status={document.status} />
+                    </div>
+                    {document.notes ? (
+                      <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                        {document.notes}
+                      </p>
+                    ) : null}
+                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                      Requested {formatDate(document.requested_at)}
+                    </p>
+                    <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <UploadForm
+                        requests={[
+                          {
+                            id: request.id,
+                            service: request.service,
+                            status: request.status,
+                          },
+                        ]}
+                        fixedRequestId={request.id}
+                        documentRequestId={document.id}
+                        initialDocumentType={document.document_type}
+                        lockDocumentType
+                        compact
+                      />
+                    </div>
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="mt-5">
+                <EmptyState title="No requested documents are outstanding for this request." />
+              </div>
+            )}
+          </Card>
+
+          <Card>
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+              Upload Additional Document
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Supporting files are stored securely and linked directly to this
@@ -367,12 +438,12 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
 
           <Card>
             <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Related Documents
+              Uploaded Documents
             </h2>
 
-            {documents.length ? (
+            {uploadedDocuments.length ? (
               <div className="mt-5 divide-y divide-slate-200">
-                {documents.map((document) => (
+                {uploadedDocuments.map((document) => (
                   <article
                     key={document.id}
                     className="grid gap-2 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto]"
@@ -388,15 +459,17 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                     <div className="flex flex-col gap-2 text-sm text-slate-600 sm:items-end sm:text-right">
                       <DocumentStatusBadge status={document.status} />
                       <p>{formatDate(document.uploaded_at)}</p>
-                      <Link
-                        href={`/api/client/documents/${document.id}/open`}
-                        prefetch={false}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="font-semibold text-teal-700 transition hover:text-teal-900"
-                      >
-                        Open
-                      </Link>
+                      {isRealUploadedDocument(document) ? (
+                        <Link
+                          href={`/api/client/documents/${document.id}/open`}
+                          prefetch={false}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="font-semibold text-teal-700 transition hover:text-teal-900"
+                        >
+                          Open
+                        </Link>
+                      ) : null}
                     </div>
                   </article>
                 ))}

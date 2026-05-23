@@ -8,6 +8,7 @@ import {
   PageHeader,
   PortalPage,
 } from "../portal-ui";
+import { UploadForm } from "./upload-form";
 
 type ClientProfile = {
   id: string;
@@ -17,9 +18,11 @@ type ClientDocument = {
   id: string;
   document_type: string;
   file_name: string;
+  file_path: string;
   status: string;
   notes: string | null;
   uploaded_at: string | null;
+  requested_at: string | null;
   request_id: string | null;
 };
 
@@ -39,6 +42,19 @@ function formatDate(value: string | null) {
     day: "numeric",
     year: "numeric",
   }).format(new Date(value));
+}
+
+function isDocumentNeeded(document: ClientDocument) {
+  return (
+    document.status === "Requested" ||
+    document.status === "Needs Replacement" ||
+    document.file_path === "pending" ||
+    document.file_name === "Pending upload"
+  );
+}
+
+function isRealUploadedDocument(document: ClientDocument) {
+  return document.file_path !== "pending" && document.file_name !== "Pending upload";
 }
 
 export default async function ClientDocumentsPage() {
@@ -82,7 +98,9 @@ export default async function ClientDocumentsPage() {
   const [documentsResult, requestsResult] = await Promise.all([
     supabase
       .from("client_documents")
-      .select("id, document_type, file_name, status, notes, uploaded_at, request_id")
+      .select(
+        "id, document_type, file_name, file_path, status, notes, uploaded_at, requested_at, request_id"
+      )
       .eq("client_id", clientProfile.id)
       .order("uploaded_at", { ascending: false })
       .returns<ClientDocument[]>(),
@@ -105,6 +123,10 @@ export default async function ClientDocumentsPage() {
   const documents = documentsResult.data ?? [];
   const requests = requestsResult.data ?? [];
   const requestMap = new Map(requests.map((request) => [request.id, request]));
+  const documentsNeeded = documents.filter(isDocumentNeeded);
+  const uploadedDocuments = documents.filter(
+    (document) => document.status !== "Requested" || isRealUploadedDocument(document)
+  );
 
   return (
     <PortalPage>
@@ -113,15 +135,76 @@ export default async function ClientDocumentsPage() {
         description="Open files submitted through request workflows. Documents are stored privately and access links expire shortly after opening."
       />
 
-      <section className="py-8">
+      <section className="space-y-6 py-8">
         <Card>
           <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-            Uploaded Files
+            Documents Needed
           </h2>
 
-          {documents.length ? (
+          {documentsNeeded.length ? (
             <div className="mt-5 divide-y divide-slate-200">
-              {documents.map((document) => {
+              {documentsNeeded.map((document) => {
+                const relatedRequest = document.request_id
+                  ? requestMap.get(document.request_id)
+                  : undefined;
+
+                return (
+                  <article
+                    key={document.id}
+                    className="grid gap-5 py-5 first:pt-0 last:pb-0 lg:grid-cols-[1fr_0.9fr]"
+                  >
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <p className="text-sm font-semibold text-slate-950">
+                          {document.document_type}
+                        </p>
+                        <DocumentStatusBadge status={document.status} />
+                      </div>
+                      <p className="mt-2 text-sm text-slate-600">
+                        {relatedRequest
+                          ? `${relatedRequest.service} (${relatedRequest.status})`
+                          : document.request_id
+                            ? "Request details unavailable"
+                            : "General / Not linked to a request"}
+                      </p>
+                      {document.notes ? (
+                        <p className="mt-3 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                          {document.notes}
+                        </p>
+                      ) : null}
+                      <p className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                        Requested {formatDate(document.requested_at)}
+                      </p>
+                    </div>
+                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                      <UploadForm
+                        requests={relatedRequest ? [relatedRequest] : requests}
+                        fixedRequestId={document.request_id || undefined}
+                        documentRequestId={document.id}
+                        initialDocumentType={document.document_type}
+                        lockDocumentType
+                        compact
+                      />
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="mt-5">
+              <EmptyState title="No documents are needed right now." />
+            </div>
+          )}
+        </Card>
+
+        <Card>
+          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+            Uploaded Documents
+          </h2>
+
+          {uploadedDocuments.length ? (
+            <div className="mt-5 divide-y divide-slate-200">
+              {uploadedDocuments.map((document) => {
                 const relatedRequest = document.request_id
                   ? requestMap.get(document.request_id)
                   : undefined;
@@ -168,15 +251,17 @@ export default async function ClientDocumentsPage() {
                       <p>{formatDate(document.uploaded_at)}</p>
                     </div>
                     <div className="lg:text-right">
-                      <Link
-                        href={`/api/client/documents/${document.id}/open`}
-                        prefetch={false}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex min-h-10 items-center justify-center rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100"
-                      >
-                        Open
-                      </Link>
+                      {isRealUploadedDocument(document) ? (
+                        <Link
+                          href={`/api/client/documents/${document.id}/open`}
+                          prefetch={false}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex min-h-10 items-center justify-center rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100"
+                        >
+                          Open
+                        </Link>
+                      ) : null}
                     </div>
                   </article>
                 );

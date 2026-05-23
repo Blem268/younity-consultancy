@@ -96,12 +96,12 @@ export default async function ClientDashboardPage() {
       .from("client_documents")
       .select("id", { count: "exact", head: true })
       .eq("client_id", clientProfile.id)
-      .in("status", ["Requested", "Pending"]),
+      .in("status", ["Requested", "Needs Replacement"]),
     supabase
       .from("client_documents")
       .select("id", { count: "exact", head: true })
       .eq("client_id", clientProfile.id)
-      .in("status", ["Submitted", "Received"]),
+      .in("status", ["Submitted", "Received", "Under Review", "Approved", "Rejected"]),
     supabase
       .from("client_invoices")
       .select("id", { count: "exact", head: true })

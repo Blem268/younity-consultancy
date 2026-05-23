@@ -57,6 +57,14 @@ type InsertedDocument = {
   id: string;
 };
 
+type RequestedDocument = {
+  id: string;
+  request_id: string | null;
+  document_type: string;
+  notes: string | null;
+  status: string;
+};
+
 function getStringValue(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
 }
@@ -88,6 +96,18 @@ function isAllowedMimeType(extension: string, mimeType: string) {
   }
 
   return allowedMimeTypesByExtension[extension]?.has(mimeType) ?? false;
+}
+
+function combineDocumentNotes(requestNotes: string | null, uploadNotes: string) {
+  if (!uploadNotes) {
+    return requestNotes || null;
+  }
+
+  if (!requestNotes) {
+    return `Upload note: ${uploadNotes}`;
+  }
+
+  return `${requestNotes}\n\nUpload note: ${uploadNotes}`;
 }
 
 export async function POST(request: Request) {
@@ -139,8 +159,9 @@ export async function POST(request: Request) {
 
   const formData = await request.formData();
   const fileValue = formData.get("file");
-  const documentType = getStringValue(formData.get("documentType"));
-  const requestId = getStringValue(formData.get("requestId"));
+  let documentType = getStringValue(formData.get("documentType"));
+  let requestId = getStringValue(formData.get("requestId"));
+  const documentRequestId = getStringValue(formData.get("documentRequestId"));
   const notes = getStringValue(formData.get("notes"));
 
   if (!(fileValue instanceof File)) {
@@ -150,7 +171,7 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!documentType) {
+  if (!documentType && !documentRequestId) {
     return NextResponse.json(
       { message: "Document type is required." },
       { status: 400 }
@@ -180,7 +201,45 @@ export async function POST(request: Request) {
     );
   }
 
+  const supabaseAdmin = createAdminClient();
   let linkedRequest: LinkedRequest | null = null;
+  let requestedDocument: RequestedDocument | null = null;
+
+  if (documentRequestId) {
+    if (!isUuid(documentRequestId)) {
+      return NextResponse.json(
+        { message: "Requested document was not found." },
+        { status: 404 }
+      );
+    }
+
+    const { data, error: requestedDocumentError } = await supabaseAdmin
+      .from("client_documents")
+      .select("id, request_id, document_type, notes, status")
+      .eq("id", documentRequestId)
+      .eq("client_id", clientProfile.id)
+      .in("status", ["Requested", "Needs Replacement"])
+      .maybeSingle<RequestedDocument>();
+
+    if (requestedDocumentError) {
+      console.error("Requested document lookup failed:", requestedDocumentError);
+      return NextResponse.json(
+        { message: "Unable to verify the requested document." },
+        { status: 500 }
+      );
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { message: "Requested document was not found." },
+        { status: 404 }
+      );
+    }
+
+    requestedDocument = data;
+    documentType = data.document_type;
+    requestId = data.request_id || "";
+  }
 
   if (requestId) {
     if (!isUuid(requestId)) {
@@ -223,8 +282,6 @@ export async function POST(request: Request) {
     `${Date.now()}-${safeFileName}`,
   ].join("/");
 
-  const supabaseAdmin = createAdminClient();
-
   const { error: uploadError } = await supabaseAdmin.storage
     .from("client-documents")
     .upload(storagePath, fileValue, {
@@ -256,20 +313,37 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: insertedDocument, error: insertError } = await supabaseAdmin
-    .from("client_documents")
-    .insert({
-      client_id: clientProfile.id,
-      request_id: requestId || null,
-      document_type: documentType,
-      file_name: fileValue.name,
-      file_path: storagePath,
-      file_url: null,
-      notes: notes || null,
-      status: "Submitted",
-    })
-    .select("id")
-    .single<InsertedDocument>();
+  const metadataQuery = requestedDocument
+    ? supabaseAdmin
+        .from("client_documents")
+        .update({
+          file_name: fileValue.name,
+          file_path: storagePath,
+          file_url: null,
+          notes: combineDocumentNotes(requestedDocument.notes, notes),
+          status: "Submitted",
+          uploaded_at: new Date().toISOString(),
+        })
+        .eq("id", requestedDocument.id)
+        .eq("client_id", clientProfile.id)
+        .select("id")
+        .single<InsertedDocument>()
+    : supabaseAdmin
+        .from("client_documents")
+        .insert({
+          client_id: clientProfile.id,
+          request_id: requestId || null,
+          document_type: documentType,
+          file_name: fileValue.name,
+          file_path: storagePath,
+          file_url: null,
+          notes: notes || null,
+          status: "Submitted",
+        })
+        .select("id")
+        .single<InsertedDocument>();
+
+  const { data: insertedDocument, error: insertError } = await metadataQuery;
 
   if (insertError) {
     console.error("Client document metadata insert failed:", {

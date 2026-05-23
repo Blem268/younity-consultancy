@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 
 const documentStatusOptions = [
+  "Requested",
   "Submitted",
   "Received",
   "Under Review",

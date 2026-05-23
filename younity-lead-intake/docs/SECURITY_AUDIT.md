@@ -130,6 +130,7 @@ Findings:
 - Signed URLs are created only after auth, client profile lookup, document UUID validation, and ownership checks.
 - Signed URL expiry is 60 seconds.
 - File paths are not displayed in the client UI.
+- Pending requested-document placeholders use `file_path = pending` and are blocked by both client and admin open routes before any signed URL is requested.
 
 ## File Upload Security
 
@@ -145,6 +146,7 @@ Findings:
 - Allowed MIME types are checked for known file extensions.
 - File names are sanitized before storage-path construction.
 - Uploads linked to requests require ownership checks.
+- Uploads against a requested document require a matching `client_documents.id`, the current client's `client_id`, and status `Requested` or `Needs Replacement`; clients cannot upload against another client's document request.
 - ClickUp attachment failures do not block Supabase document storage.
 - Private file URLs are not exposed.
 
@@ -286,10 +288,12 @@ Implementation notes:
 - Logged-out users are redirected to `/client/login`; authenticated non-admin users see a safe access-denied message.
 - Management pages use server-side Supabase admin queries after the admin check and do not expose the service role key to browser code.
 - `/api/internal/documents/[id]/open` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`, validates document UUIDs, and redirects to a short-lived Supabase Storage signed URL.
+- `/api/internal/documents/[id]/open` refuses pending placeholder rows and only signs real uploaded storage paths.
 - The internal document list and related document sections do not render public file URLs or long-lived private storage paths.
 - Admin mutation routes require Supabase auth and `INTERNAL_ADMIN_EMAILS` before changing portal records.
 - Admin mutation routes validate UUID route params, validate allowed enum values, and update only allowlisted fields.
-- Request status, manual billing/invoice status, client-visible update notes, selected client profile fields, document review status, and additional document requests are handled server-side through `/api/internal/*` routes.
+- Request status, manual billing/invoice status, client-visible update notes, selected client profile fields, document review status, and structured additional document requests are handled server-side through `/api/internal/*` routes.
+- Additional document requests create `client_documents` rows with `status = Requested`, placeholder file metadata, request metadata, and optional required flags; review actions can record reviewer, review time, and review note.
 - Relevant admin actions add `client_updates` timeline entries when the update should be visible to the client.
 - Admin action failures are logged through sanitized workflow error logging sources such as `internal_request_status_update`, `internal_request_billing_update`, `internal_client_update`, `internal_document_status_update`, and `internal_document_request`.
 - ClickUp remains the operations and billing preparation hub. Request pages display ClickUp task IDs only, not private ClickUp URLs.
@@ -323,6 +327,7 @@ Implementation notes:
 - Added admin-only client, request, and document management pages plus a short-lived admin document signed URL route.
 - Added admin-only controlled actions for request status, manual billing/invoice status, client update notes, selected client profile fields, document review status, and additional document requests.
 - Added signed ClickUp webhook receiver, idempotency table SQL, shared single-request sync logic, and admin-only webhook registration action.
+- Added structured document request workflow SQL and UI/API handling for requested documents, upload-against-request, and review metadata without public file URLs.
 - Kept ClickUp billing sync and Supabase billing display active.
 - Confirmed Zoho Books integration is not active.
 
@@ -330,6 +335,7 @@ Implementation notes:
 
 - Run `supabase/rate_limits.sql` in production so rate limiting works consistently across serverless instances.
 - Run `supabase/clickup_webhook_events.sql` in production before enabling ClickUp webhooks.
+- Run `supabase/document_requests_upgrade.sql` in production before using structured document requests.
 - Confirm `NEXT_PUBLIC_SITE_URL` exactly matches the production URL before registering ClickUp webhooks.
 - Add Cloudflare Turnstile to the public contact form if spam persists beyond the honeypot and rate limits.
 - Add production monitoring and error tracking with secret redaction.
@@ -345,10 +351,12 @@ Implementation notes:
 - Logged-out user is redirected from every `/client/*` page to `/client/login`.
 - Client A cannot access Client B request detail by changing the request UUID.
 - Client A cannot open Client B document by changing the document UUID.
+- Client A cannot upload against Client B requested-document UUID.
 - Malformed UUIDs return safe 400 responses.
 - Client document uploads reject unsupported extensions and oversized files.
 - Task-item uploads reject unsupported extensions and oversized files.
 - Document open links generate short-lived signed URLs only after ownership checks.
+- Pending requested documents do not show Open buttons and do not generate signed URLs.
 - Non-admin authenticated user cannot access `/internal/sync`.
 - Logged-out user cannot access `/internal/sync`.
 - Direct sync endpoints reject requests without `x-internal-sync-secret`.
@@ -372,7 +380,7 @@ Implementation notes:
 - Admin billing updates only accept the configured invoice status list and update manual billing fields plus the generic invoice ID field.
 - Admin client profile updates cannot change `id`, `user_id`, `email`, or `created_at`.
 - Admin document status updates only accept the configured document review status list and do not expose private file URLs.
-- Additional document requests create client timeline updates and do not create placeholder document rows while `client_documents.file_path` is required.
+- Additional document requests create structured `client_documents` placeholder rows plus client timeline updates.
 - Internal document open links generate short-lived signed URLs only after admin checks.
 - Non-admin users cannot access `/internal/errors`.
 - Non-admin users cannot call workflow error resolve or reopen API routes.

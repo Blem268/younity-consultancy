@@ -5,6 +5,7 @@ import { AddClientUpdateForm } from "./add-client-update-form";
 import { RequestBillingForm } from "./request-billing-form";
 import { RequestDocumentForm } from "./request-document-form";
 import { RequestStatusForm } from "./request-status-form";
+import { DocumentStatusForm } from "../../documents/document-status-form";
 import {
   AccessDenied,
   AdminCard,
@@ -58,8 +59,16 @@ type DocumentRecord = {
   id: string;
   document_type: string;
   file_name: string;
+  file_path: string;
   status: string;
+  notes: string | null;
   uploaded_at: string | null;
+  requested_by: string | null;
+  requested_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  required: boolean | null;
 };
 
 type UpdateRecord = {
@@ -77,6 +86,19 @@ type InvoiceRecord = {
   status: string | null;
   due_date: string | null;
 };
+
+function isDocumentNeeded(document: DocumentRecord) {
+  return (
+    document.status === "Requested" ||
+    document.status === "Needs Replacement" ||
+    document.file_path === "pending" ||
+    document.file_name === "Pending upload"
+  );
+}
+
+function isRealUploadedDocument(document: DocumentRecord) {
+  return document.file_path !== "pending" && document.file_name !== "Pending upload";
+}
 
 export default async function InternalRequestDetailPage({ params }: PageProps) {
   const admin = await requireInternalAdmin();
@@ -137,7 +159,9 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
   const [documentsResult, updatesResult, invoicesResult] = await Promise.all([
     supabaseAdmin
       .from("client_documents")
-      .select("id, document_type, file_name, status, uploaded_at")
+      .select(
+        "id, document_type, file_name, file_path, status, notes, uploaded_at, requested_by, requested_at, reviewed_by, reviewed_at, review_note, required"
+      )
       .eq("request_id", request.id)
       .order("uploaded_at", { ascending: false })
       .returns<DocumentRecord[]>(),
@@ -170,6 +194,10 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
   const documents = documentsResult.data ?? [];
   const updates = updatesResult.data ?? [];
   const invoices = invoicesResult.data ?? [];
+  const documentsRequested = documents.filter(isDocumentNeeded);
+  const uploadedDocuments = documents.filter(
+    (document) => document.status !== "Requested" || isRealUploadedDocument(document)
+  );
 
   return (
     <InternalPage
@@ -314,47 +342,129 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
 
       <section className="grid gap-5 pb-8 lg:grid-cols-2">
         <AdminCard
-          title="Related Documents"
+          title="Documents Requested"
+          description="Structured document requests visible to the client portal."
+        >
+          {documentsResult.error ? (
+            <p className="mt-5 text-sm text-slate-600">
+              Documents are unavailable right now.
+            </p>
+          ) : documentsRequested.length ? (
+            <div className="mt-4 divide-y divide-slate-200">
+              {documentsRequested.map((document) => (
+                <div
+                  key={document.id}
+                  className="py-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="break-words font-semibold text-slate-950">
+                        {document.document_type}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {document.file_name}
+                      </p>
+                      {document.notes ? (
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                          {document.notes}
+                        </p>
+                      ) : null}
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <DocumentStatusBadge>{document.status}</DocumentStatusBadge>
+                        {document.required ? <MutedBadge>Required</MutedBadge> : null}
+                        <MutedBadge>Requested {formatDateTime(document.requested_at)}</MutedBadge>
+                      </div>
+                      <p className="mt-2 text-xs text-slate-500">
+                        Requested by {document.requested_by || "Not available"}
+                      </p>
+                    </div>
+                    {isRealUploadedDocument(document) ? (
+                      <Link
+                        href={`/api/internal/documents/${document.id}/open`}
+                        prefetch={false}
+                        className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                      >
+                        Open
+                      </Link>
+                    ) : null}
+                  </div>
+                  <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4">
+                    <DocumentStatusForm
+                      documentId={document.id}
+                      currentStatus={document.status}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyCard>No document requests are outstanding for this request.</EmptyCard>
+          )}
+        </AdminCard>
+
+        <AdminCard
+          title="Uploaded Documents"
           description="Open files through the secure admin route only."
         >
           {documentsResult.error ? (
             <p className="mt-5 text-sm text-slate-600">
               Documents are unavailable right now.
             </p>
-          ) : documents.length ? (
+          ) : uploadedDocuments.length ? (
             <div className="mt-4 divide-y divide-slate-200">
-              {documents.map((document) => (
-                <div
-                  key={document.id}
-                  className="flex flex-col gap-3 py-4 sm:flex-row sm:items-start sm:justify-between"
-                >
-                  <div>
-                    <p className="break-words font-semibold text-slate-950">
-                      {document.file_name}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {document.document_type}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      <DocumentStatusBadge>{document.status}</DocumentStatusBadge>
-                      <MutedBadge>{formatDateTime(document.uploaded_at)}</MutedBadge>
+              {uploadedDocuments.map((document) => (
+                <div key={document.id} className="py-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <p className="break-words font-semibold text-slate-950">
+                        {document.file_name}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {document.document_type}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <DocumentStatusBadge>{document.status}</DocumentStatusBadge>
+                        {document.required ? <MutedBadge>Required</MutedBadge> : null}
+                        <MutedBadge>{formatDateTime(document.uploaded_at)}</MutedBadge>
+                      </div>
+                      {document.review_note ? (
+                        <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                          Review note: {document.review_note}
+                        </p>
+                      ) : null}
+                      {document.reviewed_at || document.reviewed_by ? (
+                        <p className="mt-2 text-xs text-slate-500">
+                          Reviewed {formatDateTime(document.reviewed_at)} by{" "}
+                          {document.reviewed_by || "Not available"}
+                        </p>
+                      ) : null}
                     </div>
+                    {isRealUploadedDocument(document) ? (
+                      <Link
+                        href={`/api/internal/documents/${document.id}/open`}
+                        prefetch={false}
+                        className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                      >
+                        Open
+                      </Link>
+                    ) : null}
                   </div>
-                  <Link
-                    href={`/api/internal/documents/${document.id}/open`}
-                    prefetch={false}
-                    className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
-                  >
-                    Open
-                  </Link>
+                  <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 p-4">
+                    <DocumentStatusForm
+                      documentId={document.id}
+                      currentStatus={document.status}
+                    />
+                  </div>
                 </div>
               ))}
             </div>
           ) : (
-            <EmptyCard>No documents are linked to this request yet.</EmptyCard>
+            <EmptyCard>No uploaded documents are linked to this request yet.</EmptyCard>
           )}
         </AdminCard>
+      </section>
 
+      <section className="pb-8">
         <AdminCard
           title="Update Timeline"
           description="Client-visible notes and internal admin updates for this request."
@@ -367,7 +477,9 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
             <div className="mt-4 divide-y divide-slate-200">
               {updates.map((update) => (
                 <div key={update.id} className="py-4">
-                  <p className="font-semibold text-slate-950">{update.title}</p>
+                  <p className="break-words font-semibold text-slate-950">
+                    {update.title}
+                  </p>
                   <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-700">
                     {update.message}
                   </p>

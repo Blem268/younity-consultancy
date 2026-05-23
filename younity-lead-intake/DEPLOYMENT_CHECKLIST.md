@@ -260,7 +260,11 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm client profile admin edits cannot change `id`, `user_id`, `email`, or `created_at`.
 - Confirm document review actions update only document status and never expose private file URLs.
 - Confirm internal document open buttons use `/api/internal/documents/[id]/open` and do not expose public file URLs.
-- Confirm additional document requests create client timeline updates and do not create placeholder records while `client_documents.file_path` is required.
+- Run `supabase/document_requests_upgrade.sql` in the Supabase SQL Editor before using structured document requests.
+- Confirm additional document requests create `client_documents` rows with `status = Requested`, `file_name = Pending upload`, `file_path = pending`, requested metadata, and a client timeline update.
+- Confirm clients see requested documents under Documents Needed and can upload only against their own requested-document IDs.
+- Confirm pending placeholder documents do not show Open buttons and both client/admin open routes refuse `file_path = pending`.
+- Confirm admin document review supports Requested, Submitted, Received, Under Review, Approved, Rejected, and Needs Replacement, with reviewer metadata saved for review states.
 - Confirm workflow error logs are sanitized and never include secrets.
 - Confirm workflow error resolution notes do not include secrets or raw provider payloads.
 - Confirm retry actions are admin-triggered only and limited to Google Sheets logging, Resend notifications, Twilio notifications, and ClickUp comment/attachment failures.

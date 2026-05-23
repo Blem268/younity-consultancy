@@ -4,6 +4,7 @@ import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const allowedDocumentStatuses = new Set([
+  "Requested",
   "Submitted",
   "Received",
   "Under Review",
@@ -37,7 +38,7 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { errorResponse } = await getInternalAdminUser();
+  const { user, errorResponse } = await getInternalAdminUser();
 
   if (errorResponse) {
     return errorResponse;
@@ -89,9 +90,24 @@ export async function POST(
     return NextResponse.json({ message: "Document not found." }, { status: 404 });
   }
 
+  const shouldSetReviewFields = [
+    "Approved",
+    "Rejected",
+    "Needs Replacement",
+    "Under Review",
+  ].includes(status);
+
+  const updatePayload: Record<string, string | null> = { status };
+
+  if (shouldSetReviewFields) {
+    updatePayload.reviewed_by = user.email || null;
+    updatePayload.reviewed_at = new Date().toISOString();
+    updatePayload.review_note = note || null;
+  }
+
   const { error: updateError } = await supabaseAdmin
     .from("client_documents")
-    .update({ status })
+    .update(updatePayload)
     .eq("id", existingDocument.id);
 
   if (updateError) {

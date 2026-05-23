@@ -19,6 +19,7 @@ export function RequestDocumentForm({ requestId }: { requestId: string }) {
   const router = useRouter();
   const [documentType, setDocumentType] = useState(documentTypes[0]);
   const [messageValue, setMessageValue] = useState("");
+  const [required, setRequired] = useState(true);
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -34,7 +35,7 @@ export function RequestDocumentForm({ requestId }: { requestId: string }) {
       {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documentType, message: messageValue }),
+        body: JSON.stringify({ documentType, message: messageValue, required }),
       }
     );
     const result = (await response.json()) as { message?: string };
@@ -74,6 +75,16 @@ export function RequestDocumentForm({ requestId }: { requestId: string }) {
           rows={4}
           className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
         />
+      </label>
+
+      <label className="flex items-center gap-2 text-sm font-medium text-slate-800">
+        <input
+          type="checkbox"
+          checked={required}
+          onChange={(event) => setRequired(event.target.checked)}
+          className="h-4 w-4 rounded border-slate-300 text-teal-700 focus:ring-teal-600"
+        />
+        Required document
       </label>
 
       <div aria-live="polite" className={isError ? "text-red-700" : "text-teal-700"}>

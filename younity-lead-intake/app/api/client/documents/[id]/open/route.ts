@@ -9,6 +9,7 @@ type ClientProfile = {
 type ClientDocument = {
   id: string;
   file_path: string;
+  file_name: string;
 };
 
 function isUuid(value: string) {
@@ -60,7 +61,7 @@ export async function GET(
 
   const { data: document, error: documentError } = await supabase
     .from("client_documents")
-    .select("id, file_path")
+    .select("id, file_path, file_name")
     .eq("id", documentId)
     .eq("client_id", clientProfile.id)
     .maybeSingle<ClientDocument>();
@@ -75,6 +76,13 @@ export async function GET(
 
   if (!document) {
     return NextResponse.json({ message: "Document not found." }, { status: 404 });
+  }
+
+  if (document.file_path === "pending" || document.file_name === "Pending upload") {
+    return NextResponse.json(
+      { message: "This document has not been uploaded yet." },
+      { status: 404 }
+    );
   }
 
   const supabaseAdmin = createAdminClient();

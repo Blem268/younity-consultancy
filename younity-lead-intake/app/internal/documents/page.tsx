@@ -33,9 +33,16 @@ type DocumentRecord = {
   request_id: string | null;
   document_type: string;
   file_name: string;
+  file_path: string;
   status: string;
   notes: string | null;
   uploaded_at: string | null;
+  requested_by: string | null;
+  requested_at: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
+  required: boolean | null;
   clients: {
     full_name: string | null;
     company: string | null;
@@ -44,6 +51,20 @@ type DocumentRecord = {
     service: string | null;
   } | null;
 };
+
+const documentStatusOptions = [
+  "Requested",
+  "Submitted",
+  "Received",
+  "Under Review",
+  "Approved",
+  "Rejected",
+  "Needs Replacement",
+];
+
+function isPendingDocument(document: DocumentRecord) {
+  return document.file_path === "pending" || document.file_name === "Pending upload";
+}
 
 export default async function InternalDocumentsPage({ searchParams }: PageProps) {
   const admin = await requireInternalAdmin();
@@ -78,7 +99,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
   let documentsQuery = supabaseAdmin
     .from("client_documents")
     .select(
-      "id, request_id, document_type, file_name, status, notes, uploaded_at, clients(full_name, company), client_requests(service)"
+      "id, request_id, document_type, file_name, file_path, status, notes, uploaded_at, requested_by, requested_at, reviewed_by, reviewed_at, review_note, required, clients(full_name, company), client_requests(service)"
     )
     .order("uploaded_at", { ascending: false })
     .limit(100);
@@ -128,12 +149,18 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
         </label>
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
           Status
-          <input
+          <select
             name="status"
             defaultValue={statusFilter}
             className="rounded-md border border-slate-300 px-3 py-2 font-normal"
-            placeholder="Submitted"
-          />
+          >
+            <option value="">Any status</option>
+            {documentStatusOptions.map((status) => (
+              <option key={status} value={status}>
+                {status}
+              </option>
+            ))}
+          </select>
         </label>
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
           Client Search
@@ -182,18 +209,32 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                             : "Client unavailable"}
                         </p>
                       </div>
-                      <Link
-                        href={`/api/internal/documents/${document.id}/open`}
-                        prefetch={false}
-                        className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
-                      >
-                        Open document
-                      </Link>
+                      {isPendingDocument(document) ? null : (
+                        <Link
+                          href={`/api/internal/documents/${document.id}/open`}
+                          prefetch={false}
+                          className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                        >
+                          Open document
+                        </Link>
+                      )}
                     </div>
                     <div className="flex flex-wrap gap-2">
                       <DocumentStatusBadge>{document.status}</DocumentStatusBadge>
+                      {document.required ? <MutedBadge>Required</MutedBadge> : null}
                       <MutedBadge>{formatDateTime(document.uploaded_at)}</MutedBadge>
                     </div>
+                    <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                      <p>Requested: {formatDateTime(document.requested_at)}</p>
+                      <p>By: {document.requested_by || "Not available"}</p>
+                      <p>Reviewed: {formatDateTime(document.reviewed_at)}</p>
+                      <p>By: {document.reviewed_by || "Not available"}</p>
+                    </div>
+                    {document.review_note ? (
+                      <p className="whitespace-pre-wrap text-sm leading-6 text-slate-600">
+                        Review note: {document.review_note}
+                      </p>
+                    ) : null}
                     {document.request_id ? (
                       <Link
                         href={`/internal/requests/${document.request_id}`}
@@ -223,7 +264,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                   <th className="px-4 py-3">Request</th>
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Notes</th>
-                  <th className="px-4 py-3">Uploaded</th>
+                  <th className="px-4 py-3">Request/Review</th>
                   <th className="px-4 py-3">Review</th>
                   <th className="px-4 py-3 text-right">Open</th>
                 </tr>
@@ -261,12 +302,26 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                     </td>
                     <td className="px-4 py-4">
                       <DocumentStatusBadge>{document.status}</DocumentStatusBadge>
+                      {document.required ? (
+                        <div className="mt-2">
+                          <MutedBadge>Required</MutedBadge>
+                        </div>
+                      ) : null}
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {document.notes || "Not available"}
                     </td>
-                    <td className="px-4 py-4">
-                      <MutedBadge>{formatDateTime(document.uploaded_at)}</MutedBadge>
+                    <td className="px-4 py-4 text-xs text-slate-600">
+                      <p>Uploaded: {formatDateTime(document.uploaded_at)}</p>
+                      <p className="mt-2">Requested: {formatDateTime(document.requested_at)}</p>
+                      <p className="mt-1">By: {document.requested_by || "Not available"}</p>
+                      <p className="mt-2">Reviewed: {formatDateTime(document.reviewed_at)}</p>
+                      <p className="mt-1">By: {document.reviewed_by || "Not available"}</p>
+                      {document.review_note ? (
+                        <p className="mt-2 whitespace-pre-wrap">
+                          Note: {document.review_note}
+                        </p>
+                      ) : null}
                     </td>
                     <td className="px-4 py-4 align-top">
                       <DocumentStatusForm
@@ -275,13 +330,19 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                       />
                     </td>
                     <td className="px-4 py-4 text-right">
-                      <Link
-                        href={`/api/internal/documents/${document.id}/open`}
-                        prefetch={false}
-                        className="inline-flex rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
-                      >
-                        Open document
-                      </Link>
+                      {isPendingDocument(document) ? (
+                        <span className="text-sm font-medium text-slate-500">
+                          Pending upload
+                        </span>
+                      ) : (
+                        <Link
+                          href={`/api/internal/documents/${document.id}/open`}
+                          prefetch={false}
+                          className="inline-flex rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                        >
+                          Open document
+                        </Link>
+                      )}
                     </td>
                   </tr>
                 ))}
