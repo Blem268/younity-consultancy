@@ -13,6 +13,8 @@ const navItems = [
   { label: "Clients", href: "/clients" },
 ];
 
+const clientPortalHref = "https://younity-consultancy-o4jt.vercel.app/client/login";
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -53,13 +55,22 @@ export default function Navbar() {
           ))}
         </nav>
 
-        {/* CONTACT BUTTON */}
-        <Link
-          href="/contact"
-          className="hidden rounded-xl bg-[#50A9C0] px-8 py-4 text-base font-black uppercase tracking-[0.12em] text-[#06111f] transition hover:bg-white lg:inline-flex"
-        >
-          Contact Us
-        </Link>
+        <div className="hidden items-center gap-3 lg:flex">
+          <Link
+            href={clientPortalHref}
+            className="rounded-xl border border-[#50A9C0]/50 bg-white/5 px-6 py-4 text-base font-black uppercase tracking-[0.12em] text-[#50A9C0] transition hover:bg-white hover:text-[#06111f]"
+          >
+            Client Portal
+          </Link>
+
+          {/* CONTACT BUTTON */}
+          <Link
+            href="/contact"
+            className="rounded-xl bg-[#50A9C0] px-8 py-4 text-base font-black uppercase tracking-[0.12em] text-[#06111f] transition hover:bg-white"
+          >
+            Contact Us
+          </Link>
+        </div>
 
         {/* MOBILE MENU BUTTON */}
         <button
@@ -87,9 +98,17 @@ export default function Navbar() {
             ))}
 
             <Link
+              href={clientPortalHref}
+              onClick={() => setIsOpen(false)}
+              className="mt-2 rounded-md border border-[#50A9C0]/50 px-5 py-3 text-center text-sm font-black uppercase tracking-wide text-[#50A9C0]"
+            >
+              Client Portal
+            </Link>
+
+            <Link
               href="/contact"
               onClick={() => setIsOpen(false)}
-              className="mt-2 rounded-md bg-[#50A9C0] px-5 py-3 text-center text-sm font-black uppercase tracking-wide text-[#06111f]"
+              className="rounded-md bg-[#50A9C0] px-5 py-3 text-center text-sm font-black uppercase tracking-wide text-[#06111f]"
             >
               Contact Us
             </Link>

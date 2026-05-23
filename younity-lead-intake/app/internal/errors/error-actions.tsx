@@ -83,7 +83,7 @@ export function ErrorActions({ errorId, resolved, retryable }: ErrorActionsProps
           onChange={(event) => setResolutionNote(event.target.value)}
           rows={3}
           maxLength={1000}
-          className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+          className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
           placeholder="Brief note for future review..."
         />
       </label>
@@ -91,7 +91,7 @@ export function ErrorActions({ errorId, resolved, retryable }: ErrorActionsProps
         type="button"
         disabled={Boolean(activeAction)}
         onClick={() => runAction("resolve")}
-        className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-fit rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {activeAction === "resolve" ? "Resolving..." : "Mark Resolved"}
       </button>

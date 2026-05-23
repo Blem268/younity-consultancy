@@ -57,7 +57,7 @@ export function DocumentStatusForm({
         <select
           value={status}
           onChange={(event) => setStatus(event.target.value)}
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
+          className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         >
           {documentStatusOptions.map((option) => (
             <option key={option} value={option}>
@@ -72,7 +72,7 @@ export function DocumentStatusForm({
           value={note}
           onChange={(event) => setNote(event.target.value)}
           rows={2}
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
+          className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         />
       </label>
       <div
@@ -84,7 +84,7 @@ export function DocumentStatusForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex w-fit items-center justify-center rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="inline-flex w-fit items-center justify-center rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Saving..." : "Save Status"}
       </button>

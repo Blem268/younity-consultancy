@@ -143,7 +143,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
         actions={
           <Link
             href="/internal/requests"
-            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
+            className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
           >
             Back to requests
           </Link>
@@ -208,21 +208,21 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
         <>
           <Link
             href="/internal/requests"
-            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
+            className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
           >
             Back to requests
           </Link>
           {request.clients ? (
             <Link
               href={`/internal/clients/${request.clients.id}`}
-              className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
+              className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
             >
               View client
             </Link>
           ) : null}
           <Link
             href="/internal/sync"
-            className="rounded-md bg-[#244285] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+            className="rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
           >
             Run sync controls
           </Link>
@@ -382,7 +382,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
                       <Link
                         href={`/api/internal/documents/${document.id}/open`}
                         prefetch={false}
-                        className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                        className="w-fit rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
                       >
                         Open
                       </Link>
@@ -443,7 +443,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
                       <Link
                         href={`/api/internal/documents/${document.id}/open`}
                         prefetch={false}
-                        className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                        className="w-fit rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
                       >
                         Open
                       </Link>

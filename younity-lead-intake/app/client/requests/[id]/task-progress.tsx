@@ -116,7 +116,7 @@ export function TaskProgress({ requestId }: { requestId: string }) {
 
   if (!data.linked) {
     return (
-      <div className="mt-5 rounded-lg border border-dashed border-[#50A9C0]/25 bg-[#50A9C0]/10 p-5">
+      <div className="mt-5 rounded-3xl border border-dashed border-[#50A9C0]/25 bg-[#50A9C0]/10 p-5">
         <p className="text-sm font-semibold text-slate-950">
           {data.message || "No operational task has been linked yet."}
         </p>
@@ -173,7 +173,7 @@ export function TaskProgress({ requestId }: { requestId: string }) {
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-[#50A9C0]/25 bg-[#50A9C0]/10 p-5">
+        <div className="rounded-3xl border border-dashed border-[#50A9C0]/25 bg-[#50A9C0]/10 p-5">
           <p className="text-sm font-semibold text-slate-950">
             Detailed task steps have not been published yet.
           </p>

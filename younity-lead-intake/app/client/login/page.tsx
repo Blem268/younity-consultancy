@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -34,16 +35,35 @@ export default function ClientLoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen items-center justify-center px-6 py-12">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#06111f] px-6 py-12">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_20%,#50A9C033,transparent_30%),radial-gradient(circle_at_80%_10%,#24428555,transparent_35%)]" />
       <div className="w-full max-w-md">
-        <div className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#244285]">
+        <div className="relative z-10 mb-8">
+          <div className="mb-6 flex items-center gap-4">
+            <Image
+              src="/younity-logo.png"
+              alt="Younity Consultancy Logo"
+              width={56}
+              height={56}
+              className="h-14 w-14 object-contain"
+              priority
+            />
+            <div>
+              <p className="text-xl font-black tracking-wide text-white">
+                YOUNITY
+              </p>
+              <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/80">
+                CONSULTANCY
+              </p>
+            </div>
+          </div>
+          <p className="text-sm font-black uppercase tracking-[0.3em] text-[#50A9C0]">
             Client Portal
           </p>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
-            Younity Consultancy
+          <h1 className="mt-3 text-3xl font-black tracking-tight text-white">
+            Secure client access
           </h1>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
+          <p className="mt-3 text-sm leading-6 text-white/70">
             Sign in to review requests, documents, updates, and billing
             information shared by the Younity team.
           </p>
@@ -51,13 +71,13 @@ export default function ClientLoginPage() {
 
         <form
           onSubmit={handleSubmit}
-          className={`${brand.card} p-6`}
+          className="relative z-10 rounded-[2rem] border border-white/10 bg-white p-6 shadow-2xl sm:p-8"
         >
           <div className="space-y-5">
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-800"
+                className={brand.label}
               >
                 Email
               </label>
@@ -76,7 +96,7 @@ export default function ClientLoginPage() {
             <div>
               <label
                 htmlFor="password"
-                className="block text-sm font-medium text-slate-800"
+                className={brand.label}
               >
                 Password
               </label>

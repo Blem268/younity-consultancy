@@ -176,7 +176,7 @@ export default async function ClientDocumentsPage() {
                         Requested {formatDate(document.requested_at)}
                       </p>
                     </div>
-                    <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
                       <UploadForm
                         requests={relatedRequest ? [relatedRequest] : requests}
                         fixedRequestId={document.request_id || undefined}

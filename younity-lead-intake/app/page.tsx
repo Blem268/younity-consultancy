@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 const services = [
   "Bookkeeping Services",
@@ -22,10 +23,23 @@ export default function Home() {
     <main className="min-h-screen bg-white pt-24 text-[#06111f]">
       <header className="fixed left-0 top-0 z-50 w-full border-b border-[#50A9C0]/20 bg-gradient-to-r from-[#06111f] via-[#071a33] to-[#06111f] shadow-lg">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-6 py-5 sm:flex-row sm:items-center sm:justify-between lg:px-8">
-          <Link href="/" className="w-fit">
-            <p className="text-sm font-black uppercase tracking-[0.3em] text-[#50A9C0]">
-              Younity Consultancy
-            </p>
+          <Link href="/" className="flex w-fit items-center gap-3">
+            <Image
+              src="/younity-logo.png"
+              alt="Younity Consultancy Logo"
+              width={44}
+              height={44}
+              className="h-11 w-11 object-contain"
+              priority
+            />
+            <span className="leading-tight">
+              <span className="block text-lg font-black tracking-wide text-white">
+                YOUNITY
+              </span>
+              <span className="block text-xs font-bold tracking-[0.3em] text-white/80">
+                CONSULTANCY
+              </span>
+            </span>
           </Link>
 
           <nav
@@ -82,6 +96,13 @@ export default function Home() {
             >
               Client Portal
             </Link>
+          </div>
+          <div className="mt-8 grid gap-3 text-sm text-white/75 sm:grid-cols-3">
+            {["Secure portal", "Private documents", "Managed workflow"].map((item) => (
+              <div key={item} className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 font-bold">
+                {item}
+              </div>
+            ))}
           </div>
         </div>
 

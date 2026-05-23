@@ -2,7 +2,12 @@
 
 :root {
   --background: #f6f9fc;
-  --foreground: #0f172a;
+  --foreground: #06111f;
+  --younity-dark: #06111f;
+  --younity-navy: #071a33;
+  --younity-blue: #244285;
+  --younity-accent: #50A9C0;
+  --younity-light: #f6f9fc;
 }
 
 @theme inline {
@@ -30,5 +35,10 @@ body {
 
   :where(button, input, select, textarea) {
     font: inherit;
+  }
+
+  ::selection {
+    background: rgba(80, 169, 192, 0.3);
+    color: #06111f;
   }
 }

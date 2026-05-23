@@ -156,13 +156,13 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
       title="Workflow Errors"
       description="Latest sanitized workflow errors for internal production review, retry, and resolution."
     >
-      <form className="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[0.8fr_1fr_0.8fr_0.8fr_auto]">
+      <form className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[0.8fr_1fr_0.8fr_0.8fr_auto]">
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
           Status
           <select
             name="status"
             defaultValue={statusFilter}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
           >
             <option value="open">Unresolved only</option>
             <option value="resolved">Resolved only</option>
@@ -174,7 +174,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
           <input
             name="source"
             defaultValue={sourceFilter}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
             placeholder="lead-intake, clickup, sync..."
           />
         </label>
@@ -183,7 +183,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
           <select
             name="severity"
             defaultValue={severityFilter}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
           >
             <option value="">Any severity</option>
             <option value="critical">critical</option>
@@ -197,7 +197,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
           <select
             name="retryable"
             defaultValue={retryableFilter}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
           >
             <option value="">Any</option>
             <option value="yes">Retryable</option>
@@ -206,7 +206,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
         </label>
         <button
           type="submit"
-          className="self-end rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+          className="self-end rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
         >
           Filter
         </button>
@@ -240,7 +240,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
                           {workflowError.resolved ? "Resolved" : "Open"}
                         </Badge>
                         {workflowError.retryable ? (
-                          <Badge tone="accent">Retryable</Badge>
+                          <Badge tone="amber">Retryable</Badge>
                         ) : (
                           <Badge tone="slate">Manual only</Badge>
                         )}

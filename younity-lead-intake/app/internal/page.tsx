@@ -11,6 +11,7 @@ import {
   MutedBadge,
   StatusBadge,
 } from "./internal-ui";
+import { brand } from "@/app/components/ui/brand";
 
 type CardValue = string | number;
 
@@ -259,10 +260,10 @@ export default async function InternalDashboardPage() {
           {summaryCards.map((card) => (
             <article
               key={card.title}
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#50A9C0]/30"
+              className={brand.statCard}
             >
-              <p className="text-sm font-semibold text-slate-600">{card.title}</p>
-              <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
+              <p className="text-sm font-black uppercase tracking-[0.12em] text-slate-500">{card.title}</p>
+              <p className="mt-3 text-4xl font-black tracking-tight text-[#06111f]">
                 {card.value}
               </p>
               <p className="mt-2 text-sm leading-6 text-slate-500">

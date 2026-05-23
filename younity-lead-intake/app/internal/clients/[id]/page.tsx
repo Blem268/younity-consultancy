@@ -143,7 +143,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
         actions={
           <Link
             href="/internal/clients"
-            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
+            className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
           >
             Back to clients
           </Link>
@@ -164,7 +164,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
       actions={
         <Link
           href="/internal/clients"
-          className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
+          className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
         >
           Back to clients
         </Link>
@@ -304,7 +304,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
                   <Link
                     href={`/api/internal/documents/${document.id}/open`}
                     prefetch={false}
-                    className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                    className="w-fit rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
                   >
                     Open
                   </Link>

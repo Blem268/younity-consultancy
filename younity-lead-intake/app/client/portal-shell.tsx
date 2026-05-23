@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { brand } from "@/app/components/ui/brand";
@@ -43,13 +44,23 @@ export function ClientPortalShell({ children }: { children: ReactNode }) {
       <header className={`sticky top-0 z-20 ${brand.shellHeader}`}>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <Link href="/client/dashboard" prefetch={false} className="w-fit">
-              <p className="text-xs font-black uppercase tracking-[0.3em] text-[#50A9C0]">
-                Younity Consultancy
-              </p>
-              <p className="mt-1 text-lg font-black tracking-wide text-white">
-                Client Portal
-              </p>
+            <Link href="/client/dashboard" prefetch={false} className="flex w-fit items-center gap-3">
+              <Image
+                src="/younity-logo.png"
+                alt="Younity Consultancy Logo"
+                width={44}
+                height={44}
+                className="h-11 w-11 object-contain"
+                priority
+              />
+              <span className="leading-tight">
+                <span className="block text-lg font-black tracking-wide text-white">
+                  YOUNITY
+                </span>
+                <span className="block text-xs font-bold tracking-[0.3em] text-white/80">
+                  CLIENT PORTAL
+                </span>
+              </span>
             </Link>
           </div>
 

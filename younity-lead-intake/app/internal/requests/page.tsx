@@ -122,13 +122,13 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
       title="Internal Requests"
       description="Review submitted client requests, operational status, and ClickUp billing preparation fields."
     >
-      <form className="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[0.8fr_0.8fr_1fr_1fr_auto]">
+      <form className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[0.8fr_0.8fr_1fr_1fr_auto]">
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
           Status
           <input
             name="status"
             defaultValue={statusFilter}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
             placeholder="Submitted, In Progress..."
           />
         </label>
@@ -137,7 +137,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
           <input
             name="invoice_status"
             defaultValue={invoiceStatusFilter}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
             placeholder="Ready for Billing, Paid..."
           />
         </label>
@@ -146,7 +146,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
           <input
             name="service"
             defaultValue={serviceFilter}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
             placeholder="Consulting"
           />
         </label>
@@ -155,13 +155,13 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
           <input
             name="search"
             defaultValue={search}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
             placeholder="Name, company, or email"
           />
         </label>
         <button
           type="submit"
-          className="self-end rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+          className="self-end rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
         >
           Filter
         </button>
@@ -196,7 +196,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                       </div>
                       <Link
                         href={`/internal/requests/${request.id}`}
-                        className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                        className="w-fit rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
                       >
                         View detail
                       </Link>
@@ -218,9 +218,9 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                 </AdminCard>
               ))}
             </div>
-            <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm xl:block">
+            <div className="hidden overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm xl:block">
               <table className="min-w-[1280px] w-full text-left text-sm">
-              <thead className="border-b border-[#50A9C0]/20 bg-[#50A9C0]/15 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
+              <thead className="border-b border-[#50A9C0]/20 bg-[#06111f] text-xs font-black uppercase tracking-[0.12em] text-white">
                 <tr>
                   <th className="px-4 py-3">Request</th>
                   <th className="px-4 py-3">Client</th>

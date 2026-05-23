@@ -190,7 +190,7 @@ export function SyncButtons() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <section className="rounded-lg border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50 lg:col-span-2">
+      <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50 lg:col-span-2">
         <h2 className="text-xl font-semibold tracking-tight text-slate-950">
           ClickUp Webhook Status
         </h2>
@@ -225,7 +225,7 @@ export function SyncButtons() {
         ) : null}
       </section>
 
-      <section className="rounded-lg border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50">
+      <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50">
         <h2 className="text-xl font-semibold tracking-tight text-slate-950">
           ClickUp Status Sync
         </h2>
@@ -236,14 +236,14 @@ export function SyncButtons() {
           type="button"
           disabled={statusSync.isLoading}
           onClick={() => runSync("/api/internal/run-status-sync", setStatusSync)}
-          className="mt-5 inline-flex items-center justify-center rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           {statusSync.isLoading ? "Running..." : "Run Status Sync"}
         </button>
         <SyncResultPanel state={statusSync} />
       </section>
 
-      <section className="rounded-lg border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50">
+      <section className="rounded-3xl border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50">
         <h2 className="text-xl font-semibold tracking-tight text-slate-950">
           ClickUp Billing Sync
         </h2>
@@ -257,7 +257,7 @@ export function SyncButtons() {
           onClick={() =>
             runSync("/api/internal/run-billing-sync", setBillingSync)
           }
-          className="mt-5 inline-flex items-center justify-center rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           {billingSync.isLoading ? "Running..." : "Run Billing Sync"}
         </button>

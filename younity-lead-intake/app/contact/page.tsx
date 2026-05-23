@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { brand } from "@/app/components/ui/brand";
 
 type FormState = {
@@ -73,11 +74,23 @@ export default function ContactPage() {
     <main className="min-h-screen bg-[#f6f9fc] text-[#06111f]">
       <section className="bg-[#06111f] px-6 py-16 text-white sm:py-20">
         <div className="mx-auto max-w-3xl">
-          <Link
-            href="/"
-            className="text-sm font-black uppercase tracking-[0.3em] text-[#50A9C0] transition hover:text-white"
-          >
-            Younity Consultancy
+          <Link href="/" className="flex w-fit items-center gap-3">
+            <Image
+              src="/younity-logo.png"
+              alt="Younity Consultancy Logo"
+              width={48}
+              height={48}
+              className="h-12 w-12 object-contain"
+              priority
+            />
+            <span className="leading-tight">
+              <span className="block text-lg font-black tracking-wide text-white">
+                YOUNITY
+              </span>
+              <span className="block text-xs font-bold tracking-[0.3em] text-white/80">
+                CONSULTANCY
+              </span>
+            </span>
           </Link>
           <h1 className="mt-4 text-4xl font-black tracking-tight sm:text-5xl">
             Start your request

@@ -137,13 +137,13 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
       title="Internal Documents"
       description="Review uploaded client document metadata and open files through short-lived admin signed URLs."
     >
-      <form className="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[1fr_0.8fr_1fr_auto]">
+      <form className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[1fr_0.8fr_1fr_auto]">
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
           Document Type
           <input
             name="document_type"
             defaultValue={documentTypeFilter}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
             placeholder="Passport, invoice..."
           />
         </label>
@@ -152,7 +152,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
           <select
             name="status"
             defaultValue={statusFilter}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
           >
             <option value="">Any status</option>
             {documentStatusOptions.map((status) => (
@@ -167,13 +167,13 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
           <input
             name="search"
             defaultValue={search}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
             placeholder="Client, company, email, or file"
           />
         </label>
         <button
           type="submit"
-          className="self-end rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+          className="self-end rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
         >
           Filter
         </button>
@@ -213,7 +213,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                         <Link
                           href={`/api/internal/documents/${document.id}/open`}
                           prefetch={false}
-                          className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                          className="w-fit rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
                         >
                           Open document
                         </Link>
@@ -255,9 +255,9 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                 </AdminCard>
               ))}
             </div>
-            <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm xl:block">
+            <div className="hidden overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm xl:block">
               <table className="min-w-[1120px] w-full text-left text-sm">
-              <thead className="border-b border-[#50A9C0]/20 bg-[#50A9C0]/15 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
+              <thead className="border-b border-[#50A9C0]/20 bg-[#06111f] text-xs font-black uppercase tracking-[0.12em] text-white">
                 <tr>
                   <th className="px-4 py-3">Document</th>
                   <th className="px-4 py-3">Client</th>
@@ -338,7 +338,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                         <Link
                           href={`/api/internal/documents/${document.id}/open`}
                           prefetch={false}
-                          className="inline-flex rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                          className="inline-flex rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
                         >
                           Open document
                         </Link>

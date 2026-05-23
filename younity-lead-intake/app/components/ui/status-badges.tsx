@@ -56,6 +56,7 @@ export function getStatusTone(value: ReactNode): BadgeTone {
     status.includes("requested") ||
     status.includes("needs") ||
     status.includes("warning") ||
+    status.includes("retryable") ||
     status.includes("draft")
   ) {
     return "amber";
@@ -83,8 +84,7 @@ export function getStatusTone(value: ReactNode): BadgeTone {
   if (
     status.includes("progress") ||
     status.includes("review") ||
-    status.includes("billing") ||
-    status.includes("retryable")
+    status.includes("billing")
   ) {
     return "accent";
   }

@@ -96,7 +96,7 @@ export default function ClientsPage() {
                 className="rounded-3xl border border-slate-200 p-8 shadow-sm"
               >
                 <p className="text-lg leading-8 text-slate-600">
-                  "{testimonial.quote}"
+                  &ldquo;{testimonial.quote}&rdquo;
                 </p>
 
                 <div className="mt-8">

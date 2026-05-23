@@ -37,6 +37,7 @@
 - Phase 18 ClickUp webhook automation for task status and billing field changes, with `/api/webhooks/clickup`, admin-only webhook registration from `/internal/sync`, and Supabase-backed idempotency in `public.clickup_webhook_events`.
 - Phase 19 structured document request workflow: admin document requests now create `client_documents` rows with `status = Requested`, clients upload directly against requested rows, existing private storage and upload notifications continue, and admins can review with Requested, Submitted, Received, Under Review, Approved, Rejected, and Needs Replacement statuses.
 - Phase 20 unified the public website, contact intake, client portal, task workspace, document surfaces, and internal admin area with the actual blue-themed Younity Consultancy website branding, including shared `#06111f`, `#071a33`, `#244285`, `#50A9C0`, and `#f6f9fc` visual tokens, standardized status badges, consistent cards/buttons/forms/navigation, mobile polish, and accessible focus states.
+- Phase 21 premium UI polish for the official website, contact intake, client portal, task workspace, and internal admin area, including official logo usage, refined blue gradients, stronger card elevation, premium dashboard/stat cards, polished forms/buttons, dark table headers, clearer empty states, and brand-aligned status badges without backend workflow changes.
 
 ## Next Recommended Work
 

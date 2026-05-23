@@ -110,19 +110,19 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
       title="Internal Clients"
       description="Review client portal profiles and jump into related requests and documents."
     >
-      <form className="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_auto]">
+      <form className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_auto]">
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
           Search clients
           <input
             name="search"
             defaultValue={search}
-            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+            className="rounded-xl border border-slate-200 px-3 py-2 font-normal"
             placeholder="Name, email, or company"
           />
         </label>
         <button
           type="submit"
-          className="self-end rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
+          className="self-end rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
         >
           Filter
         </button>
@@ -178,7 +178,7 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
                       </p>
                       <Link
                         href={`/internal/clients/${client.id}`}
-                        className="rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
+                        className="rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
                       >
                         View detail
                       </Link>
@@ -187,9 +187,9 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
                 </AdminCard>
               ))}
             </div>
-            <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm lg:block">
+            <div className="hidden overflow-x-auto rounded-3xl border border-slate-200 bg-white shadow-sm lg:block">
               <table className="min-w-[980px] w-full text-left text-sm">
-                <thead className="border-b border-[#50A9C0]/20 bg-[#50A9C0]/15 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
+                <thead className="border-b border-[#50A9C0]/20 bg-[#06111f] text-xs font-black uppercase tracking-[0.12em] text-white">
                   <tr>
                     <th className="px-4 py-3">Client</th>
                     <th className="px-4 py-3">Contact</th>

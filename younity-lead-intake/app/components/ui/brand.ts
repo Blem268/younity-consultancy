@@ -1,4 +1,9 @@
 export const brand = {
+  dark: "#06111f",
+  navy: "#071a33",
+  blue: "#244285",
+  accent: "#50A9C0",
+  light: "#f6f9fc",
   appBackground: "bg-[#f6f9fc]",
   pageBackground: "bg-[#f6f9fc]",
   heading: "text-[#06111f]",
@@ -6,7 +11,11 @@ export const brand = {
   shellHeader:
     "border-b border-[#50A9C0]/20 bg-gradient-to-r from-[#06111f] via-[#071a33] to-[#06111f] shadow-lg",
   card:
-    "rounded-3xl border border-slate-200/80 bg-white shadow-sm transition shadow-slate-200/50",
+    "rounded-3xl border border-slate-200/80 bg-white shadow-[0_18px_50px_rgba(6,17,31,0.07)] transition",
+  statCard:
+    "rounded-3xl border border-[#50A9C0]/15 bg-white p-6 shadow-[0_18px_50px_rgba(6,17,31,0.07)] transition hover:-translate-y-1 hover:shadow-[0_24px_70px_rgba(6,17,31,0.12)]",
+  glassCard:
+    "rounded-[2rem] border border-white/10 bg-white/5 shadow-2xl backdrop-blur-xl",
   cardPadding: "p-6 sm:p-8",
   empty:
     "rounded-3xl border border-dashed border-[#50A9C0]/30 bg-[#50A9C0]/10 p-6",
@@ -23,4 +32,7 @@ export const brand = {
     "mt-2 block w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-[#06111f] outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25 disabled:bg-slate-100 disabled:text-slate-600",
   tableHeader:
     "border-b border-[#50A9C0]/20 bg-[#06111f] text-xs font-black uppercase tracking-[0.12em] text-white",
+  premiumPanel:
+    "rounded-[2rem] border border-[#50A9C0]/20 bg-gradient-to-br from-white via-white to-[#50A9C0]/10 shadow-[0_24px_80px_rgba(6,17,31,0.08)]",
+  sectionContainer: "mx-auto w-full max-w-6xl px-6 lg:px-8",
 };

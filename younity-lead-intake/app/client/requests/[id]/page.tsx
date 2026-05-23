@@ -395,7 +395,7 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                     <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
                       Requested {formatDate(document.requested_at)}
                     </p>
-                    <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                    <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
                       <UploadForm
                         requests={[
                           {
