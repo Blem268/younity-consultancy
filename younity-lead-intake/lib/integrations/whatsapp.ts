@@ -36,7 +36,6 @@ type InternalWhatsAppPortalRequestInput = {
   urgency: string;
   preferredContactMethod: string;
   message: string;
-  billingNotes?: string | null;
   portalRequestId: string;
   clickUpTaskId?: string;
 };
@@ -147,7 +146,6 @@ export async function sendInternalWhatsAppPortalRequestNotification({
   urgency,
   preferredContactMethod,
   message,
-  billingNotes,
   portalRequestId,
   clickUpTaskId,
 }: InternalWhatsAppPortalRequestInput) {
@@ -171,8 +169,6 @@ export async function sendInternalWhatsAppPortalRequestNotification({
     `Preferred Contact Method: ${preferredContactMethod}`,
     "",
     `Message: ${message}`,
-    "",
-    `Billing Notes: ${billingNotes || "None"}`,
     "",
     `Portal Request ID: ${portalRequestId}`,
     `ClickUp Task ID: ${clickUpTaskId || "Not available"}`,

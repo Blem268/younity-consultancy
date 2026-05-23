@@ -39,6 +39,7 @@ type RequestBody = {
   message?: unknown;
   preferredContactMethod?: unknown;
   urgency?: unknown;
+  // Accepted for older clients only. New Request no longer sends or uses this.
   billingNotes?: unknown;
 };
 
@@ -103,7 +104,6 @@ export async function POST(request: Request) {
   const preferredContactMethod =
     getString(body.preferredContactMethod) || "No Preference";
   const urgency = getString(body.urgency) || "Normal";
-  const billingNotes = getString(body.billingNotes);
 
   if (!service) {
     return NextResponse.json(
@@ -195,7 +195,6 @@ export async function POST(request: Request) {
       message,
       preferredContactMethod,
       urgency,
-      billingNotes,
       portalRequestId: insertedRequest.id,
     });
 
@@ -297,7 +296,6 @@ export async function POST(request: Request) {
     urgency,
     preferredContactMethod,
     message,
-    billingNotes,
     portalRequestId: insertedRequest.id,
     clickUpTaskId,
   };

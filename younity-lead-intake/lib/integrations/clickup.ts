@@ -47,7 +47,6 @@ type PortalRequestTaskInput = {
   message: string;
   preferredContactMethod: string;
   urgency: string;
-  billingNotes?: string | null;
   portalRequestId: string;
 };
 
@@ -503,7 +502,6 @@ export async function createClickUpPortalRequestTask({
   message,
   preferredContactMethod,
   urgency,
-  billingNotes,
   portalRequestId,
 }: PortalRequestTaskInput) {
   if (!process.env.CLICKUP_API_TOKEN) {
@@ -536,7 +534,6 @@ export async function createClickUpPortalRequestTask({
     "- Amount Paid: 0",
     "- Balance Due: To Be Reviewed",
     "- Invoice Status: Not Ready",
-    `- Billing Notes: ${billingNotes || "None"}`,
     "",
     "Portal:",
     `- Portal Request ID: ${portalRequestId}`,

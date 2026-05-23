@@ -39,7 +39,6 @@ type PortalRequestNotificationInput = {
   urgency: string;
   preferredContactMethod: string;
   message: string;
-  billingNotes?: string | null;
   portalRequestId: string;
   clickUpTaskId?: string;
 };
@@ -240,7 +239,6 @@ export async function sendPortalRequestNotificationEmail({
   urgency,
   preferredContactMethod,
   message,
-  billingNotes,
   portalRequestId,
   clickUpTaskId,
 }: PortalRequestNotificationInput) {
@@ -272,7 +270,6 @@ export async function sendPortalRequestNotificationEmail({
         <p><strong>Urgency:</strong> ${urgency}</p>
         <p><strong>Preferred contact method:</strong> ${preferredContactMethod}</p>
         <p><strong>Message:</strong> ${message}</p>
-        <p><strong>Billing notes:</strong> ${billingNotes || "None"}</p>
 
         <h3>Integration Details</h3>
         <p><strong>Portal Request ID:</strong> ${portalRequestId}</p>

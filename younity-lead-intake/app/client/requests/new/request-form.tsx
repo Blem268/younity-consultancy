@@ -33,7 +33,6 @@ export function RequestForm() {
     preferredContactOptions[0]
   );
   const [urgency, setUrgency] = useState("Normal");
-  const [billingNotes, setBillingNotes] = useState("");
   const [documentType, setDocumentType] = useState(documentTypes[0]);
   const [documentNotes, setDocumentNotes] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
@@ -59,7 +58,6 @@ export function RequestForm() {
         message,
         preferredContactMethod,
         urgency,
-        billingNotes,
       }),
     });
 
@@ -196,23 +194,6 @@ export function RequestForm() {
             ))}
           </select>
         </div>
-      </div>
-
-      <div>
-        <label
-          htmlFor="billingNotes"
-          className="block text-sm font-medium text-slate-800"
-        >
-          Billing Notes
-        </label>
-        <textarea
-          id="billingNotes"
-          name="billingNotes"
-          value={billingNotes}
-          onChange={(event) => setBillingNotes(event.target.value)}
-          rows={4}
-          className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
-        />
       </div>
 
       <fieldset className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
