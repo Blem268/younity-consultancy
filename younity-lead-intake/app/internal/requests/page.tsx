@@ -3,11 +3,13 @@ import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AccessDenied,
+  AdminCard,
   clientLabel,
   EmptyCard,
   formatDateTime,
   formatMoney,
   getSearchParam,
+  InvoiceStatusBadge,
   InternalPage,
   logInternalQueryError,
   MutedBadge,
@@ -127,7 +129,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
             name="status"
             defaultValue={statusFilter}
             className="rounded-md border border-slate-300 px-3 py-2 font-normal"
-            placeholder="Submitted"
+            placeholder="Submitted, In Progress..."
           />
         </label>
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
@@ -136,7 +138,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
             name="invoice_status"
             defaultValue={invoiceStatusFilter}
             className="rounded-md border border-slate-300 px-3 py-2 font-normal"
-            placeholder="Ready for Billing"
+            placeholder="Ready for Billing, Paid..."
           />
         </label>
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
@@ -173,8 +175,51 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
             </p>
           </div>
         ) : requests.length ? (
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-            <table className="min-w-[1280px] w-full text-left text-sm">
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-slate-600">
+              Showing {requests.length} request{requests.length === 1 ? "" : "s"}
+              {search ? ` for clients matching "${search}"` : ""}.
+            </p>
+            <div className="grid gap-4 xl:hidden">
+              {requests.map((request) => (
+                <AdminCard key={request.id}>
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-slate-950">{request.service}</p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {request.clients ? clientLabel(request.clients) : "Client unavailable"}
+                        </p>
+                        <p className="mt-1 break-words text-xs text-slate-500">
+                          {request.clients?.email || "Email unavailable"}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/internal/requests/${request.id}`}
+                        className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                      >
+                        View detail
+                      </Link>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <StatusBadge>{request.status}</StatusBadge>
+                      <InvoiceStatusBadge>
+                        {request.invoice_status || "Invoice status unavailable"}
+                      </InvoiceStatusBadge>
+                      <MutedBadge>{request.billing_type || "Billing type unavailable"}</MutedBadge>
+                    </div>
+                    <div className="grid gap-2 text-sm text-slate-600 sm:grid-cols-2">
+                      <p>Estimated: {formatMoney(request.estimated_fee)}</p>
+                      <p>Balance: {formatMoney(request.balance_due)}</p>
+                      <p>Created: {formatDateTime(request.created_at)}</p>
+                      <p>Updated: {formatDateTime(request.updated_at)}</p>
+                    </div>
+                  </div>
+                </AdminCard>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm xl:block">
+              <table className="min-w-[1280px] w-full text-left text-sm">
               <thead className="border-b border-teal-900/10 bg-teal-50/70 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
                 <tr>
                   <th className="px-4 py-3">Request</th>
@@ -213,9 +258,9 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                     <td className="px-4 py-4">
                       <div className="flex flex-col gap-2">
                         <StatusBadge>{request.status}</StatusBadge>
-                        <MutedBadge>
+                        <InvoiceStatusBadge>
                           {request.invoice_status || "Invoice status unavailable"}
-                        </MutedBadge>
+                        </InvoiceStatusBadge>
                       </div>
                     </td>
                     <td className="px-4 py-4 text-slate-600">
@@ -246,9 +291,13 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         ) : (
-          <EmptyCard>No requests found.</EmptyCard>
+          <EmptyCard>
+            No requests found for the selected filters. Adjust status, invoice status,
+            service, or client search.
+          </EmptyCard>
         )}
       </section>
     </InternalPage>

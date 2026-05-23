@@ -4,10 +4,13 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { ClientAdminForm } from "./client-admin-form";
 import {
   AccessDenied,
+  AdminCard,
+  DocumentStatusBadge,
   EmptyCard,
   formatDate,
   formatDateTime,
   formatMoney,
+  InvoiceStatusBadge,
   InternalPage,
   isUuid,
   logInternalQueryError,
@@ -168,8 +171,10 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
       }
     >
       <section className="grid gap-5 py-8 lg:grid-cols-[1fr_0.9fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold tracking-tight">Client Details</h2>
+        <AdminCard
+          title="Client Details"
+          description="Portal profile and CRM reference fields for internal review."
+        >
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
             {[
               ["Email", client.email],
@@ -191,10 +196,12 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
               </div>
             ))}
           </dl>
-        </article>
+        </AdminCard>
 
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold tracking-tight">Edit Client Profile</h2>
+        <AdminCard
+          title="Edit Client Profile"
+          description="Update the internal profile fields already supported by admin routes."
+        >
           <ClientAdminForm
             clientId={client.id}
             fullName={client.full_name}
@@ -204,12 +211,11 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
             zohoLeadId={client.zoho_lead_id}
             zohoContactId={client.zoho_contact_id}
           />
-        </article>
+        </AdminCard>
       </section>
 
       <section className="grid gap-5 pb-8 lg:grid-cols-[1fr_0.9fr]">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold tracking-tight">Invoices</h2>
+        <AdminCard title="Invoices" description="Manual invoice records visible to staff.">
           {invoicesResult.error ? (
             <p className="mt-5 text-sm text-slate-600">
               Invoice records are unavailable right now.
@@ -222,7 +228,9 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
                     {invoice.invoice_number || "Invoice number pending"}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <StatusBadge>{invoice.status || "Status unavailable"}</StatusBadge>
+                    <InvoiceStatusBadge>
+                      {invoice.status || "Status unavailable"}
+                    </InvoiceStatusBadge>
                     <MutedBadge>{formatMoney(invoice.amount)}</MutedBadge>
                     <MutedBadge>Due {formatDate(invoice.due_date)}</MutedBadge>
                   </div>
@@ -230,16 +238,13 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
               ))}
             </div>
           ) : (
-            <p className="mt-5 text-sm text-slate-600">
-              No invoice records found.
-            </p>
+            <EmptyCard>No invoice records found for this client.</EmptyCard>
           )}
-        </article>
+        </AdminCard>
       </section>
 
       <section className="grid gap-5 pb-8 lg:grid-cols-2">
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold tracking-tight">Related Requests</h2>
+        <AdminCard title="Related Requests" description="Recent client requests and billing status.">
           {requestsResult.error ? (
             <p className="mt-5 text-sm text-slate-600">
               Requests are unavailable right now.
@@ -256,21 +261,23 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
                   </Link>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <StatusBadge>{request.status}</StatusBadge>
-                    <MutedBadge>
+                    <InvoiceStatusBadge>
                       {request.invoice_status || "Invoice status unavailable"}
-                    </MutedBadge>
+                    </InvoiceStatusBadge>
                     <MutedBadge>{formatDateTime(request.created_at)}</MutedBadge>
                   </div>
                 </div>
               ))}
             </div>
           ) : (
-            <p className="mt-5 text-sm text-slate-600">No requests found.</p>
+            <EmptyCard>No requests found for this client.</EmptyCard>
           )}
-        </article>
+        </AdminCard>
 
-        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-lg font-semibold tracking-tight">Related Documents</h2>
+        <AdminCard
+          title="Related Documents"
+          description="Recent secure uploads associated with this client."
+        >
           {documentsResult.error ? (
             <p className="mt-5 text-sm text-slate-600">
               Documents are unavailable right now.
@@ -290,7 +297,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
                       {document.document_type}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2">
-                      <StatusBadge>{document.status}</StatusBadge>
+                      <DocumentStatusBadge>{document.status}</DocumentStatusBadge>
                       <MutedBadge>{formatDateTime(document.uploaded_at)}</MutedBadge>
                     </div>
                   </div>
@@ -305,9 +312,9 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
               ))}
             </div>
           ) : (
-            <p className="mt-5 text-sm text-slate-600">No documents found.</p>
+            <EmptyCard>No documents found for this client.</EmptyCard>
           )}
-        </article>
+        </AdminCard>
       </section>
     </InternalPage>
   );

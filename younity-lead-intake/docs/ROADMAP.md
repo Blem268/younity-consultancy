@@ -33,6 +33,7 @@
 - Phase 13 central internal admin dashboard at `/internal`, summarizing workflow errors, requests, documents, billing readiness, and rate-limit records while keeping `/internal/sync` and `/internal/errors` available.
 - Phase 14 internal client, request, and document management pages at `/internal/clients`, `/internal/requests`, and `/internal/documents`, including admin-only signed document access.
 - Phase 15 controlled internal admin actions for request status updates, manual billing/invoice status updates, client-visible update notes, selected client profile edits, document review status changes, and additional document requests.
+- Phase 17 internal admin UX polish for `/internal`, `/internal/clients`, `/internal/clients/[id]`, `/internal/requests`, `/internal/requests/[id]`, `/internal/documents`, `/internal/sync`, and `/internal/errors`, including a shared internal navigation shell, clearer cards, mobile-friendly list views, improved filters, better empty states, and safer workflow error context display.
 
 ## Next Recommended Work
 
@@ -40,6 +41,7 @@
 - Move Twilio from sandbox to production WhatsApp setup.
 - Keep billing preparation in ClickUp and display synced billing/invoice status in Supabase.
 - Handle actual invoicing manually or outside the portal for now.
+- Keep email-dependent notification phases paused until the production Younity sending domain is reactivated and verified.
 - Add Cloudflare Turnstile to the public contact form if spam volume increases.
 - Add ClickUp webhook automation instead of manual sync.
 - Add client document download via signed URLs.

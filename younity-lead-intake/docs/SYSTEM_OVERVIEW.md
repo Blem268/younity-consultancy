@@ -52,11 +52,11 @@ Client portal routes use Supabase Auth and resolve each portal user through `cli
 
 Private documents are stored in the private `client-documents` Supabase bucket. The portal opens documents through a server route that verifies ownership before issuing a short-lived signed URL.
 
-The central internal dashboard at `/internal`, internal client/request/document management pages, internal sync controls, and workflow error review pages require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
+The central internal dashboard at `/internal`, internal client/request/document management pages, internal sync controls, and workflow error review pages require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Internal pages share a mobile-friendly admin navigation shell for Dashboard, Clients, Requests, Documents, Sync Controls, and Workflow Errors. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
 
 Public lead intake, portal write APIs, document upload, task updates, and internal sync wrapper routes use lightweight server-side rate limiting. Production rate limiting is backed by Supabase table `public.rate_limits`; deployments must run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
 
-Production workflow failures are written to Supabase table `public.workflow_errors` through a server-side helper that sanitizes context before insert. Admin users can review operational health at `/internal`, including workflow error counts, recent client requests, recent document uploads, billing readiness, and active rate-limit records. Admin users can review and lightly manage clients at `/internal/clients`, requests at `/internal/requests`, and documents at `/internal/documents` without using Supabase tables directly. Admin users can review the latest workflow errors at `/internal/errors`, mark errors resolved, reopen resolved errors, retry safe retryable errors when safe context is available, and store resolution notes.
+Production workflow failures are written to Supabase table `public.workflow_errors` through a server-side helper that sanitizes context before insert. Admin users can review operational health at `/internal`, including workflow error counts, recent client requests, recent document uploads, billing readiness, and active rate-limit records. Admin users can review and lightly manage clients at `/internal/clients`, requests at `/internal/requests`, and documents at `/internal/documents` without using Supabase tables directly. Phase 17 polished these internal admin pages with clearer cards, badges, search/filter controls, mobile-friendly list cards, stronger empty states, and grouped request-detail action areas. Admin users can review the latest workflow errors at `/internal/errors`, filter by status/source/severity/retryability, mark errors resolved, reopen resolved errors, retry safe retryable errors when safe context is available, and store resolution notes.
 
 The public contact form includes a hidden honeypot field. Cloudflare Turnstile is not active and remains a future option if spam increases.
 
@@ -120,6 +120,8 @@ Admin opens /internal
 -> Admin opens private documents through /api/internal/documents/[id]/open
 -> Short-lived signed Supabase Storage URL is issued after admin check
 ```
+
+Phase 17 improved the internal admin experience without changing public lead intake, client portal behavior, ClickUp integrations, Zoho CRM integrations, Resend/Twilio behavior, Supabase schema, or workflow retry behavior. ClickUp remains the operations and billing preparation hub. Email-dependent notification work remains paused until the production Younity email domain is reactivated and verified.
 
 ### D3. Controlled Internal Admin Actions
 

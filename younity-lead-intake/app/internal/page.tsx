@@ -1,7 +1,16 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
-import { InternalNav } from "./internal-ui";
+import {
+  AdminCard,
+  AccessDenied,
+  EmptyCard,
+  formatDateTime,
+  InvoiceStatusBadge,
+  InternalPage,
+  MutedBadge,
+  StatusBadge,
+} from "./internal-ui";
 
 type CardValue = string | number;
 
@@ -42,20 +51,6 @@ type ClientDocumentItem = {
     company: string | null;
   } | null;
 };
-
-function formatDateTime(value: string | null) {
-  if (!value) {
-    return "Not available";
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(new Date(value));
-}
 
 function clientLabel(
   client: { full_name: string | null; company: string | null } | null
@@ -105,33 +100,11 @@ async function getCountCard(
   };
 }
 
-function AccessDenied() {
-  return (
-    <main className="min-h-screen bg-[#f7faf8] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="border-b border-teal-900/10 pb-8">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
-            Younity Consultancy
-          </p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight">
-            Younity Internal Dashboard
-          </h1>
-        </header>
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm leading-6 text-slate-600">
-            You do not have access to this internal page.
-          </p>
-        </section>
-      </div>
-    </main>
-  );
-}
-
 export default async function InternalDashboardPage() {
   const admin = await requireInternalAdmin();
 
   if (!admin.isAdmin) {
-    return <AccessDenied />;
+    return <AccessDenied title="Younity Internal Dashboard" />;
   }
 
   const supabaseAdmin = createAdminClient();
@@ -154,7 +127,7 @@ export default async function InternalDashboardPage() {
   ] = await Promise.all([
     getCountCard(
       "Open Workflow Errors",
-      "Unresolved workflow failures.",
+      "Unresolved workflow failures that may need retry or manual resolution.",
       supabaseAdmin
         .from("workflow_errors")
         .select("id", { count: "exact", head: true })
@@ -162,7 +135,7 @@ export default async function InternalDashboardPage() {
     ),
     getCountCard(
       "Recent Client Requests",
-      "Created in the last 7 days.",
+      "Requests submitted in the last 7 days across the client portal.",
       supabaseAdmin
         .from("client_requests")
         .select("id", { count: "exact", head: true })
@@ -170,7 +143,7 @@ export default async function InternalDashboardPage() {
     ),
     getCountCard(
       "Documents Uploaded",
-      "Uploaded in the last 7 days.",
+      "Client files uploaded in the last 7 days through secure storage.",
       supabaseAdmin
         .from("client_documents")
         .select("id", { count: "exact", head: true })
@@ -178,7 +151,7 @@ export default async function InternalDashboardPage() {
     ),
     getCountCard(
       "Active Client Requests",
-      "Not completed or closed.",
+      "Requests still moving through the operations workflow.",
       supabaseAdmin
         .from("client_requests")
         .select("id", { count: "exact", head: true })
@@ -186,7 +159,7 @@ export default async function InternalDashboardPage() {
     ),
     getCountCard(
       "Ready for Billing",
-      "Requests awaiting invoice preparation.",
+      "Requests marked ready for manual invoice preparation.",
       supabaseAdmin
         .from("client_requests")
         .select("id", { count: "exact", head: true })
@@ -194,7 +167,7 @@ export default async function InternalDashboardPage() {
     ),
     getCountCard(
       "Rate Limit Records",
-      "Active rate-limit windows.",
+      "Active Supabase-backed rate-limit windows protecting public actions.",
       supabaseAdmin
         .from("rate_limits")
         .select("id", { count: "exact", head: true })
@@ -250,33 +223,22 @@ export default async function InternalDashboardPage() {
     { label: "Manage Requests", href: "/internal/requests" },
     { label: "Manage Documents", href: "/internal/documents" },
     { label: "Run Syncs", href: "/internal/sync" },
-    { label: "View Workflow Errors", href: "/internal/errors" },
-    { label: "Client Portal", href: "/client/dashboard" },
+    { label: "Workflow Errors", href: "/internal/errors" },
     { label: "Public Website", href: "/" },
     { label: "Test Lead Form", href: "/contact" },
   ];
 
   return (
-    <main className="min-h-screen bg-[#f7faf8] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="border-b border-teal-900/10 pb-8">
-          <InternalNav active="dashboard" />
-          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
-            Younity Consultancy
-          </p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-            Younity Internal Dashboard
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-            Operations, workflow health, and client portal activity.
-          </p>
-        </header>
-
+    <InternalPage
+      active="dashboard"
+      title="Younity Internal Dashboard"
+      description="Operations, workflow health, billing readiness, and client portal activity."
+    >
         <section className="grid gap-4 py-8 sm:grid-cols-2 xl:grid-cols-3">
           {summaryCards.map((card) => (
             <article
               key={card.title}
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200"
             >
               <p className="text-sm font-semibold text-slate-600">{card.title}</p>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
@@ -290,18 +252,18 @@ export default async function InternalDashboardPage() {
         </section>
 
         <section className="grid gap-5 lg:grid-cols-2">
-          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-center sm:justify-between">
-              <h2 className="text-lg font-semibold tracking-tight">
-                Recent Workflow Errors
-              </h2>
+          <AdminCard
+            title="Recent Workflow Errors"
+            description="Newest unresolved failures from workflow logging."
+            actions={
               <Link
                 href="/internal/errors"
                 className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
               >
                 View all
               </Link>
-            </div>
+            }
+          >
             {workflowErrorsResult.error ? (
               <p className="mt-5 text-sm text-slate-600">
                 Workflow errors are unavailable right now.
@@ -311,12 +273,8 @@ export default async function InternalDashboardPage() {
                 {workflowErrors.map((workflowError) => (
                   <div key={workflowError.id} className="py-4">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
-                        {workflowError.severity}
-                      </span>
-                      <span className="text-xs font-medium text-slate-500">
-                        {formatDateTime(workflowError.created_at)}
-                      </span>
+                      <StatusBadge>{workflowError.severity}</StatusBadge>
+                      <MutedBadge>{formatDateTime(workflowError.created_at)}</MutedBadge>
                     </div>
                     <p className="mt-2 text-sm font-semibold text-slate-950">
                       {workflowError.message}
@@ -328,16 +286,14 @@ export default async function InternalDashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="mt-5 text-sm text-slate-600">
-                No unresolved workflow errors.
-              </p>
+              <EmptyCard>No unresolved workflow errors. The active workflow queue is clear.</EmptyCard>
             )}
-          </article>
+          </AdminCard>
 
-          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="border-b border-slate-200 pb-4 text-lg font-semibold tracking-tight">
-              Quick Actions
-            </h2>
+          <AdminCard
+            title="Quick Actions"
+            description="Common internal routes for daily operations."
+          >
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               {quickActions.map((action) => (
                 <Link
@@ -349,14 +305,14 @@ export default async function InternalDashboardPage() {
                 </Link>
               ))}
             </div>
-          </article>
+          </AdminCard>
         </section>
 
         <section className="grid gap-5 py-8 lg:grid-cols-2">
-          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="border-b border-slate-200 pb-4 text-lg font-semibold tracking-tight">
-              Recent Client Requests
-            </h2>
+          <AdminCard
+            title="Recent Client Requests"
+            description="Latest submitted requests with status and billing readiness."
+          >
             {clientRequestsResult.error ? (
               <p className="mt-5 text-sm text-slate-600">
                 Client requests are unavailable right now.
@@ -372,12 +328,10 @@ export default async function InternalDashboardPage() {
                       {clientLabel(request.clients)}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700">
-                        {request.status}
-                      </span>
-                      <span className="rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-teal-800">
+                      <StatusBadge>{request.status}</StatusBadge>
+                      <InvoiceStatusBadge>
                         {request.invoice_status || "Invoice status unavailable"}
-                      </span>
+                      </InvoiceStatusBadge>
                     </div>
                     <p className="mt-3 text-xs text-slate-500">
                       Created {formatDateTime(request.created_at)}
@@ -389,16 +343,14 @@ export default async function InternalDashboardPage() {
                 ))}
               </div>
             ) : (
-              <p className="mt-5 text-sm text-slate-600">
-                No recent client requests.
-              </p>
+              <EmptyCard>No recent client requests in the current dashboard window.</EmptyCard>
             )}
-          </article>
+          </AdminCard>
 
-          <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
-            <h2 className="border-b border-slate-200 pb-4 text-lg font-semibold tracking-tight">
-              Recent Document Uploads
-            </h2>
+          <AdminCard
+            title="Recent Document Uploads"
+            description="Newest client uploads, kept behind admin document routes."
+          >
             {clientDocumentsResult.error ? (
               <p className="mt-5 text-sm text-slate-600">
                 Document uploads are unavailable right now.
@@ -417,24 +369,17 @@ export default async function InternalDashboardPage() {
                       {clientLabel(document.clients)}
                     </p>
                     <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                      <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-slate-700">
-                        {document.status}
-                      </span>
-                      <span className="text-xs font-medium text-slate-500">
-                        Uploaded {formatDateTime(document.uploaded_at)}
-                      </span>
+                      <StatusBadge>{document.status}</StatusBadge>
+                      <MutedBadge>Uploaded {formatDateTime(document.uploaded_at)}</MutedBadge>
                     </div>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="mt-5 text-sm text-slate-600">
-                No recent document uploads.
-              </p>
+              <EmptyCard>No recent document uploads in the current dashboard window.</EmptyCard>
             )}
-          </article>
+          </AdminCard>
         </section>
-      </div>
-    </main>
+    </InternalPage>
   );
 }

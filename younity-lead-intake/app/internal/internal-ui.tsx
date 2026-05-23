@@ -1,14 +1,4 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
-
-const internalNavItems = [
-  { label: "Dashboard", href: "/internal", key: "dashboard" },
-  { label: "Clients", href: "/internal/clients", key: "clients" },
-  { label: "Requests", href: "/internal/requests", key: "requests" },
-  { label: "Documents", href: "/internal/documents", key: "documents" },
-  { label: "Sync Controls", href: "/internal/sync", key: "sync" },
-  { label: "Workflow Errors", href: "/internal/errors", key: "errors" },
-];
 
 export type InternalNavKey =
   | "dashboard"
@@ -99,71 +89,88 @@ export function logInternalQueryError(label: string, error: unknown) {
   });
 }
 
-export function StatusBadge({ children }: { children: ReactNode }) {
+function badgeClass(tone: "teal" | "slate" | "amber" | "red" | "green" | "blue") {
+  const tones = {
+    teal: "border-teal-200 bg-teal-50 text-teal-800",
+    slate: "border-slate-200 bg-slate-50 text-slate-700",
+    amber: "border-amber-200 bg-amber-50 text-amber-800",
+    red: "border-red-200 bg-red-50 text-red-800",
+    green: "border-green-200 bg-green-50 text-green-800",
+    blue: "border-sky-200 bg-sky-50 text-sky-800",
+  };
+
+  return tones[tone];
+}
+
+export function Badge({
+  children,
+  tone = "slate",
+}: {
+  children: ReactNode;
+  tone?: "teal" | "slate" | "amber" | "red" | "green" | "blue";
+}) {
   return (
-    <span className="inline-flex w-fit rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
+    <span
+      className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-xs font-semibold ${badgeClass(
+        tone
+      )}`}
+    >
       {children}
     </span>
   );
 }
 
+export function StatusBadge({ children }: { children: ReactNode }) {
+  const value = String(children).toLowerCase();
+  const tone =
+    value.includes("complete") || value.includes("approved") || value.includes("resolved")
+      ? "green"
+      : value.includes("hold") || value.includes("needs") || value.includes("warning")
+        ? "amber"
+        : value.includes("reject") || value.includes("error") || value.includes("failed")
+          ? "red"
+          : "teal";
+
+  return <Badge tone={tone}>{children}</Badge>;
+}
+
+export function InvoiceStatusBadge({ children }: { children: ReactNode }) {
+  const value = String(children).toLowerCase();
+  const tone =
+    value.includes("ready")
+      ? "green"
+      : value.includes("paid")
+        ? "teal"
+        : value.includes("overdue") || value.includes("failed")
+          ? "red"
+          : value.includes("pending") || value.includes("draft")
+            ? "amber"
+            : "slate";
+
+  return <Badge tone={tone}>{children}</Badge>;
+}
+
+export function DocumentStatusBadge({ children }: { children: ReactNode }) {
+  return <StatusBadge>{children}</StatusBadge>;
+}
+
 export function MutedBadge({ children }: { children: ReactNode }) {
-  return (
-    <span className="inline-flex w-fit rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-700">
-      {children}
-    </span>
-  );
+  return <Badge tone="slate">{children}</Badge>;
 }
 
 export function AccessDenied({ title }: { title: string }) {
   return (
-    <main className="min-h-screen bg-[#f7faf8] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="border-b border-teal-900/10 pb-8">
-          <InternalNav active="dashboard" />
-          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
-            Younity Consultancy
-          </p>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight">{title}</h1>
-        </header>
-        <section className="mt-8 rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-          <p className="text-sm leading-6 text-slate-600">
-            You do not have access to this internal page.
-          </p>
-        </section>
-      </div>
-    </main>
-  );
-}
-
-export function InternalNav({ active }: { active: InternalNavKey }) {
-  return (
-    <nav aria-label="Internal navigation" className="overflow-x-auto">
-      <div className="flex min-w-max gap-2">
-        {internalNavItems.map((item) => {
-          const isActive = item.key === active;
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
-                isActive
-                  ? "bg-teal-700 text-white shadow-sm"
-                  : "text-slate-700 hover:bg-teal-50 hover:text-teal-900"
-              }`}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
-      </div>
-    </nav>
+    <section className="py-8">
+      <AdminCard title={title}>
+        <p className="text-sm leading-6 text-slate-600">
+          You do not have access to this internal page.
+        </p>
+      </AdminCard>
+    </section>
   );
 }
 
 export function InternalPage({
-  active,
   title,
   description,
   children,
@@ -176,30 +183,27 @@ export function InternalPage({
   actions?: ReactNode;
 }) {
   return (
-    <main className="min-h-screen bg-[#f7faf8] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
-      <div className="mx-auto w-full max-w-6xl">
-        <header className="border-b border-teal-900/10 pb-8">
-          <InternalNav active={active} />
-          <div className="mt-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
-                Younity Consultancy
+    <>
+      <div className="border-b border-teal-900/10 py-6">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+              Younity Consultancy
+            </p>
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+              {title}
+            </h1>
+            {description ? (
+              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                {description}
               </p>
-              <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
-                {title}
-              </h1>
-              {description ? (
-                <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                  {description}
-                </p>
-              ) : null}
-            </div>
-            {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+            ) : null}
           </div>
-        </header>
-        {children}
+          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+        </div>
       </div>
-    </main>
+      {children}
+    </>
   );
 }
 
@@ -208,5 +212,38 @@ export function EmptyCard({ children }: { children: ReactNode }) {
     <div className="rounded-lg border border-dashed border-teal-900/20 bg-teal-50/40 p-5">
       <p className="text-sm font-semibold text-slate-950">{children}</p>
     </div>
+  );
+}
+
+export function AdminCard({
+  title,
+  description,
+  children,
+  actions,
+  className = "",
+}: {
+  title?: string;
+  description?: string;
+  children: ReactNode;
+  actions?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <article className={`rounded-lg border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
+      {title || actions ? (
+        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            {title ? (
+              <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+            ) : null}
+            {description ? (
+              <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+            ) : null}
+          </div>
+          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+        </div>
+      ) : null}
+      <div className={title || actions ? "mt-5" : ""}>{children}</div>
+    </article>
   );
 }

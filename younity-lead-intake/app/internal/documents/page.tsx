@@ -3,7 +3,9 @@ import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AccessDenied,
+  AdminCard,
   clientLabel,
+  DocumentStatusBadge,
   EmptyCard,
   formatDateTime,
   getSearchParam,
@@ -11,7 +13,6 @@ import {
   logInternalQueryError,
   MutedBadge,
   sanitizeSearchParam,
-  StatusBadge,
 } from "../internal-ui";
 import { DocumentStatusForm } from "./document-status-form";
 
@@ -90,10 +91,14 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
     documentsQuery = documentsQuery.eq("status", statusFilter);
   }
 
-  if (matchedClientIds) {
-    documentsQuery = matchedClientIds.length
-      ? documentsQuery.in("client_id", matchedClientIds)
-      : documentsQuery.eq("client_id", "00000000-0000-4000-8000-000000000000");
+  if (search) {
+    const searchConditions = [`file_name.ilike.*${search}*`];
+
+    if (matchedClientIds?.length) {
+      searchConditions.push(`client_id.in.(${matchedClientIds.join(",")})`);
+    }
+
+    documentsQuery = documentsQuery.or(searchConditions.join(","));
   }
 
   const { data: documentsData, error: documentsError } =
@@ -136,7 +141,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
             name="search"
             defaultValue={search}
             className="rounded-md border border-slate-300 px-3 py-2 font-normal"
-            placeholder="Name, company, or email"
+            placeholder="Client, company, email, or file"
           />
         </label>
         <button
@@ -155,8 +160,62 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
             </p>
           </div>
         ) : documents.length ? (
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-            <table className="min-w-[1120px] w-full text-left text-sm">
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-slate-600">
+              Showing {documents.length} document{documents.length === 1 ? "" : "s"}.
+            </p>
+            <div className="grid gap-4 xl:hidden">
+              {documents.map((document) => (
+                <AdminCard key={document.id}>
+                  <div className="space-y-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="break-words font-semibold text-slate-950">
+                          {document.file_name}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {document.document_type}
+                        </p>
+                        <p className="mt-1 text-sm text-slate-600">
+                          {document.clients
+                            ? clientLabel(document.clients)
+                            : "Client unavailable"}
+                        </p>
+                      </div>
+                      <Link
+                        href={`/api/internal/documents/${document.id}/open`}
+                        prefetch={false}
+                        className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                      >
+                        Open document
+                      </Link>
+                    </div>
+                    <div className="flex flex-wrap gap-2">
+                      <DocumentStatusBadge>{document.status}</DocumentStatusBadge>
+                      <MutedBadge>{formatDateTime(document.uploaded_at)}</MutedBadge>
+                    </div>
+                    {document.request_id ? (
+                      <Link
+                        href={`/internal/requests/${document.request_id}`}
+                        className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
+                      >
+                        {document.client_requests?.service || "View related request"}
+                      </Link>
+                    ) : (
+                      <p className="text-sm text-slate-600">No request linked</p>
+                    )}
+                    <div className="rounded-md border border-slate-200 bg-slate-50 p-4">
+                      <DocumentStatusForm
+                        documentId={document.id}
+                        currentStatus={document.status}
+                      />
+                    </div>
+                  </div>
+                </AdminCard>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm xl:block">
+              <table className="min-w-[1120px] w-full text-left text-sm">
               <thead className="border-b border-teal-900/10 bg-teal-50/70 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
                 <tr>
                   <th className="px-4 py-3">Document</th>
@@ -201,7 +260,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                       ) : null}
                     </td>
                     <td className="px-4 py-4">
-                      <StatusBadge>{document.status}</StatusBadge>
+                      <DocumentStatusBadge>{document.status}</DocumentStatusBadge>
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       {document.notes || "Not available"}
@@ -221,16 +280,20 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                         prefetch={false}
                         className="inline-flex rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
                       >
-                        Open
+                        Open document
                       </Link>
                     </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+            </div>
           </div>
         ) : (
-          <EmptyCard>No documents found.</EmptyCard>
+          <EmptyCard>
+            No documents found for the selected filters. Private files remain
+            accessible only through the admin open route.
+          </EmptyCard>
         )}
       </section>
     </InternalPage>

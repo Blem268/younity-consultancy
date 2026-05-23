@@ -105,6 +105,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Test `/internal/errors` after deployment.
 - Test `/internal` after deployment.
 - Test `/internal/clients`, `/internal/requests`, and `/internal/documents` after deployment.
+- Test `/internal/clients/[id]` and `/internal/requests/[id]` after deployment.
 
 ### G. Production Test Plan
 
@@ -122,7 +123,10 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Run internal billing sync.
 - Confirm `/internal` summarizes workflow errors, client requests, document uploads, billing readiness, and active rate-limit records for an authorized admin.
 - Confirm `/internal` links to client, request, document, sync, and workflow error management pages.
+- Confirm the shared internal navigation highlights Dashboard, Clients, Requests, Documents, Sync Controls, and Workflow Errors on desktop and mobile widths.
 - Confirm authorized admins can review `/internal/clients`, `/internal/requests`, and `/internal/documents`.
+- Confirm internal client, request, document, and workflow error filters/search return expected results and useful empty states.
+- Confirm workflow error sanitized context remains collapsed by default and does not display tokens, passwords, keys, authorization headers, cookies, credentials, or raw email addresses.
 - Confirm authorized admins can open private documents only through `/api/internal/documents/[id]/open` and receive a short-lived signed URL.
 - Confirm workflow errors can be reviewed at `/internal/errors` by an authorized admin.
 - Confirm authorized admins can mark workflow errors resolved with an optional note.
@@ -189,6 +193,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm `INTERNAL_SYNC_SECRET` is set to a strong random value.
 - Confirm `/internal` is protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `/internal/clients`, `/internal/requests`, and `/internal/documents` are protected by `INTERNAL_ADMIN_EMAILS`.
+- Confirm `/internal/clients/[id]` and `/internal/requests/[id]` are protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `/internal/sync` is protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `/internal/errors` remains protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `INTERNAL_ADMIN_EMAILS` contains only authorized internal admin email addresses, separated by commas.
@@ -236,6 +241,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm request status and billing actions update only allowlisted `client_requests` fields and add client timeline entries only when intended.
 - Confirm client profile admin edits cannot change `id`, `user_id`, `email`, or `created_at`.
 - Confirm document review actions update only document status and never expose private file URLs.
+- Confirm internal document open buttons use `/api/internal/documents/[id]/open` and do not expose public file URLs.
 - Confirm additional document requests create client timeline updates and do not create placeholder records while `client_documents.file_path` is required.
 - Confirm workflow error logs are sanitized and never include secrets.
 - Confirm workflow error resolution notes do not include secrets or raw provider payloads.
@@ -245,6 +251,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm Zoho CRM lead creation, ClickUp task creation, Supabase storage uploads, Supabase document metadata inserts, request creation, auth/authorization failures, and validation failures are not configured for automatic retry.
 - Keep Sentry or another external error tracker as a future monitoring option.
 - Confirm API keys and OAuth refresh tokens have an owner and rotation cadence.
+- Confirm email-dependent notification phases remain paused until Younity email is reactivated and verified.
 
 ## Final Verification
 

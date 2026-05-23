@@ -3,6 +3,7 @@ import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AccessDenied,
+  AdminCard,
   EmptyCard,
   formatDateTime,
   InternalPage,
@@ -135,60 +136,115 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
             </p>
           </div>
         ) : clients.length ? (
-          <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm">
-            <table className="min-w-[980px] w-full text-left text-sm">
-              <thead className="border-b border-teal-900/10 bg-teal-50/70 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
-                <tr>
-                  <th className="px-4 py-3">Client</th>
-                  <th className="px-4 py-3">Contact</th>
-                  <th className="px-4 py-3">Company</th>
-                  <th className="px-4 py-3">Preferred</th>
-                  <th className="px-4 py-3">Requests</th>
-                  <th className="px-4 py-3">Documents</th>
-                  <th className="px-4 py-3">Created</th>
-                  <th className="px-4 py-3 text-right">Details</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200">
-                {clients.map((client) => (
-                  <tr key={client.id}>
-                    <td className="px-4 py-4">
+          <div className="space-y-4">
+            <p className="text-sm font-medium text-slate-600">
+              Showing {clients.length} client{clients.length === 1 ? "" : "s"}
+              {search ? ` matching "${search}"` : ""}.
+            </p>
+            <div className="grid gap-4 lg:hidden">
+              {clients.map((client) => (
+                <AdminCard key={client.id}>
+                  <div className="flex flex-col gap-4">
+                    <div>
                       <p className="font-semibold text-slate-950">{client.full_name}</p>
-                      <p className="mt-1 text-xs text-slate-500">{client.email}</p>
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {client.phone || "Not available"}
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {client.company || "Not available"}
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {client.preferred_contact_method || "Not available"}
-                    </td>
-                    <td className="px-4 py-4 font-semibold text-slate-800">
-                      {requestCounts.get(client.id) ?? 0}
-                    </td>
-                    <td className="px-4 py-4 font-semibold text-slate-800">
-                      {documentCounts.get(client.id) ?? 0}
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {formatDateTime(client.created_at)}
-                    </td>
-                    <td className="px-4 py-4 text-right">
+                      <p className="mt-1 break-words text-sm text-slate-600">
+                        {client.email}
+                      </p>
+                      <p className="mt-1 text-sm text-slate-600">
+                        {client.company || "Company not listed"}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                          Requests
+                        </p>
+                        <p className="mt-1 text-lg font-semibold">
+                          {requestCounts.get(client.id) ?? 0}
+                        </p>
+                      </div>
+                      <div className="rounded-md border border-slate-200 bg-slate-50 p-3">
+                        <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                          Documents
+                        </p>
+                        <p className="mt-1 text-lg font-semibold">
+                          {documentCounts.get(client.id) ?? 0}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-xs text-slate-500">
+                        Created {formatDateTime(client.created_at)}
+                      </p>
                       <Link
                         href={`/internal/clients/${client.id}`}
-                        className="font-semibold text-teal-700 transition hover:text-teal-900"
+                        className="rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
                       >
-                        View
+                        View detail
                       </Link>
-                    </td>
+                    </div>
+                  </div>
+                </AdminCard>
+              ))}
+            </div>
+            <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm lg:block">
+              <table className="min-w-[980px] w-full text-left text-sm">
+                <thead className="border-b border-teal-900/10 bg-teal-50/70 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
+                  <tr>
+                    <th className="px-4 py-3">Client</th>
+                    <th className="px-4 py-3">Contact</th>
+                    <th className="px-4 py-3">Company</th>
+                    <th className="px-4 py-3">Preferred</th>
+                    <th className="px-4 py-3">Requests</th>
+                    <th className="px-4 py-3">Documents</th>
+                    <th className="px-4 py-3">Created</th>
+                    <th className="px-4 py-3 text-right">Details</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {clients.map((client) => (
+                    <tr key={client.id}>
+                      <td className="px-4 py-4">
+                        <p className="font-semibold text-slate-950">{client.full_name}</p>
+                        <p className="mt-1 text-xs text-slate-500">{client.email}</p>
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {client.phone || "Not available"}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {client.company || "Not available"}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {client.preferred_contact_method || "Not available"}
+                      </td>
+                      <td className="px-4 py-4 font-semibold text-slate-800">
+                        {requestCounts.get(client.id) ?? 0}
+                      </td>
+                      <td className="px-4 py-4 font-semibold text-slate-800">
+                        {documentCounts.get(client.id) ?? 0}
+                      </td>
+                      <td className="px-4 py-4 text-slate-600">
+                        {formatDateTime(client.created_at)}
+                      </td>
+                      <td className="px-4 py-4 text-right">
+                        <Link
+                          href={`/internal/clients/${client.id}`}
+                          className="font-semibold text-teal-700 transition hover:text-teal-900"
+                        >
+                          View
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         ) : (
-          <EmptyCard>No clients found.</EmptyCard>
+          <EmptyCard>
+            No clients found{search ? " for this search." : "."} Try a different name,
+            email, or company.
+          </EmptyCard>
         )}
       </section>
     </InternalPage>
