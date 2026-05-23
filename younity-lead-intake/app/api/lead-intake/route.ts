@@ -145,8 +145,17 @@ export async function POST(request: Request) {
       source: "lead-intake.google-sheets",
       severity: "warning",
       message: "Google Sheets lead logging failed.",
+      retryable: true,
+      retryStatus: "ready",
       context: {
         error,
+        retryType: "google_sheets_log",
+        retryPayload: {
+          lead,
+          zohoLeadId,
+          clickUpTaskId,
+          status: integrationErrors.length ? "Partial Success" : "Received",
+        },
         leadEmail: lead.email,
         service: lead.service,
         clickUpTaskId,
@@ -172,8 +181,20 @@ export async function POST(request: Request) {
       source: "lead-intake.email",
       severity: "warning",
       message: "Lead notification email failed.",
+      retryable: true,
+      retryStatus: "ready",
       context: {
         error,
+        retryType: "resend_email",
+        retryPayload: {
+          emailKind: "lead_notification",
+          input: {
+            lead,
+            zohoLeadId,
+            clickUpTaskId,
+            clickUpTaskUrl,
+          },
+        },
         leadEmail: lead.email,
         service: lead.service,
         clickUpTaskId,
@@ -198,8 +219,17 @@ export async function POST(request: Request) {
       source: "lead-intake.client-email",
       severity: "warning",
       message: "Client confirmation email failed.",
+      retryable: true,
+      retryStatus: "ready",
       context: {
         error,
+        retryType: "resend_email",
+        retryPayload: {
+          emailKind: "client_confirmation",
+          input: {
+            lead,
+          },
+        },
         leadEmail: lead.email,
         service: lead.service,
       },
@@ -225,8 +255,19 @@ export async function POST(request: Request) {
       source: "lead-intake.whatsapp",
       severity: "warning",
       message: "Internal WhatsApp lead notification failed.",
+      retryable: true,
+      retryStatus: "ready",
       context: {
         error,
+        retryType: "twilio_whatsapp",
+        retryPayload: {
+          whatsappKind: "lead_notification",
+          input: {
+            lead,
+            zohoLeadId,
+            clickUpTaskId,
+          },
+        },
         leadEmail: lead.email,
         service: lead.service,
         clickUpTaskId,

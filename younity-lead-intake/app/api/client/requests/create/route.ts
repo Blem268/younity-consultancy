@@ -310,8 +310,15 @@ export async function POST(request: Request) {
       source: "client-request-create.email",
       severity: "warning",
       message: "Portal request email notification failed.",
+      retryable: true,
+      retryStatus: "ready",
       context: {
         error,
+        retryType: "resend_email",
+        retryPayload: {
+          emailKind: "portal_request_notification",
+          input: notificationInput,
+        },
         service,
         clickUpTaskId,
       },
@@ -329,8 +336,15 @@ export async function POST(request: Request) {
       source: "client-request-create.whatsapp",
       severity: "warning",
       message: "Portal request WhatsApp notification failed.",
+      retryable: true,
+      retryStatus: "ready",
       context: {
         error,
+        retryType: "twilio_whatsapp",
+        retryPayload: {
+          whatsappKind: "portal_request_notification",
+          input: notificationInput,
+        },
         service,
         clickUpTaskId,
       },
