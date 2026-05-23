@@ -32,6 +32,7 @@
 - Phase 12C controlled retry actions for safe retryable workflow errors.
 - Phase 13 central internal admin dashboard at `/internal`, summarizing workflow errors, requests, documents, billing readiness, and rate-limit records while keeping `/internal/sync` and `/internal/errors` available.
 - Phase 14 internal client, request, and document management pages at `/internal/clients`, `/internal/requests`, and `/internal/documents`, including admin-only signed document access.
+- Phase 15 controlled internal admin actions for request status updates, manual billing/invoice status updates, client-visible update notes, selected client profile edits, document review status changes, and additional document requests.
 
 ## Next Recommended Work
 
@@ -42,7 +43,6 @@
 - Add Cloudflare Turnstile to the public contact form if spam volume increases.
 - Add ClickUp webhook automation instead of manual sync.
 - Add client document download via signed URLs.
-- Add internal edit/actions for safe client profile maintenance if operationally needed.
 - Perform multi-client testing.
 - Add duplicate Zoho handling.
 - Add production monitoring and error tracking.

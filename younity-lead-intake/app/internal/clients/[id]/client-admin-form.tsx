@@ -1,0 +1,150 @@
+"use client";
+
+import { useRouter } from "next/navigation";
+import { useState, type FormEvent } from "react";
+
+const preferredContactOptions = [
+  "Email",
+  "Phone Call",
+  "WhatsApp",
+  "No Preference",
+];
+
+export function ClientAdminForm({
+  clientId,
+  fullName,
+  phone,
+  company,
+  preferredContactMethod,
+  zohoLeadId,
+  zohoContactId,
+}: {
+  clientId: string;
+  fullName: string;
+  phone: string | null;
+  company: string | null;
+  preferredContactMethod: string | null;
+  zohoLeadId: string | null;
+  zohoContactId: string | null;
+}) {
+  const router = useRouter();
+  const [fullNameValue, setFullNameValue] = useState(fullName);
+  const [phoneValue, setPhoneValue] = useState(phone || "");
+  const [companyValue, setCompanyValue] = useState(company || "");
+  const [preferredContactValue, setPreferredContactValue] = useState(
+    preferredContactMethod || "No Preference"
+  );
+  const [zohoLeadIdValue, setZohoLeadIdValue] = useState(zohoLeadId || "");
+  const [zohoContactIdValue, setZohoContactIdValue] = useState(zohoContactId || "");
+  const [message, setMessage] = useState("");
+  const [isError, setIsError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMessage("");
+    setIsError(false);
+    setIsSubmitting(true);
+
+    const response = await fetch(`/api/internal/clients/${clientId}/update`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        fullName: fullNameValue,
+        phone: phoneValue,
+        company: companyValue,
+        preferredContactMethod: preferredContactValue,
+        zohoLeadId: zohoLeadIdValue,
+        zohoContactId: zohoContactIdValue,
+      }),
+    });
+    const result = (await response.json()) as { message?: string };
+
+    setMessage(result.message || "Client profile updated.");
+    setIsError(!response.ok);
+    setIsSubmitting(false);
+
+    if (response.ok) {
+      router.refresh();
+    }
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-5 space-y-4">
+      <label className="block text-sm font-medium text-slate-800">
+        Full Name
+        <input
+          value={fullNameValue}
+          onChange={(event) => setFullNameValue(event.target.value)}
+          required
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+        />
+      </label>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm font-medium text-slate-800">
+          Phone
+          <input
+            value={phoneValue}
+            onChange={(event) => setPhoneValue(event.target.value)}
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          />
+        </label>
+        <label className="block text-sm font-medium text-slate-800">
+          Company
+          <input
+            value={companyValue}
+            onChange={(event) => setCompanyValue(event.target.value)}
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          />
+        </label>
+      </div>
+
+      <label className="block text-sm font-medium text-slate-800">
+        Preferred Contact Method
+        <select
+          value={preferredContactValue}
+          onChange={(event) => setPreferredContactValue(event.target.value)}
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+        >
+          {preferredContactOptions.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="block text-sm font-medium text-slate-800">
+          Zoho Lead ID
+          <input
+            value={zohoLeadIdValue}
+            onChange={(event) => setZohoLeadIdValue(event.target.value)}
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          />
+        </label>
+        <label className="block text-sm font-medium text-slate-800">
+          Zoho Contact ID
+          <input
+            value={zohoContactIdValue}
+            onChange={(event) => setZohoContactIdValue(event.target.value)}
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          />
+        </label>
+      </div>
+
+      <div aria-live="polite" className={isError ? "text-red-700" : "text-teal-700"}>
+        {message ? <p className="text-sm font-medium">{message}</p> : null}
+      </div>
+
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+      >
+        {isSubmitting ? "Updating..." : "Update Client"}
+      </button>
+    </form>
+  );
+}

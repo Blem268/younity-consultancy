@@ -14,7 +14,7 @@ The Next.js website provides the public homepage, contact form, and client porta
 
 ### Supabase
 
-Supabase provides client portal authentication, client-facing tables, request records, update timelines, private document storage, production rate limiting, and sanitized internal workflow error logs.
+Supabase provides client portal authentication, client-facing tables, request records, update timelines, private document storage, production rate limiting, sanitized internal workflow error logs, and controlled internal admin mutations for lightweight portal visibility updates.
 
 ### ClickUp
 
@@ -56,7 +56,7 @@ The central internal dashboard at `/internal`, internal client/request/document 
 
 Public lead intake, portal write APIs, document upload, task updates, and internal sync wrapper routes use lightweight server-side rate limiting. Production rate limiting is backed by Supabase table `public.rate_limits`; deployments must run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
 
-Production workflow failures are written to Supabase table `public.workflow_errors` through a server-side helper that sanitizes context before insert. Admin users can review operational health at `/internal`, including workflow error counts, recent client requests, recent document uploads, billing readiness, and active rate-limit records. Admin users can review clients at `/internal/clients`, requests at `/internal/requests`, and documents at `/internal/documents` without using Supabase tables directly. Admin users can review the latest workflow errors at `/internal/errors`, mark errors resolved, reopen resolved errors, retry safe retryable errors when safe context is available, and store resolution notes.
+Production workflow failures are written to Supabase table `public.workflow_errors` through a server-side helper that sanitizes context before insert. Admin users can review operational health at `/internal`, including workflow error counts, recent client requests, recent document uploads, billing readiness, and active rate-limit records. Admin users can review and lightly manage clients at `/internal/clients`, requests at `/internal/requests`, and documents at `/internal/documents` without using Supabase tables directly. Admin users can review the latest workflow errors at `/internal/errors`, mark errors resolved, reopen resolved errors, retry safe retryable errors when safe context is available, and store resolution notes.
 
 The public contact form includes a hidden honeypot field. Cloudflare Turnstile is not active and remains a future option if spam increases.
 
@@ -120,6 +120,19 @@ Admin opens /internal
 -> Admin opens private documents through /api/internal/documents/[id]/open
 -> Short-lived signed Supabase Storage URL is issued after admin check
 ```
+
+### D3. Controlled Internal Admin Actions
+
+```text
+Admin opens an internal management page
+-> Supabase Auth and INTERNAL_ADMIN_EMAILS are checked
+-> Admin updates request status, manual billing fields, client profile fields, or document review status
+-> Server API route validates UUIDs, allowed values, and allowed fields
+-> Supabase portal tables are updated server-side
+-> Relevant client_updates timeline entries are added for client-visible updates
+```
+
+Phase 15 added controlled admin actions for portal visibility and lightweight management only. Request status, manual billing/invoice status, client-visible update notes, selected client profile fields, document review status, and additional document requests are handled through admin-only API routes. ClickUp remains the operations and billing preparation hub. Zoho Books remains inactive and no Zoho Books calls are made.
 
 ### E. Workflow Error Review
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { ClientAdminForm } from "./client-admin-form";
 import {
   AccessDenied,
   EmptyCard,
@@ -192,6 +193,21 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
           </dl>
         </article>
 
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold tracking-tight">Edit Client Profile</h2>
+          <ClientAdminForm
+            clientId={client.id}
+            fullName={client.full_name}
+            phone={client.phone}
+            company={client.company}
+            preferredContactMethod={client.preferred_contact_method}
+            zohoLeadId={client.zoho_lead_id}
+            zohoContactId={client.zoho_contact_id}
+          />
+        </article>
+      </section>
+
+      <section className="grid gap-5 pb-8 lg:grid-cols-[1fr_0.9fr]">
         <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
           <h2 className="text-lg font-semibold tracking-tight">Invoices</h2>
           {invoicesResult.error ? (

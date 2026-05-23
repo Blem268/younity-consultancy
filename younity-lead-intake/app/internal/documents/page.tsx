@@ -13,6 +13,7 @@ import {
   sanitizeSearchParam,
   StatusBadge,
 } from "../internal-ui";
+import { DocumentStatusForm } from "./document-status-form";
 
 type PageProps = {
   searchParams: Promise<{
@@ -164,6 +165,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Notes</th>
                   <th className="px-4 py-3">Uploaded</th>
+                  <th className="px-4 py-3">Review</th>
                   <th className="px-4 py-3 text-right">Open</th>
                 </tr>
               </thead>
@@ -206,6 +208,12 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                     </td>
                     <td className="px-4 py-4">
                       <MutedBadge>{formatDateTime(document.uploaded_at)}</MutedBadge>
+                    </td>
+                    <td className="px-4 py-4 align-top">
+                      <DocumentStatusForm
+                        documentId={document.id}
+                        currentStatus={document.status}
+                      />
                     </td>
                     <td className="px-4 py-4 text-right">
                       <Link

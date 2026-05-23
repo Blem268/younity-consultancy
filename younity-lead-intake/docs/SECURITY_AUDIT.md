@@ -255,7 +255,7 @@ Implementation notes:
 
 ## Internal Management Pages
 
-Phase 14 added read-only internal management pages for client operations review.
+Phase 14 added read-only internal management pages for client operations review. Phase 15 added controlled admin actions to those management pages.
 
 Implementation notes:
 
@@ -264,6 +264,11 @@ Implementation notes:
 - Management pages use server-side Supabase admin queries after the admin check and do not expose the service role key to browser code.
 - `/api/internal/documents/[id]/open` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`, validates document UUIDs, and redirects to a short-lived Supabase Storage signed URL.
 - The internal document list and related document sections do not render public file URLs or long-lived private storage paths.
+- Admin mutation routes require Supabase auth and `INTERNAL_ADMIN_EMAILS` before changing portal records.
+- Admin mutation routes validate UUID route params, validate allowed enum values, and update only allowlisted fields.
+- Request status, manual billing/invoice status, client-visible update notes, selected client profile fields, document review status, and additional document requests are handled server-side through `/api/internal/*` routes.
+- Relevant admin actions add `client_updates` timeline entries when the update should be visible to the client.
+- Admin action failures are logged through sanitized workflow error logging sources such as `internal_request_status_update`, `internal_request_billing_update`, `internal_client_update`, `internal_document_status_update`, and `internal_document_request`.
 - ClickUp remains the operations and billing preparation hub. Request pages display ClickUp task IDs only, not private ClickUp URLs.
 - Billing remains ClickUp-based/manual; Zoho Books is not active and was not reintroduced.
 
@@ -293,6 +298,7 @@ Implementation notes:
 - Added admin-only workflow error retry controls for safe retryable failures.
 - Added admin-only `/internal` dashboard for workflow health, client portal activity, billing readiness, rate-limit records, and quick links to existing internal tools.
 - Added admin-only client, request, and document management pages plus a short-lived admin document signed URL route.
+- Added admin-only controlled actions for request status, manual billing/invoice status, client update notes, selected client profile fields, document review status, and additional document requests.
 - Kept ClickUp billing sync and Supabase billing display active.
 - Confirmed Zoho Books integration is not active.
 
@@ -335,6 +341,12 @@ Implementation notes:
 - Logged-out users cannot access `/internal/clients`, `/internal/requests`, or `/internal/documents`.
 - Non-admin users cannot access internal client, request, or document management pages.
 - Non-admin users cannot call `/api/internal/documents/[id]/open`.
+- Non-admin users cannot call request status, billing, update-note, document-request, client update, or document status admin action routes.
+- Admin request status updates only accept the configured request status list and update `client_requests.status`.
+- Admin billing updates only accept the configured invoice status list and update manual billing fields plus the generic invoice ID field.
+- Admin client profile updates cannot change `id`, `user_id`, `email`, or `created_at`.
+- Admin document status updates only accept the configured document review status list and do not expose private file URLs.
+- Additional document requests create client timeline updates and do not create placeholder document rows while `client_documents.file_path` is required.
 - Internal document open links generate short-lived signed URLs only after admin checks.
 - Non-admin users cannot access `/internal/errors`.
 - Non-admin users cannot call workflow error resolve or reopen API routes.

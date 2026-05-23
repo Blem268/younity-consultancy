@@ -232,6 +232,11 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm monitoring/error tracking is configured with secret redaction before broad production use.
 - Confirm internal request pages display ClickUp task IDs only and do not expose ClickUp API tokens or private URLs.
 - Confirm billing remains ClickUp-based/manual and no Zoho Books integration or `ZOHO_BOOKS_*` environment variables are introduced.
+- Confirm Phase 15 admin action routes require Supabase auth plus `INTERNAL_ADMIN_EMAILS`.
+- Confirm request status and billing actions update only allowlisted `client_requests` fields and add client timeline entries only when intended.
+- Confirm client profile admin edits cannot change `id`, `user_id`, `email`, or `created_at`.
+- Confirm document review actions update only document status and never expose private file URLs.
+- Confirm additional document requests create client timeline updates and do not create placeholder records while `client_documents.file_path` is required.
 - Confirm workflow error logs are sanitized and never include secrets.
 - Confirm workflow error resolution notes do not include secrets or raw provider payloads.
 - Confirm retry actions are admin-triggered only and limited to Google Sheets logging, Resend notifications, Twilio notifications, and ClickUp comment/attachment failures.

@@ -1,6 +1,10 @@
 import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { AddClientUpdateForm } from "./add-client-update-form";
+import { RequestBillingForm } from "./request-billing-form";
+import { RequestDocumentForm } from "./request-document-form";
+import { RequestStatusForm } from "./request-status-form";
 import {
   AccessDenied,
   clientLabel,
@@ -209,7 +213,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
               ["Deposit Required", formatMoney(request.deposit_required)],
               ["Amount Paid", formatMoney(request.amount_paid)],
               ["Balance Due", formatMoney(request.balance_due)],
-              ["Invoice ID Field", request.zoho_books_invoice_id || "Not available"],
+              ["Invoice ID", request.zoho_books_invoice_id || "Not available"],
               ["Created", formatDateTime(request.created_at)],
               ["Updated", formatDateTime(request.updated_at)],
             ].map(([label, value]) => (
@@ -255,6 +259,42 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
           ) : (
             <p className="mt-5 text-sm text-slate-600">Client unavailable.</p>
           )}
+        </article>
+      </section>
+
+      <section className="grid gap-5 pb-8 lg:grid-cols-2">
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold tracking-tight">Update Status</h2>
+          <RequestStatusForm
+            requestId={request.id}
+            currentStatus={request.status}
+          />
+        </article>
+
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold tracking-tight">Update Billing</h2>
+          <RequestBillingForm
+            requestId={request.id}
+            billingType={request.billing_type}
+            estimatedFee={request.estimated_fee}
+            depositRequired={request.deposit_required}
+            amountPaid={request.amount_paid}
+            balanceDue={request.balance_due}
+            invoiceStatus={request.invoice_status}
+            invoiceId={request.zoho_books_invoice_id}
+          />
+        </article>
+      </section>
+
+      <section className="grid gap-5 pb-8 lg:grid-cols-2">
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold tracking-tight">Add Client Update</h2>
+          <AddClientUpdateForm requestId={request.id} />
+        </article>
+
+        <article className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+          <h2 className="text-lg font-semibold tracking-tight">Request Document</h2>
+          <RequestDocumentForm requestId={request.id} />
         </article>
       </section>
 
