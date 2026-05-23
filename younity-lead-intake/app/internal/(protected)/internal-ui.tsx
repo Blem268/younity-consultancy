@@ -12,6 +12,7 @@ import {
 export type InternalNavKey =
   | "dashboard"
   | "clients"
+  | "onboarding"
   | "requests"
   | "documents"
   | "sync"

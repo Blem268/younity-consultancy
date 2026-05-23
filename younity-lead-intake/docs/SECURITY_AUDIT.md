@@ -1,6 +1,6 @@
 # Security Audit
 
-Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase. Phase 12A added sanitized workflow error logging backed by Supabase. Phase 12B added admin resolution and reopen controls for workflow errors. Phase 12C added controlled admin retries for safe retryable workflow errors. Phase 18 added ClickUp webhook automation with signature verification and Supabase-backed idempotency.
+Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase. Phase 12A added sanitized workflow error logging backed by Supabase. Phase 12B added admin resolution and reopen controls for workflow errors. Phase 12C added controlled admin retries for safe retryable workflow errors. Phase 18 added ClickUp webhook automation with signature verification and Supabase-backed idempotency. Phase 22 added admin-only client onboarding and manual Supabase Auth user linking.
 
 ## Summary
 
@@ -30,6 +30,7 @@ Zoho Books integration is not active and was not reintroduced.
 - Supabase server/admin clients.
 - ClickUp, Zoho CRM, Resend, Twilio, and Google Sheets integrations.
 - Workflow error logging and the `/internal/errors` admin operations page.
+- Client onboarding at `/internal/onboarding` and its admin-only create/link API routes.
 
 ## Client Route Protections
 
@@ -97,6 +98,11 @@ Findings:
 - Browser wrapper routes do not expose `INTERNAL_SYNC_SECRET`.
 - `/api/internal/clickup-webhook/register` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`.
 - Webhook registration uses server-only `CLICKUP_API_TOKEN` and `CLICKUP_TEAM_ID` and does not expose the ClickUp API token.
+- `/internal/onboarding` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`.
+- `/api/internal/onboarding/create-client` and `/api/internal/onboarding/link-auth-user` require Supabase auth and `INTERNAL_ADMIN_EMAILS`.
+- Client onboarding does not create Supabase Auth users automatically and does not send email invitations.
+- Linking requires an admin-supplied Supabase Auth user UUID and updates only `clients.user_id` plus `updated_at`.
+- Clients cannot call onboarding APIs or link themselves to another client profile.
 
 Fixes applied:
 
@@ -380,9 +386,14 @@ Implementation notes:
 - Admin request status updates only accept the configured request status list and update `client_requests.status`.
 - Admin billing updates only accept the configured invoice status list and update manual billing fields plus the generic invoice ID field.
 - Admin client profile updates cannot change `id`, `user_id`, `email`, or `created_at`.
+- Admin onboarding can link `clients.user_id` only through the dedicated admin-only onboarding route.
 - Admin document status updates only accept the configured document review status list and do not expose private file URLs.
 - Additional document requests create structured `client_documents` placeholder rows plus client timeline updates.
 - Internal document open links generate short-lived signed URLs only after admin checks.
 - Non-admin users cannot access `/internal/errors`.
+- Non-admin users cannot access `/internal/onboarding`.
+- Non-admin users cannot call onboarding create-client or link-auth-user API routes.
+- Client onboarding API responses return safe messages and do not expose raw Supabase errors.
+- Onboarding client components do not import the Supabase service role client.
 - Non-admin users cannot call workflow error resolve or reopen API routes.
 - Admin users can mark a workflow error resolved with a note and reopen it if needed.

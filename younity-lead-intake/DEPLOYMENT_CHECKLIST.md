@@ -111,6 +111,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Test `/internal` after deployment.
 - Test `/internal/clients`, `/internal/requests`, and `/internal/documents` after deployment.
 - Test `/internal/clients/[id]` and `/internal/requests/[id]` after deployment.
+- Test `/internal/onboarding` after deployment from an authorized admin account.
 
 ### G. Production Test Plan
 
@@ -131,7 +132,12 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm `/internal` summarizes workflow errors, client requests, document uploads, billing readiness, and active rate-limit records for an authorized admin.
 - Confirm `/internal` links to client, request, document, sync, and workflow error management pages.
 - Confirm the shared internal navigation highlights Dashboard, Clients, Requests, Documents, Sync Controls, and Workflow Errors on desktop and mobile widths.
+- Confirm the shared internal navigation includes Onboarding and highlights it at `/internal/onboarding`.
 - Confirm authorized admins can review `/internal/clients`, `/internal/requests`, and `/internal/documents`.
+- Confirm authorized admins can create a client profile from `/internal/onboarding`.
+- Confirm authorized admins can manually link a Supabase Auth user ID to `clients.user_id`.
+- Confirm onboarding does not send automated emails; provide client login instructions manually until Younity email services are reactivated.
+- Confirm clients see the onboarding checklist on `/client/dashboard`.
 - Confirm internal client, request, document, and workflow error filters/search return expected results and useful empty states.
 - Confirm workflow error sanitized context remains collapsed by default and does not display tokens, passwords, keys, authorization headers, cookies, credentials, or raw email addresses.
 - Confirm authorized admins can open private documents only through `/api/internal/documents/[id]/open` and receive a short-lived signed URL.
@@ -149,6 +155,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm forms, action buttons, cards, empty states, mobile list views, table scrolling, and focus states remain usable on mobile and keyboard navigation.
 - Run multi-client access tests for request, document, invoice, update, and task detail isolation.
 - Confirm Zoho Books is not active and no `ZOHO_BOOKS_*` variables are configured.
+- Confirm onboarding does not reintroduce Zoho Books or email-dependent invitation workflows.
 
 ## Supabase
 
@@ -243,12 +250,14 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Document metadata is shown only for the owning client.
 - `/internal` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/internal/clients`, `/internal/clients/[id]`, `/internal/requests`, `/internal/requests/[id]`, and `/internal/documents` require an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
+- `/internal/onboarding` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/internal/sync` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/internal/errors` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/documents/[id]/open` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/errors/[id]/resolve` and `/api/internal/errors/[id]/reopen` require an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/errors/[id]/retry` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/clickup-webhook/register` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
+- `/api/internal/onboarding/create-client` and `/api/internal/onboarding/link-auth-user` require an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 
 ## Security Review
 
@@ -267,6 +276,10 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm Phase 15 admin action routes require Supabase auth plus `INTERNAL_ADMIN_EMAILS`.
 - Confirm request status and billing actions update only allowlisted `client_requests` fields and add client timeline entries only when intended.
 - Confirm client profile admin edits cannot change `id`, `user_id`, `email`, or `created_at`.
+- Confirm onboarding profile creation returns a safe duplicate-email message and never exposes raw Supabase errors.
+- Confirm only the admin-only onboarding link route can set `clients.user_id`; clients cannot link themselves or claim another profile.
+- Confirm the Supabase service role key is not imported by onboarding client components.
+- Confirm email invitations remain paused until Younity email services are reactivated; admins manually create/link Auth users and share login instructions.
 - Confirm document review actions update only document status and never expose private file URLs.
 - Confirm internal document open buttons use `/api/internal/documents/[id]/open` and do not expose public file URLs.
 - Run `supabase/document_requests_upgrade.sql` in the Supabase SQL Editor before using structured document requests.

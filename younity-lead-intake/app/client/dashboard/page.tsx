@@ -82,6 +82,7 @@ export default async function ClientDashboardPage() {
 
   const [
     activeRequestsResult,
+    allRequestsResult,
     documentsNeededResult,
     submittedDocumentsResult,
     invoicesResult,
@@ -93,6 +94,10 @@ export default async function ClientDashboardPage() {
       .eq("client_id", clientProfile.id)
       .neq("status", "Completed")
       .neq("status", "Closed"),
+    supabase
+      .from("client_requests")
+      .select("id", { count: "exact", head: true })
+      .eq("client_id", clientProfile.id),
     supabase
       .from("client_documents")
       .select("id", { count: "exact", head: true })
@@ -165,9 +170,38 @@ export default async function ClientDashboardPage() {
   ];
 
   const recentUpdates = recentUpdatesResult.data ?? [];
+  const onboardingItems = [
+    {
+      label: "Profile information reviewed",
+      complete: Boolean(
+        clientProfile.phone &&
+          clientProfile.company &&
+          clientProfile.preferred_contact_method
+      ),
+    },
+    {
+      label: "First service request submitted",
+      complete: (allRequestsResult.count ?? 0) > 0,
+    },
+    {
+      label: "Required documents uploaded",
+      complete: (documentsNeededResult.count ?? 0) === 0,
+    },
+    {
+      label: "Contact preference confirmed",
+      complete: Boolean(clientProfile.preferred_contact_method),
+    },
+  ];
+  const completedOnboardingItems = onboardingItems.filter(
+    (item) => item.complete
+  ).length;
 
   if (activeRequestsResult.error) {
     console.error("Active requests count failed:", activeRequestsResult.error);
+  }
+
+  if (allRequestsResult.error) {
+    console.error("All requests count failed:", allRequestsResult.error);
   }
 
   if (documentsNeededResult.error) {
@@ -222,7 +256,56 @@ export default async function ClientDashboardPage() {
         ))}
       </section>
 
-      <Card>
+      <Card className="mt-6">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+              Onboarding Checklist
+            </h2>
+            <p className="mt-2 text-sm leading-6 text-slate-600">
+              {completedOnboardingItems} of {onboardingItems.length} setup steps
+              complete.
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-5 grid gap-3">
+          {onboardingItems.map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
+            >
+              <span
+                aria-hidden="true"
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-black ${
+                  item.complete
+                    ? "bg-[#50A9C0] text-[#06111f]"
+                    : "bg-white text-slate-500 ring-1 ring-slate-200"
+                }`}
+              >
+                {item.complete ? "OK" : ""}
+              </span>
+              <span className="text-sm font-semibold text-slate-800">
+                {item.label}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-6 grid gap-3 sm:grid-cols-3">
+          <SecondaryButtonLink href="/client/profile">
+            Update Profile
+          </SecondaryButtonLink>
+          <PrimaryButtonLink href="/client/requests/new">
+            Submit Request
+          </PrimaryButtonLink>
+          <SecondaryButtonLink href="/client/documents">
+            Upload Documents
+          </SecondaryButtonLink>
+        </div>
+      </Card>
+
+      <Card className="mt-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-slate-950">

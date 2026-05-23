@@ -52,7 +52,7 @@ Client portal routes use Supabase Auth and resolve each portal user through `cli
 
 Private documents are stored in the private `client-documents` Supabase bucket. The portal opens documents through a server route that verifies ownership before issuing a short-lived signed URL. Requested documents are stored as `client_documents` rows with `status = Requested`, `file_name = Pending upload`, and `file_path = pending` until the client uploads the real file.
 
-Admin users sign in through the dedicated `/internal/login` entry point. The central internal dashboard at `/internal`, internal client/request/document management pages, internal sync controls, webhook registration controls, and workflow error review pages require Supabase auth plus a user email listed in `INTERNAL_ADMIN_EMAILS`. Logged-out users are redirected to `/internal/login`; authenticated non-admin users see an access-denied screen. Internal pages share a mobile-friendly admin navigation shell for Dashboard, Clients, Requests, Documents, Sync Controls, Workflow Errors, and Logout. The public website links only to the client portal entry point, not the internal admin login. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
+Admin users sign in through the dedicated `/internal/login` entry point. The central internal dashboard at `/internal`, internal client/request/document management pages, internal onboarding page, internal sync controls, webhook registration controls, and workflow error review pages require Supabase auth plus a user email listed in `INTERNAL_ADMIN_EMAILS`. Logged-out users are redirected to `/internal/login`; authenticated non-admin users see an access-denied screen. Internal pages share a mobile-friendly admin navigation shell for Dashboard, Clients, Onboarding, Requests, Documents, Sync Controls, Workflow Errors, and Logout. The public website links only to the client portal entry point, not the internal admin login. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
 
 Public lead intake, portal write APIs, document upload, task updates, and internal sync wrapper routes use lightweight server-side rate limiting. Production rate limiting is backed by Supabase table `public.rate_limits`; deployments must run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
 
@@ -156,6 +156,20 @@ Phase 18 added ClickUp webhook automation without changing public lead intake, c
 Phase 20 aligns the public website, client portal, and internal admin area with the actual blue-themed Younity Consultancy website branding. The shared UI layer uses the website colors `#06111f`, `#071a33`, `#244285`, `#50A9C0`, and `#f6f9fc`, plus the website's dark gradient navigation, rounded white cards, bold uppercase action buttons, blue accent form focus states, empty states, and standardized status badge colors across request, document, invoice, workflow error, and task progress surfaces. This phase is presentation-only and does not change public lead intake behavior, portal data flows, private document access, ClickUp, Zoho CRM, Twilio, Google Sheets, rate limiting, or workflow retry behavior.
 
 Phase 21 adds premium UI polish on top of the official Younity blue brand system. The public website, contact intake, client portal, and internal admin area now share more refined elevations, logo usage, dark gradient shells, rounded premium cards, stronger dashboard stat cards, polished buttons, clearer table headers, improved form focus states, and brand-aligned badge treatments while retaining the existing workflows and integrations unchanged.
+
+### D2A. Client Onboarding
+
+```text
+Admin opens /internal/onboarding
+-> Supabase Auth and INTERNAL_ADMIN_EMAILS are checked
+-> Admin creates or finds a client profile
+-> Admin manually creates the user in Supabase Authentication
+-> Admin links the Supabase Auth user ID to clients.user_id
+-> Admin manually provides login instructions to the client
+-> Client sees first-time setup progress on /client/dashboard
+```
+
+Phase 22 adds a simple internal onboarding flow without automated email invitations. New client profiles can be created with contact and Zoho CRM reference fields, but Supabase Auth users are not created automatically. The linking route only updates `clients.user_id` after an admin supplies a valid client ID and Auth user ID. The client dashboard checklist uses existing profile, request, and document data to show whether profile information is reviewed, a first request has been submitted, required documents are uploaded, and contact preference is confirmed. Email-dependent onboarding invitations remain paused until Younity email services are reactivated.
 
 ### D3. Controlled Internal Admin Actions
 

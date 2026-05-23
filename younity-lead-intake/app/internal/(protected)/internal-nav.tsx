@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const internalNavItems = [
   { label: "Dashboard", href: "/internal" },
   { label: "Clients", href: "/internal/clients" },
+  { label: "Onboarding", href: "/internal/onboarding" },
   { label: "Requests", href: "/internal/requests" },
   { label: "Documents", href: "/internal/documents" },
   { label: "Sync Controls", href: "/internal/sync" },
