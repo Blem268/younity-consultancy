@@ -1,6 +1,6 @@
 # Security Audit
 
-Phase 10 security review completed for the Younity Consultancy Next.js application.
+Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase.
 
 ## Summary
 
@@ -74,6 +74,7 @@ Fixes applied:
 - Added UUID validation for linked request IDs during document uploads.
 - Added safe JSON parsing to client request/profile routes.
 - Replaced raw provider warning messages in client API responses with safe operational messages.
+- Added authenticated rate limiting for portal request creation, document uploads, and task updates.
 
 ## Internal Admin Protections
 
@@ -95,6 +96,7 @@ Findings:
 Fixes applied:
 
 - Internal sync route catch blocks now return generic failure messages instead of raw exception text.
+- Added admin-email-based rate limiting to browser-triggered internal sync wrapper routes.
 
 ## Supabase RLS And Service Role Usage
 
@@ -135,6 +137,7 @@ Findings:
 
 - Maximum file size is enforced at 10 MB.
 - Allowed file extensions are enforced.
+- Allowed MIME types are checked for known file extensions.
 - File names are sanitized before storage-path construction.
 - Uploads linked to requests require ownership checks.
 - ClickUp attachment failures do not block Supabase document storage.
@@ -143,6 +146,29 @@ Findings:
 Fixes applied:
 
 - Added MIME type validation for allowed file extensions while allowing empty or `application/octet-stream` uploads to avoid rejecting valid browser/platform uploads with generic MIME values.
+- Added per-user upload/update rate limits before storage or ClickUp attachment work begins.
+
+## Rate Limiting And Spam Protection
+
+Phase 11 added practical abuse protection for public and sensitive write routes.
+
+Active limits:
+
+- Public lead intake: 5 submissions per IP per 10 minutes.
+- Portal request creation: 10 submissions per authenticated user per hour.
+- Portal document upload: 20 uploads per authenticated user per hour.
+- Task/subtask updates: 20 submissions per authenticated user per hour.
+- Internal sync wrapper routes: 10 sync runs per admin email per 10 minutes.
+
+Implementation notes:
+
+- Production rate limiting is backed by Supabase table `public.rate_limits` and SQL function `public.increment_rate_limit`.
+- Manual setup is required: run `supabase/rate_limits.sql` in the Supabase SQL Editor.
+- No additional third-party Redis provider is required.
+- Rate limiting fails open if Supabase rate-limit storage is temporarily unavailable.
+- Rate limit responses are user-safe and do not expose IP addresses, database keys, counters, tokens, or storage details.
+- The public contact form includes a hidden `companyWebsite` honeypot. If filled, the lead-intake route returns a normal success-like response without running integrations.
+- Cloudflare Turnstile is not active. It remains a future recommendation if public lead spam increases.
 
 ## Environment Variable And Secrets Review
 
@@ -163,6 +189,7 @@ Findings:
 - Server-only secrets are not exposed as `NEXT_PUBLIC_` variables.
 - Secrets are not sent in browser API responses.
 - Browser-visible variables remain limited to `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_SITE_URL`.
+- Rate limiting uses the existing server-only Supabase service role key through the admin client.
 
 ## Logging Review
 
@@ -186,6 +213,8 @@ Fixes applied:
 - Public lead intake returned internal integration identifiers and ClickUp URL data.
 - Internal sync routes returned raw exception text on top-level sync failures.
 - File upload routes had extension validation but no MIME validation.
+- Public and sensitive write routes did not have request rate limiting.
+- Public lead-intake form did not have a honeypot field.
 
 ## Fixes Applied
 
@@ -194,13 +223,15 @@ Fixes applied:
 - Sanitized client-facing warning messages.
 - Sanitized public lead-intake response payload.
 - Sanitized internal sync top-level error responses.
+- Added rate limiting to public lead intake, portal request creation, document uploads, task updates, and internal sync wrapper routes.
+- Added a hidden public contact form honeypot.
 - Kept ClickUp billing sync and Supabase billing display active.
 - Confirmed Zoho Books integration is not active.
 
 ## Remaining Risks And Recommendations
 
-- Add rate limiting to public lead intake and authenticated write APIs.
-- Add spam protection such as CAPTCHA or Turnstile to the public contact form if spam appears.
+- Run `supabase/rate_limits.sql` in production so rate limiting works consistently across serverless instances.
+- Add Cloudflare Turnstile to the public contact form if spam persists beyond the honeypot and rate limits.
 - Add production monitoring and error tracking with secret redaction.
 - Rotate API keys and OAuth refresh tokens periodically.
 - Perform multi-client access testing before each major portal release.
@@ -221,4 +252,10 @@ Fixes applied:
 - Logged-out user cannot access `/internal/sync`.
 - Direct sync endpoints reject requests without `x-internal-sync-secret`.
 - Public lead intake returns safe messages when integrations partially fail.
+- Public lead intake returns HTTP 429 after more than 5 submissions from the same IP in 10 minutes.
+- Portal request creation returns HTTP 429 after more than 10 submissions by the same user in 1 hour.
+- Portal document uploads return HTTP 429 after more than 20 uploads by the same user in 1 hour.
+- Task updates return HTTP 429 after more than 20 submissions by the same user in 1 hour.
+- Internal sync wrapper routes return HTTP 429 after more than 10 runs by the same admin in 10 minutes.
+- Filling the hidden contact honeypot returns a success-like response and creates no integrations.
 - Browser responses never include server-only secrets, raw provider responses, ClickUp private URLs, or raw exception details.

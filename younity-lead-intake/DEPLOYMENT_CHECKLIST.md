@@ -118,6 +118,9 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Run internal status sync.
 - Run internal billing sync.
 - Confirm client-facing billing/invoice status reflects ClickUp billing sync data.
+- Confirm public lead-intake rate limiting returns a safe 429 response after repeated submissions.
+- Confirm portal request, document upload, task update, and internal sync rate limits return safe 429 responses after repeated submissions.
+- Confirm the public contact form honeypot field is present and normal submissions still work.
 - Run multi-client access tests for request, document, invoice, update, and task detail isolation.
 - Confirm Zoho Books is not active and no `ZOHO_BOOKS_*` variables are configured.
 
@@ -125,6 +128,9 @@ Add all required environment variables to the hosting provider. Keep secret valu
 
 - Add the production URL to Supabase Auth site URL and redirect URLs.
 - Confirm the Supabase schema and RLS policies are already applied.
+- Run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
+- Confirm `public.rate_limits` exists with RLS enabled and no public/client policies.
+- Confirm `public.increment_rate_limit` exists.
 - Confirm the Supabase Storage bucket `client-documents` exists.
 - Confirm `client-documents` is private.
 - Confirm document uploads store private storage paths only and do not expose public file URLs or signed download links.
@@ -167,6 +173,20 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm `/internal/sync` is protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `INTERNAL_ADMIN_EMAILS` contains only authorized internal admin email addresses, separated by commas.
 
+## Rate Limiting And Spam Protection
+
+- Confirm production rate limiting is backed by Supabase `public.rate_limits`.
+- Confirm no additional third-party Redis provider is required.
+- Confirm rate limit responses do not expose IP addresses, database keys, counters, tokens, or storage details.
+- Confirm rate limiting fails open if Supabase rate-limit storage is temporarily unavailable.
+- Confirm public lead intake is limited to 5 submissions per IP per 10 minutes.
+- Confirm portal request creation is limited to 10 submissions per user per hour.
+- Confirm document uploads are limited to 20 uploads per user per hour.
+- Confirm task updates are limited to 20 submissions per user per hour.
+- Confirm internal sync wrapper routes are limited to 10 runs per admin email per 10 minutes.
+- Confirm the public contact honeypot returns a success-like response without creating integrations when filled.
+- Keep Cloudflare Turnstile as a future option if spam increases.
+
 ## Protected Routes
 
 - Client routes redirect unauthenticated users to `/client/login`.
@@ -181,7 +201,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm only `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_SITE_URL` are browser-visible.
 - Confirm server-only secrets are not referenced in client components.
 - Confirm public lead-intake and authenticated write routes return safe errors only.
-- Confirm public lead-intake has rate limiting and spam protection on the security roadmap.
+- Confirm public lead-intake has rate limiting and honeypot spam protection.
+- Confirm Cloudflare Turnstile remains documented as a future option, not active.
 - Confirm monitoring/error tracking is configured with secret redaction before broad production use.
 - Confirm API keys and OAuth refresh tokens have an owner and rotation cadence.
 

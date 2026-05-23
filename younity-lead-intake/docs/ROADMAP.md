@@ -25,6 +25,8 @@
 - Vercel deployment readiness.
 - System documentation and testing checklist.
 - Phase 10 security review, data protection, and access control audit.
+- Phase 11 rate limiting and public contact form honeypot.
+- Phase 11B Supabase-backed production rate limiting.
 
 ## Next Recommended Work
 
@@ -32,8 +34,7 @@
 - Move Twilio from sandbox to production WhatsApp setup.
 - Keep billing preparation in ClickUp and display synced billing/invoice status in Supabase.
 - Handle actual invoicing manually or outside the portal for now.
-- Add rate limiting to public and write-heavy API routes.
-- Add CAPTCHA or Turnstile to the public contact form if spam volume increases.
+- Add Cloudflare Turnstile to the public contact form if spam volume increases.
 - Add ClickUp webhook automation instead of manual sync.
 - Add client document download via signed URLs.
 - Build an admin portal for managing clients.

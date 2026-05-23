@@ -54,6 +54,10 @@ Private documents are stored in the private `client-documents` Supabase bucket. 
 
 Internal sync controls require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
 
+Public lead intake, portal write APIs, document upload, task updates, and internal sync wrapper routes use lightweight server-side rate limiting. Production rate limiting is backed by Supabase table `public.rate_limits`; deployments must run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
+
+The public contact form includes a hidden honeypot field. Cloudflare Turnstile is not active and remains a future option if spam increases.
+
 Zoho Books is not active. ClickUp remains the operations and billing preparation hub, while Supabase displays synced client-facing billing and invoice status. Actual invoicing is handled manually or outside the portal for now.
 
 ## High-Level Workflows
