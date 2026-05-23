@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
@@ -128,6 +129,16 @@ export default function ClientLoginPage() {
             </button>
           </div>
         </form>
+
+        <footer className="relative z-10 mt-6 flex justify-center">
+          <Link
+            href="/internal/login"
+            prefetch={false}
+            className="rounded-xl border border-white/15 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white/70 transition hover:border-[#50A9C0]/60 hover:bg-white/10 hover:text-[#50A9C0] focus:outline-none focus:ring-2 focus:ring-[#50A9C0]/50"
+          >
+            Admin Portal
+          </Link>
+        </footer>
       </div>
     </main>
   );

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { isStaleRefreshTokenError } from "@/lib/supabase/authErrors";
 
 type InternalAdminResult =
   | {
@@ -31,7 +32,12 @@ export async function requireInternalAdmin(): Promise<InternalAdminResult> {
   const supabase = await createClient();
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  if (isStaleRefreshTokenError(error)) {
+    redirect("/internal/login");
+  }
 
   if (!user) {
     redirect("/internal/login");
@@ -64,7 +70,18 @@ export async function getInternalAdminUser(): Promise<InternalAdminApiResult> {
   const supabase = await createClient();
   const {
     data: { user },
+    error,
   } = await supabase.auth.getUser();
+
+  if (isStaleRefreshTokenError(error)) {
+    return {
+      user: null,
+      errorResponse: NextResponse.json(
+        { message: "Unauthorized." },
+        { status: 401 }
+      ),
+    };
+  }
 
   if (!user) {
     return {
