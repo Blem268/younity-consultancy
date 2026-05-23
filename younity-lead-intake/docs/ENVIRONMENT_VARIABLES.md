@@ -26,6 +26,10 @@ Do not commit real values. `NEXT_PUBLIC_` variables can be visible in the browse
 | --- | --- | --- | --- |
 | `CLICKUP_API_TOKEN` | ClickUp API token for task creation, comments, and task reads. | ClickUp integration. | Server-only |
 | `CLICKUP_LIST_ID` | Target ClickUp list for lead and portal request tasks. | ClickUp task creation. | Server-only |
+| `CLICKUP_TEAM_ID` | ClickUp Workspace/team ID used when registering API webhooks. | Admin-only ClickUp webhook registration route. | Server-only |
+| `CLICKUP_WEBHOOK_SECRET` | Secret used to verify incoming ClickUp webhook `X-Signature` HMAC signatures. | `/api/webhooks/clickup`. | Server-only |
+
+`CLICKUP_WEBHOOK_SECRET` must never be exposed to client components or browser responses. ClickUp returns the webhook signing secret during webhook registration; capture it only through a secure server-side setup flow and store it in the deployment environment. Manual ClickUp status and billing sync remains available at `/internal/sync` as a fallback if webhook delivery is paused or misconfigured.
 
 ## Google Sheets
 
@@ -69,4 +73,4 @@ No additional rate-limiting environment variables are required. The rate limit u
 
 | Variable | Purpose | Used By | Visibility |
 | --- | --- | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | Production site URL used for server-side internal sync runner fetches. | Internal sync runner routes. | Public |
+| `NEXT_PUBLIC_SITE_URL` | Production site URL used for server-side internal sync runner fetches and ClickUp webhook endpoint registration. | Internal sync runner routes, ClickUp webhook registration. | Public |

@@ -25,10 +25,24 @@ type SyncState = {
   error: string;
 };
 
+type RegisterState = {
+  isLoading: boolean;
+  message: string;
+  error: string;
+  webhookId: string | null;
+};
+
 const initialSyncState: SyncState = {
   isLoading: false,
   result: null,
   error: "",
+};
+
+const initialRegisterState: RegisterState = {
+  isLoading: false,
+  message: "",
+  error: "",
+  webhookId: null,
 };
 
 function SyncResultPanel({ state }: { state: SyncState }) {
@@ -77,6 +91,8 @@ function SyncResultPanel({ state }: { state: SyncState }) {
 export function SyncButtons() {
   const [statusSync, setStatusSync] = useState<SyncState>(initialSyncState);
   const [billingSync, setBillingSync] = useState<SyncState>(initialSyncState);
+  const [webhookRegistration, setWebhookRegistration] =
+    useState<RegisterState>(initialRegisterState);
 
   async function runSync(
     endpoint: string,
@@ -126,8 +142,89 @@ export function SyncButtons() {
     }
   }
 
+  async function registerWebhook() {
+    setWebhookRegistration({
+      isLoading: true,
+      message: "",
+      error: "",
+      webhookId: null,
+    });
+
+    try {
+      const response = await fetch("/api/internal/clickup-webhook/register", {
+        method: "POST",
+      });
+      const result = (await response.json().catch(() => ({}))) as {
+        message?: string;
+        webhookId?: string | null;
+      };
+
+      if (!response.ok) {
+        setWebhookRegistration({
+          isLoading: false,
+          message: "",
+          error: result.message || "Webhook registration failed.",
+          webhookId: null,
+        });
+        return;
+      }
+
+      setWebhookRegistration({
+        isLoading: false,
+        message: result.message || "ClickUp webhook registered.",
+        error: "",
+        webhookId: result.webhookId || null,
+      });
+    } catch (error) {
+      setWebhookRegistration({
+        isLoading: false,
+        message: "",
+        error:
+          error instanceof Error
+            ? error.message
+            : "Webhook registration failed.",
+        webhookId: null,
+      });
+    }
+  }
+
   return (
     <div className="grid gap-6 lg:grid-cols-2">
+      <section className="rounded-lg border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50 lg:col-span-2">
+        <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+          ClickUp Webhook Status
+        </h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">
+          ClickUp webhooks can update request status and billing fields
+          automatically. Manual sync remains available below as a fallback.
+        </p>
+        <button
+          type="button"
+          disabled={webhookRegistration.isLoading}
+          onClick={registerWebhook}
+          className="mt-5 inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+        >
+          {webhookRegistration.isLoading
+            ? "Registering..."
+            : "Register ClickUp Webhook"}
+        </button>
+        {webhookRegistration.error ? (
+          <p className="mt-4 text-sm font-medium text-red-700">
+            {webhookRegistration.error}
+          </p>
+        ) : null}
+        {webhookRegistration.message ? (
+          <div className="mt-4 rounded-md border border-teal-900/10 bg-teal-50/40 p-4 text-sm leading-6 text-slate-700">
+            <p>{webhookRegistration.message}</p>
+            {webhookRegistration.webhookId ? (
+              <p className="mt-2 font-mono text-xs text-slate-600">
+                Webhook ID: {webhookRegistration.webhookId}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+      </section>
+
       <section className="rounded-lg border border-slate-200/80 bg-white p-6 shadow-sm shadow-slate-200/50">
         <h2 className="text-xl font-semibold tracking-tight text-slate-950">
           ClickUp Status Sync
