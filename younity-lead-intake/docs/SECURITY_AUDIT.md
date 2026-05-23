@@ -1,6 +1,6 @@
 # Security Audit
 
-Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase. Phase 12A added sanitized workflow error logging backed by Supabase.
+Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase. Phase 12A added sanitized workflow error logging backed by Supabase. Phase 12B added admin resolution and reopen controls for workflow errors.
 
 ## Summary
 
@@ -28,7 +28,7 @@ Zoho Books integration is not active and was not reintroduced.
 - Internal sync page and sync API routes.
 - Supabase server/admin clients.
 - ClickUp, Zoho CRM, Resend, Twilio, and Google Sheets integrations.
-- Workflow error logging and the `/internal/errors` admin page.
+- Workflow error logging and the `/internal/errors` admin operations page.
 
 ## Client Route Protections
 
@@ -209,20 +209,28 @@ Fixes applied:
 - Client request/document/task routes no longer return raw provider error messages in warning arrays.
 - Added `logWorkflowError()` helper that redacts token, secret, authorization, cookie, password, refresh, bearer, and session-shaped context keys.
 - Added `/internal/errors` for admin-only review of latest sanitized workflow errors.
+- Added admin-only resolve and reopen actions for workflow errors.
 
 ## Workflow Error Logging
 
-Phase 12A added a Supabase-backed workflow error log.
+Phase 12A added a Supabase-backed workflow error log. Phase 12B added admin resolution controls.
 
 Implementation notes:
 
 - Manual setup is required: run `supabase/workflow_errors.sql` in the Supabase SQL Editor.
+- Resolution setup is required: run `supabase/workflow_errors_resolution.sql` in the Supabase SQL Editor.
 - `public.workflow_errors` has RLS enabled and no public/client policies.
 - The app writes workflow logs only through server-side service-role/admin client code.
 - `logWorkflowError()` never throws to callers; if logging fails, the original workflow continues with existing behavior.
 - Logged context is intentionally small and sanitized.
 - `/internal/errors` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`.
+- `/internal/errors` supports unresolved/resolved/all, source, and severity filters.
+- Admins can mark workflow errors resolved, store optional resolution notes, and reopen resolved errors.
+- Resolution metadata is stored in `public.workflow_errors` as `resolved_by`, `resolution_note`, `reopened_at`, and `reopened_by`.
 - Context is hidden by default and shown only in a collapsible preformatted block.
+- Automatic retry actions are not active yet.
+- Future retry controls should be limited to safe retryable categories: Google Sheets logging failures, Resend notification failures, Twilio notification failures, and ClickUp comment/attachment failures.
+- Zoho CRM lead creation, ClickUp task creation, Supabase document metadata inserts, auth/authorization failures, and validation failures are not automatically retryable in the current design.
 - Sentry or another external error tracker remains a future recommendation for broader monitoring, alerting, and release correlation.
 
 ## Issues Found
@@ -247,6 +255,7 @@ Implementation notes:
 - Added rate limiting to public lead intake, portal request creation, document uploads, task updates, and internal sync wrapper routes.
 - Added a hidden public contact form honeypot.
 - Added Supabase-backed workflow error logging and an admin-only `/internal/errors` page.
+- Added admin-only workflow error resolve/reopen controls with optional resolution notes.
 - Kept ClickUp billing sync and Supabase billing display active.
 - Confirmed Zoho Books integration is not active.
 
@@ -284,3 +293,5 @@ Implementation notes:
 - Browser responses never include server-only secrets, raw provider responses, ClickUp private URLs, or raw exception details.
 - Workflow failures create sanitized rows in `public.workflow_errors`.
 - Non-admin users cannot access `/internal/errors`.
+- Non-admin users cannot call workflow error resolve or reopen API routes.
+- Admin users can mark a workflow error resolved with a note and reopen it if needed.

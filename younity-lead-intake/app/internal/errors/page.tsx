@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { ErrorActions } from "./error-actions";
 
 type WorkflowErrorRecord = {
   id: string;
@@ -10,13 +11,18 @@ type WorkflowErrorRecord = {
   message: string;
   context: unknown;
   resolved: boolean;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  resolution_note: string | null;
   created_at: string | null;
 };
 
 type PageProps = {
   searchParams: Promise<{
     unresolved?: string | string[];
+    status?: string | string[];
     source?: string | string[];
+    severity?: string | string[];
   }>;
 };
 
@@ -73,8 +79,10 @@ function prettyContext(context: unknown) {
 
 export default async function InternalErrorsPage({ searchParams }: PageProps) {
   const params = await searchParams;
-  const unresolvedOnly = getSearchParam(params.unresolved) === "true";
+  const legacyUnresolvedOnly = getSearchParam(params.unresolved) === "true";
+  const statusFilter = getSearchParam(params.status) || (legacyUnresolvedOnly ? "open" : "all");
   const sourceFilter = getSearchParam(params.source).trim();
+  const severityFilter = getSearchParam(params.severity).trim();
   const supabase = await createClient();
   const {
     data: { user },
@@ -113,14 +121,24 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
   const supabaseAdmin = createAdminClient();
   let query = supabaseAdmin
     .from("workflow_errors")
-    .select("id, source, severity, message, context, resolved, created_at");
+    .select(
+      "id, source, severity, message, context, resolved, resolved_at, resolved_by, resolution_note, created_at"
+    );
 
-  if (unresolvedOnly) {
+  if (statusFilter === "open") {
     query = query.eq("resolved", false);
+  }
+
+  if (statusFilter === "resolved") {
+    query = query.eq("resolved", true);
   }
 
   if (sourceFilter) {
     query = query.ilike("source", `%${sourceFilter}%`);
+  }
+
+  if (severityFilter) {
+    query = query.eq("severity", severityFilter);
   }
 
   const { data, error } = await query
@@ -161,7 +179,19 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
         </p>
       </header>
 
-      <form className="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[1fr_auto_auto]">
+      <form className="mt-6 grid gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[0.8fr_1fr_0.8fr_auto]">
+        <label className="grid gap-1 text-sm font-semibold text-slate-800">
+          Status
+          <select
+            name="status"
+            defaultValue={statusFilter}
+            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+          >
+            <option value="open">Unresolved only</option>
+            <option value="resolved">Resolved only</option>
+            <option value="all">All</option>
+          </select>
+        </label>
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
           Source contains
           <input
@@ -171,15 +201,19 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
             placeholder="lead-intake, clickup, sync..."
           />
         </label>
-        <label className="flex items-end gap-2 text-sm font-semibold text-slate-800">
-          <input
-            type="checkbox"
-            name="unresolved"
-            value="true"
-            defaultChecked={unresolvedOnly}
-            className="mb-3"
-          />
-          <span className="pb-2">Unresolved only</span>
+        <label className="grid gap-1 text-sm font-semibold text-slate-800">
+          Severity
+          <select
+            name="severity"
+            defaultValue={severityFilter}
+            className="rounded-md border border-slate-300 px-3 py-2 font-normal"
+          >
+            <option value="">Any severity</option>
+            <option value="critical">critical</option>
+            <option value="error">error</option>
+            <option value="warning">warning</option>
+            <option value="info">info</option>
+          </select>
         </label>
         <button
           type="submit"
@@ -228,6 +262,22 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
                       <p className="mt-1 break-words text-sm text-slate-600">
                         {workflowError.source}
                       </p>
+                      {workflowError.resolved_at || workflowError.resolved_by ? (
+                        <p className="mt-2 text-sm text-slate-600">
+                          Resolved{" "}
+                          {workflowError.resolved_at
+                            ? formatDate(workflowError.resolved_at)
+                            : ""}
+                          {workflowError.resolved_by
+                            ? ` by ${workflowError.resolved_by}`
+                            : ""}
+                        </p>
+                      ) : null}
+                      {workflowError.resolution_note ? (
+                        <p className="mt-2 rounded-md border border-slate-200 bg-slate-50 p-3 text-sm leading-6 text-slate-700">
+                          {workflowError.resolution_note}
+                        </p>
+                      ) : null}
                     </div>
                     <p className="text-sm text-slate-500">
                       {formatDate(workflowError.created_at)}
@@ -244,6 +294,11 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
                       </pre>
                     </details>
                   ) : null}
+
+                  <ErrorActions
+                    errorId={workflowError.id}
+                    resolved={workflowError.resolved}
+                  />
                 </article>
               );
             })}

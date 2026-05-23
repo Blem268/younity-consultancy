@@ -5,6 +5,8 @@ import {
   completeClickUpTaskItem,
   getClickUpTaskProgress,
 } from "@/lib/integrations/clickup";
+import { logWorkflowError } from "@/lib/internal/workflowErrors";
+import { rateLimit } from "@/lib/security/rateLimit";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -129,6 +131,22 @@ export async function POST(
     );
   }
 
+  const rateLimitResult = await rateLimit({
+    key: `client-task-submit:${user.id}`,
+    limit: 20,
+    windowSeconds: 60 * 60,
+  });
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Too many task updates. Please wait before submitting more updates.",
+      },
+      { status: 429 }
+    );
+  }
+
   const { data: clientProfile, error: clientProfileError } = await supabase
     .from("clients")
     .select("id, full_name, email")
@@ -245,6 +263,18 @@ export async function POST(
     taskProgress = await getClickUpTaskProgress(clientRequest.clickup_task_id);
   } catch (error) {
     console.error("ClickUp task progress lookup failed:", error);
+    await logWorkflowError({
+      source: "client-task-submit.clickup-progress",
+      severity: "error",
+      message: "ClickUp task progress lookup failed.",
+      context: {
+        error,
+        clickUpTaskId: clientRequest.clickup_task_id,
+        taskItemId: itemId,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: clientRequest.id,
+    });
     return NextResponse.json(
       { success: false, message: "Unable to verify this task item." },
       { status: 500 }
@@ -287,6 +317,20 @@ export async function POST(
       console.error("Supabase task document upload failed:", {
         message: uploadError.message,
       });
+      await logWorkflowError({
+        source: "client-task-submit.storage",
+        severity: "error",
+        message: "Supabase task document upload failed.",
+        context: {
+          error: uploadError,
+          taskItemId: itemId,
+          documentType,
+          fileSize: file.size,
+          fileType: file.type,
+        },
+        relatedClientId: clientProfile.id,
+        relatedRequestId: clientRequest.id,
+      });
       return NextResponse.json(
         { success: false, message: "Document upload failed." },
         { status: 500 }
@@ -310,6 +354,20 @@ export async function POST(
 
     if (insertError) {
       logSupabaseError("Task document metadata insert failed:", insertError);
+      await logWorkflowError({
+        source: "client-task-submit.metadata",
+        severity: "error",
+        message: "Task document metadata insert failed.",
+        context: {
+          error: insertError,
+          taskItemId: itemId,
+          documentType,
+          fileSize: file.size,
+          fileType: file.type,
+        },
+        relatedClientId: clientProfile.id,
+        relatedRequestId: clientRequest.id,
+      });
       return NextResponse.json(
         { success: false, message: "Document metadata could not be saved." },
         { status: 500 }
@@ -331,6 +389,20 @@ export async function POST(
             "ClickUp subtask file attachment failed:",
             subtaskAttachmentError
           );
+          await logWorkflowError({
+            source: "client-task-submit.clickup-subtask-attachment",
+            severity: "warning",
+            message: "ClickUp subtask file attachment failed; trying parent task.",
+            context: {
+              error: subtaskAttachmentError,
+              parentTaskId: taskProgress.parentTaskId,
+              taskItemId: taskItem.id,
+              documentId: insertedDocument.id,
+            },
+            relatedClientId: clientProfile.id,
+            relatedRequestId: clientRequest.id,
+            relatedDocumentId: insertedDocument.id,
+          });
           await attachFileToClickUpTask({
             taskId: taskProgress.parentTaskId,
             file,
@@ -346,6 +418,20 @@ export async function POST(
       }
     } catch (error) {
       console.error("ClickUp task item file attachment failed:", error);
+      await logWorkflowError({
+        source: "client-task-submit.clickup-attachment",
+        severity: "warning",
+        message: "ClickUp task item file attachment failed.",
+        context: {
+          error,
+          parentTaskId: taskProgress.parentTaskId,
+          taskItemId: taskItem.id,
+          documentId: insertedDocument?.id,
+        },
+        relatedClientId: clientProfile.id,
+        relatedRequestId: clientRequest.id,
+        relatedDocumentId: insertedDocument?.id,
+      });
       warnings.push("Document saved, but ClickUp file attachment failed.");
     }
   }
@@ -368,6 +454,20 @@ export async function POST(
     warnings.push(...commentResult.warnings);
   } catch (error) {
     console.error("ClickUp task item comment failed:", error);
+    await logWorkflowError({
+      source: "client-task-submit.clickup-comment",
+      severity: "warning",
+      message: "ClickUp task item comment failed.",
+      context: {
+        error,
+        parentTaskId: taskProgress.parentTaskId,
+        taskItemId: taskItem.id,
+        documentId: insertedDocument?.id,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: clientRequest.id,
+      relatedDocumentId: insertedDocument?.id,
+    });
     warnings.push("The update was saved, but the ClickUp comment could not be added.");
   }
 
@@ -382,6 +482,19 @@ export async function POST(
       });
     } catch (error) {
       console.error("ClickUp task item completion failed:", error);
+      await logWorkflowError({
+        source: "client-task-submit.clickup-completion",
+        severity: "warning",
+        message: "ClickUp task item completion failed.",
+        context: {
+          error,
+          parentTaskId: taskProgress.parentTaskId,
+          taskItemId: taskItem.id,
+          taskItemType: taskItem.type,
+        },
+        relatedClientId: clientProfile.id,
+        relatedRequestId: clientRequest.id,
+      });
       warnings.push("Completion could not be applied automatically.");
     }
   }
@@ -399,6 +512,19 @@ export async function POST(
 
   if (timelineError) {
     logSupabaseError("Task update timeline insert failed:", timelineError);
+    await logWorkflowError({
+      source: "client-task-submit.timeline",
+      severity: "warning",
+      message: "Task update timeline insert failed.",
+      context: {
+        error: timelineError,
+        taskItemId: taskItem.id,
+        documentId: insertedDocument?.id,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: clientRequest.id,
+      relatedDocumentId: insertedDocument?.id,
+    });
     warnings.push("The portal timeline could not be updated.");
   }
 

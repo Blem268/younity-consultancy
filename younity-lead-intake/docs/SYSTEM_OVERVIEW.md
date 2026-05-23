@@ -56,7 +56,7 @@ Internal sync controls require a logged-in user whose email is listed in `INTERN
 
 Public lead intake, portal write APIs, document upload, task updates, and internal sync wrapper routes use lightweight server-side rate limiting. Production rate limiting is backed by Supabase table `public.rate_limits`; deployments must run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
 
-Production workflow failures are written to Supabase table `public.workflow_errors` through a server-side helper that sanitizes context before insert. Admin users can review the latest workflow errors at `/internal/errors`.
+Production workflow failures are written to Supabase table `public.workflow_errors` through a server-side helper that sanitizes context before insert. Admin users can review the latest workflow errors at `/internal/errors`, mark errors resolved, reopen resolved errors, and store resolution notes.
 
 The public contact form includes a hidden honeypot field. Cloudflare Turnstile is not active and remains a future option if spam increases.
 
@@ -111,7 +111,19 @@ ClickUp status/billing updates
 -> Client sees latest portal status/billing
 ```
 
-### E. Client Task Progress
+### E. Workflow Error Review
+
+```text
+Workflow failure
+-> Sanitized public.workflow_errors row
+-> Admin reviews /internal/errors
+-> Admin marks resolved with optional note
+-> Admin can reopen if follow-up is needed
+```
+
+Automatic retry actions are not active yet. Future retry controls should be limited to safe retryable failures such as Google Sheets logging, Resend notifications, Twilio notifications, and ClickUp comments or attachments. Zoho CRM lead creation, ClickUp task creation, Supabase document metadata inserts, auth failures, authorization failures, and validation failures are not automatically retryable in the current design.
+
+### F. Client Task Progress
 
 ```text
 Client opens request detail
