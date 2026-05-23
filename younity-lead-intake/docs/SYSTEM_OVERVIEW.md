@@ -171,6 +171,8 @@ Admin opens /internal/onboarding
 
 Phase 22 adds a simple internal onboarding flow without automated email invitations. New client profiles can be created with contact and Zoho CRM reference fields, but Supabase Auth users are not created automatically. The linking route only updates `clients.user_id` after an admin supplies a valid client ID and Auth user ID. The client dashboard checklist uses existing profile, request, and document data to show whether profile information is reviewed, a first request has been submitted, required documents are uploaded, and contact preference is confirmed. Email-dependent onboarding invitations remain paused until Younity email services are reactivated.
 
+Phase 23 simplifies `/client/dashboard` for non-technical clients. The dashboard now opens with a welcome message and a next-best-action card that prioritizes requested documents, active requests, or starting a first request, followed by plain-language request, document, and profile cards. Recent updates use friendlier wording, the onboarding checklist appears lower as "Getting Started," and mobile layouts emphasize full-width, easy-to-tap actions. This phase changes dashboard presentation only; Supabase queries, auth, API routes, schema, ClickUp, and client data access rules remain unchanged.
+
 ### D3. Controlled Internal Admin Actions
 
 ```text

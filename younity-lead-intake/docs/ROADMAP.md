@@ -39,6 +39,7 @@
 - Phase 20 unified the public website, contact intake, client portal, task workspace, document surfaces, and internal admin area with the actual blue-themed Younity Consultancy website branding, including shared `#06111f`, `#071a33`, `#244285`, `#50A9C0`, and `#f6f9fc` visual tokens, standardized status badges, consistent cards/buttons/forms/navigation, mobile polish, and accessible focus states.
 - Phase 21 premium UI polish for the official website, contact intake, client portal, task workspace, and internal admin area, including official logo usage, refined blue gradients, stronger card elevation, premium dashboard/stat cards, polished forms/buttons, dark table headers, clearer empty states, and brand-aligned status badges without backend workflow changes.
 - Phase 22 client onboarding flow at `/internal/onboarding`: admins can manually create client portal profiles, link existing profiles to Supabase Auth user IDs, review recent unlinked/onboarded clients, and clients see an onboarding checklist on their dashboard. Email invitations remain paused until Younity email services are reactivated; admins manually create users in Supabase Authentication and link `clients.user_id`.
+- Phase 23 simplified the client dashboard for non-technical clients with a clearer welcome section, next-best-action guidance, plain-language request/document/profile cards, friendlier recent updates, a lower-priority getting-started checklist, and mobile-first action buttons without changing backend workflows.
 
 ## Next Recommended Work
 

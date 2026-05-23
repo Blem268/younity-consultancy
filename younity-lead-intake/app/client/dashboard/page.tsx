@@ -27,6 +27,17 @@ type ClientUpdate = {
   created_at: string | null;
 };
 
+function friendlyPortalText(value: string) {
+  return value
+    .replaceAll("client_requests", "requests")
+    .replaceAll("Client Requests", "Requests")
+    .replaceAll("client requests", "requests")
+    .replaceAll("sync", "update")
+    .replaceAll("Sync", "Update")
+    .replaceAll("billing fields", "profile details")
+    .replaceAll("Billing fields", "Profile details");
+}
+
 function formatUpdateDate(value: string | null) {
   if (!value) {
     return "Date unavailable";
@@ -123,72 +134,100 @@ export default async function ClientDashboardPage() {
       .returns<ClientUpdate[]>(),
   ]);
 
-  const dashboardCards = [
-    {
-      title: "Active Requests",
-      value: String(activeRequestsResult.count ?? 0),
-      href: "/client/requests",
-    },
-    {
-      title: "Documents Needed",
-      value: String(documentsNeededResult.count ?? 0),
-      href: "/client/documents",
-    },
-    {
-      title: "Submitted Documents",
-      value: String(submittedDocumentsResult.count ?? 0),
-      href: "/client/documents",
-    },
-    {
-      title: "Invoices",
-      value: String(invoicesResult.count ?? 0),
-      href: "/client/requests",
-    },
-  ];
-
-  const quickActions = [
-    {
-      label: "Submit New Request",
-      href: "/client/requests/new",
-      primary: true,
-    },
-    {
-      label: "Document Library",
-      href: "/client/documents",
-      primary: false,
-    },
-    {
-      label: "View Requests",
-      href: "/client/requests",
-      primary: false,
-    },
-    {
-      label: "Update Profile",
-      href: "/client/profile",
-      primary: false,
-    },
-  ];
-
+  const activeRequestCount = activeRequestsResult.count ?? 0;
+  const allRequestCount = allRequestsResult.count ?? 0;
+  const documentsNeededCount = documentsNeededResult.count ?? 0;
+  const uploadedDocumentCount = submittedDocumentsResult.count ?? 0;
+  const profileComplete = Boolean(
+    clientProfile.phone &&
+      clientProfile.company &&
+      clientProfile.preferred_contact_method
+  );
   const recentUpdates = recentUpdatesResult.data ?? [];
+  const primaryNextStep =
+    documentsNeededCount > 0
+      ? {
+          title: "Documents needed",
+          message:
+            "Please upload the requested documents so we can continue your work.",
+          buttonLabel: "Upload Documents",
+          href: "/client/documents",
+        }
+      : activeRequestCount > 0
+        ? {
+            title: "Your request is in progress",
+            message:
+              "You can check the latest status or view updates from Younity.",
+            buttonLabel: "View Requests",
+            href: "/client/requests",
+          }
+        : {
+            title: "Start your first request",
+            message:
+              "Tell us what you need help with and we’ll guide you from there.",
+            buttonLabel: "Start New Request",
+            href: "/client/requests/new",
+          };
+  const actionCards = [
+    {
+      title: "Your Requests",
+      value: String(activeRequestCount),
+      helper:
+        activeRequestCount === 1
+          ? "1 request is currently active."
+          : `${activeRequestCount} requests are currently active.`,
+      buttonLabel: "View Requests",
+      href: "/client/requests",
+      primary: false,
+    },
+    {
+      title: "Documents We Need",
+      value: String(documentsNeededCount),
+      helper:
+        documentsNeededCount === 1
+          ? "1 document needs your attention."
+          : `${documentsNeededCount} documents need your attention.`,
+      buttonLabel: "Upload Documents",
+      href: "/client/documents",
+      primary: documentsNeededCount > 0,
+    },
+    {
+      title: "Uploaded Documents",
+      value: String(uploadedDocumentCount),
+      helper:
+        uploadedDocumentCount === 1
+          ? "1 document has been uploaded."
+          : `${uploadedDocumentCount} documents have been uploaded.`,
+      buttonLabel: "View Documents",
+      href: "/client/documents",
+      primary: false,
+    },
+    {
+      title: "Your Profile",
+      value: profileComplete ? "Complete" : "Needs review",
+      helper: profileComplete
+        ? "Your contact details are ready."
+        : "Add your company, phone, and contact preference.",
+      buttonLabel: "Update Profile",
+      href: "/client/profile",
+      primary: !profileComplete,
+    },
+  ];
   const onboardingItems = [
     {
-      label: "Profile information reviewed",
-      complete: Boolean(
-        clientProfile.phone &&
-          clientProfile.company &&
-          clientProfile.preferred_contact_method
-      ),
+      label: "Profile completed",
+      complete: profileComplete,
     },
     {
-      label: "First service request submitted",
-      complete: (allRequestsResult.count ?? 0) > 0,
+      label: "First request submitted",
+      complete: allRequestCount > 0,
     },
     {
-      label: "Required documents uploaded",
-      complete: (documentsNeededResult.count ?? 0) === 0,
+      label: "Documents uploaded",
+      complete: documentsNeededCount === 0 && uploadedDocumentCount > 0,
     },
     {
-      label: "Contact preference confirmed",
+      label: "Contact preference added",
       complete: Boolean(clientProfile.preferred_contact_method),
     },
   ];
@@ -229,47 +268,108 @@ export default async function ClientDashboardPage() {
         title={`Welcome back, ${clientProfile.full_name}`}
         description={
           <>
-            {clientProfile.company || "Company not provided"} |{" "}
-            {clientProfile.email} | Signed in as {user.email}
+            {clientProfile.company ? `${clientProfile.company}. ` : ""}
+            Here’s what needs your attention today.
           </>
         }
       />
 
+      <Card className="mt-8 overflow-hidden border-[#50A9C0]/30 bg-gradient-to-br from-white via-white to-[#50A9C0]/12">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-black uppercase tracking-[0.12em] text-[#244285]">
+              Next step
+            </p>
+            <h2 className="mt-3 text-2xl font-black tracking-tight text-[#06111f] sm:text-3xl">
+              {primaryNextStep.title}
+            </h2>
+            <p className="mt-3 max-w-2xl text-base leading-7 text-slate-700">
+              {primaryNextStep.message}
+            </p>
+          </div>
+          <PrimaryButtonLink href={primaryNextStep.href}>
+            {primaryNextStep.buttonLabel}
+          </PrimaryButtonLink>
+        </div>
+      </Card>
+
       <section className="grid gap-4 py-8 sm:grid-cols-2 lg:grid-cols-4">
-        {dashboardCards.map((card) => (
+        {actionCards.map((card) => (
           <Link
             key={card.title}
             href={card.href}
             prefetch={false}
-            className={brand.statCard}
+            className={`${brand.statCard} flex min-h-64 flex-col justify-between`}
           >
-            <p className="text-sm font-black uppercase tracking-[0.12em] text-slate-500">
-              {card.title}
-            </p>
-            <p className="mt-4 text-4xl font-black tracking-tight text-[#06111f]">
-              {card.value}
-            </p>
-            <p className="mt-4 text-sm font-black text-[#244285]">
-              View details
-            </p>
+            <span>
+              <span className="block text-sm font-black uppercase tracking-[0.12em] text-slate-500">
+                {card.title}
+              </span>
+              <span className="mt-4 block text-4xl font-black tracking-tight text-[#06111f]">
+                {card.value}
+              </span>
+              <span className="mt-3 block text-sm leading-6 text-slate-600">
+                {card.helper}
+              </span>
+            </span>
+            <span
+              className={`mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-xl px-4 py-3 text-center text-sm font-black uppercase tracking-[0.08em] transition ${
+                card.primary
+                  ? "bg-[#244285] text-white"
+                  : "border border-[#06111f]/15 bg-white text-[#06111f]"
+              }`}
+            >
+              {card.buttonLabel}
+            </span>
           </Link>
         ))}
       </section>
+
+      <Card>
+        <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+          Recent Updates
+        </h2>
+
+        {recentUpdates.length ? (
+          <div className="mt-5 divide-y divide-slate-200">
+            {recentUpdates.map((update) => (
+              <article key={update.id} className="py-4 first:pt-0 last:pb-0">
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
+                  <h3 className="text-sm font-semibold text-slate-950">
+                    {friendlyPortalText(update.title)}
+                  </h3>
+                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                    {formatUpdateDate(update.created_at)}
+                  </p>
+                </div>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  {friendlyPortalText(update.message)}
+                </p>
+              </article>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            title="No updates yet."
+            description="When Younity posts an update, it will appear here."
+          />
+        )}
+      </Card>
 
       <Card className="mt-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Onboarding Checklist
+              Getting Started
             </h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
-              {completedOnboardingItems} of {onboardingItems.length} setup steps
+              {completedOnboardingItems} of {onboardingItems.length} steps
               complete.
             </p>
           </div>
         </div>
 
-        <div className="mt-5 grid gap-3">
+        <div className="mt-5 grid gap-3 sm:grid-cols-2">
           {onboardingItems.map((item) => (
             <div
               key={item.label}
@@ -291,73 +391,18 @@ export default async function ClientDashboardPage() {
             </div>
           ))}
         </div>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-3">
-          <SecondaryButtonLink href="/client/profile">
-            Update Profile
-          </SecondaryButtonLink>
-          <PrimaryButtonLink href="/client/requests/new">
-            Submit Request
-          </PrimaryButtonLink>
-          <SecondaryButtonLink href="/client/documents">
-            Upload Documents
-          </SecondaryButtonLink>
-        </div>
       </Card>
 
-      <Card className="mt-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Quick Actions
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Start common client portal tasks from one place.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {quickActions.map((action) =>
-            action.primary ? (
-              <PrimaryButtonLink key={action.href} href={action.href}>
-                {action.label}
-              </PrimaryButtonLink>
-            ) : (
-              <SecondaryButtonLink key={action.href} href={action.href}>
-                {action.label}
-              </SecondaryButtonLink>
-            )
-          )}
-        </div>
-      </Card>
-
-      <Card className="mt-6">
+      <Card className="mt-6 border-[#50A9C0]/25 bg-[#50A9C0]/10 shadow-none">
         <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-          Recent Updates
+          Need help?
         </h2>
-
-        {recentUpdates.length ? (
-          <div className="mt-5 divide-y divide-slate-200">
-            {recentUpdates.map((update) => (
-              <article key={update.id} className="py-4 first:pt-0 last:pb-0">
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                  <h3 className="text-sm font-semibold text-slate-950">
-                    {update.title}
-                  </h3>
-                  <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
-                    {formatUpdateDate(update.created_at)}
-                  </p>
-                </div>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {update.message}
-                </p>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <EmptyState title="No recent updates yet." />
-        )}
+        <p className="mt-2 text-sm leading-6 text-slate-700">
+          Contact Younity Consultancy if you need assistance using the portal.
+        </p>
+        <div className="mt-5">
+          <SecondaryButtonLink href="/contact">Contact Younity</SecondaryButtonLink>
+        </div>
       </Card>
     </PortalPage>
   );
