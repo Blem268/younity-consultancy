@@ -40,6 +40,7 @@
 - Phase 21 premium UI polish for the official website, contact intake, client portal, task workspace, and internal admin area, including official logo usage, refined blue gradients, stronger card elevation, premium dashboard/stat cards, polished forms/buttons, dark table headers, clearer empty states, and brand-aligned status badges without backend workflow changes.
 - Phase 22 client onboarding flow at `/internal/onboarding`: admins can manually create client portal profiles, link existing profiles to Supabase Auth user IDs, review recent unlinked/onboarded clients, and clients see an onboarding checklist on their dashboard. Email invitations remain paused until Younity email services are reactivated; admins manually create users in Supabase Authentication and link `clients.user_id`.
 - Phase 23 simplified the client dashboard for non-technical clients with a clearer welcome section, next-best-action guidance, plain-language request/document/profile cards, friendlier recent updates, a lower-priority getting-started checklist, and mobile-first action buttons without changing backend workflows.
+- Phase 25 client portal launch operations documentation: created the Client Portal Launch Checklist, Client Portal SOP, and Troubleshooting Guide for internal staff operation without codebase knowledge.
 
 ## Next Recommended Work
 
@@ -49,6 +50,7 @@
 - Handle actual invoicing manually or outside the portal for now.
 - Keep email-dependent notification phases paused until the production Younity sending domain is reactivated and verified.
 - Keep automated client onboarding invitations paused until Younity email services are reactivated; use manual login instructions after linking the Supabase Auth user ID.
+- Use the Phase 25 launch checklist, SOP, and troubleshooting guide for staff training, launch readiness checks, and repeatable client portal operations.
 - Add Cloudflare Turnstile to the public contact form if spam volume increases.
 - Monitor ClickUp webhook delivery and keep manual sync available as the fallback.
 - Continue using private signed URL document access only for uploaded files.

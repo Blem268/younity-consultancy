@@ -7,6 +7,9 @@ The system supports public service requests, Zoho CRM lead creation, ClickUp ope
 ## Documentation
 
 - [System Overview](docs/SYSTEM_OVERVIEW.md)
+- [Client Portal Launch Checklist](docs/CLIENT_PORTAL_LAUNCH_CHECKLIST.md)
+- [Client Portal SOP](docs/CLIENT_PORTAL_SOP.md)
+- [Troubleshooting Guide](docs/TROUBLESHOOTING_GUIDE.md)
 - [Testing Checklist](docs/TESTING_CHECKLIST.md)
 - [Environment Variables](docs/ENVIRONMENT_VARIABLES.md)
 - [Roadmap](docs/ROADMAP.md)
