@@ -100,7 +100,7 @@ export function SubtaskActionForm({
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={5}
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         />
       </div>
 
@@ -117,7 +117,7 @@ export function SubtaskActionForm({
             name="documentType"
             value={documentType}
             onChange={(event) => setDocumentType(event.target.value)}
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
           >
             {documentTypes.map((typeOption) => (
               <option key={typeOption} value={typeOption}>
@@ -136,22 +136,22 @@ export function SubtaskActionForm({
             id="file"
             name="file"
             type="file"
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-[#244285] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
           />
         </div>
       </div>
 
-      <label className="flex gap-3 rounded-lg border border-teal-900/10 bg-teal-50/40 p-4 text-sm font-medium text-slate-800">
+      <label className="flex gap-3 rounded-lg border border-[#50A9C0]/20 bg-[#50A9C0]/10 p-4 text-sm font-medium text-slate-800">
         <input
           type="checkbox"
           checked={markComplete}
           onChange={(event) => setMarkComplete(event.target.checked)}
-          className="mt-1 h-4 w-4 accent-teal-700"
+          className="mt-1 h-4 w-4 accent-[#244285]"
         />
         <span>Mark this task complete</span>
       </label>
 
-      <div aria-live="polite" className={isError ? "text-red-700" : "text-teal-700"}>
+      <div aria-live="polite" className={isError ? "text-red-700" : "text-[#244285]"}>
         {message ? <p className="text-sm font-medium">{message}</p> : null}
         {warnings.length ? (
           <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 text-sm leading-6 text-amber-900">
@@ -165,7 +165,7 @@ export function SubtaskActionForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="inline-flex items-center justify-center rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Submitting..." : "Submit Update"}
       </button>

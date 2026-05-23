@@ -143,7 +143,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
         actions={
           <Link
             href="/internal/requests"
-            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-teal-50 hover:text-teal-900"
+            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
           >
             Back to requests
           </Link>
@@ -208,21 +208,21 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
         <>
           <Link
             href="/internal/requests"
-            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-teal-50 hover:text-teal-900"
+            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
           >
             Back to requests
           </Link>
           {request.clients ? (
             <Link
               href={`/internal/clients/${request.clients.id}`}
-              className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-teal-50 hover:text-teal-900"
+              className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
             >
               View client
             </Link>
           ) : null}
           <Link
             href="/internal/sync"
-            className="rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+            className="rounded-md bg-[#244285] px-4 py-2 text-sm font-semibold text-white transition hover:brightness-110"
           >
             Run sync controls
           </Link>
@@ -285,7 +285,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
               <p>{request.clients.preferred_contact_method || "Preferred contact unavailable"}</p>
               <Link
                 href={`/internal/clients/${request.clients.id}`}
-                className="inline-flex font-semibold text-teal-700 transition hover:text-teal-900"
+                className="inline-flex font-semibold text-[#244285] transition hover:text-[#06111f]"
               >
                 View client profile
               </Link>
@@ -382,7 +382,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
                       <Link
                         href={`/api/internal/documents/${document.id}/open`}
                         prefetch={false}
-                        className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                        className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
                       >
                         Open
                       </Link>
@@ -443,7 +443,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
                       <Link
                         href={`/api/internal/documents/${document.id}/open`}
                         prefetch={false}
-                        className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                        className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
                       >
                         Open
                       </Link>

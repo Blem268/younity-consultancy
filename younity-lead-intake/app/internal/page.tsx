@@ -259,7 +259,7 @@ export default async function InternalDashboardPage() {
           {summaryCards.map((card) => (
             <article
               key={card.title}
-              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-teal-200"
+              className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm transition hover:border-[#50A9C0]/30"
             >
               <p className="text-sm font-semibold text-slate-600">{card.title}</p>
               <p className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
@@ -279,7 +279,7 @@ export default async function InternalDashboardPage() {
             actions={
               <Link
                 href="/internal/errors"
-                className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
+                className="text-sm font-semibold text-[#244285] transition hover:text-[#06111f]"
               >
                 View all
               </Link>
@@ -320,7 +320,7 @@ export default async function InternalDashboardPage() {
                 <Link
                   key={action.href}
                   href={action.href}
-                  className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-teal-200 hover:bg-teal-50 hover:text-teal-900"
+                  className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-[#50A9C0]/30 hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
                 >
                   {action.label}
                 </Link>

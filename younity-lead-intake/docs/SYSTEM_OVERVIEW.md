@@ -153,6 +153,8 @@ Admin opens /internal
 
 Phase 18 added ClickUp webhook automation without changing public lead intake, client portal behavior, ClickUp task creation, Zoho CRM integrations, Resend/Twilio behavior, or workflow retry behavior. Phase 19 adds structured document request rows and upload-against-request behavior without adding email-dependent client notifications. ClickUp remains the operations and billing preparation hub. Email-dependent notification work remains paused until the production Younity email domain is reactivated and verified.
 
+Phase 20 aligns the public website, client portal, and internal admin area with the actual blue-themed Younity Consultancy website branding. The shared UI layer uses the website colors `#06111f`, `#071a33`, `#244285`, `#50A9C0`, and `#f6f9fc`, plus the website's dark gradient navigation, rounded white cards, bold uppercase action buttons, blue accent form focus states, empty states, and standardized status badge colors across request, document, invoice, workflow error, and task progress surfaces. This phase is presentation-only and does not change public lead intake behavior, portal data flows, private document access, ClickUp, Zoho CRM, Twilio, Google Sheets, rate limiting, or workflow retry behavior.
+
 ### D3. Controlled Internal Admin Actions
 
 ```text

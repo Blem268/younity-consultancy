@@ -91,7 +91,7 @@ export function ErrorActions({ errorId, resolved, retryable }: ErrorActionsProps
         type="button"
         disabled={Boolean(activeAction)}
         onClick={() => runAction("resolve")}
-        className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:opacity-60"
+        className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:opacity-60"
       >
         {activeAction === "resolve" ? "Resolving..." : "Mark Resolved"}
       </button>
@@ -100,7 +100,7 @@ export function ErrorActions({ errorId, resolved, retryable }: ErrorActionsProps
           type="button"
           disabled={Boolean(activeAction)}
           onClick={() => runAction("retry")}
-          className="w-fit rounded-md border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-semibold text-teal-800 transition hover:border-teal-300 hover:bg-teal-100 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-fit rounded-md border border-[#50A9C0]/30 bg-[#50A9C0]/10 px-3 py-2 text-sm font-semibold text-[#244285] transition hover:border-[#50A9C0] hover:bg-[#50A9C0]/20 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {activeAction === "retry" ? "Retrying..." : "Retry"}
         </button>

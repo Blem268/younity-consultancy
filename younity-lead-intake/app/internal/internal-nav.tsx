@@ -34,10 +34,10 @@ export function InternalNav() {
               key={item.href}
               href={item.href}
               aria-current={isActive ? "page" : undefined}
-              className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+              className={`rounded-xl px-3 py-2 text-sm font-black uppercase tracking-[0.08em] transition ${
                 isActive
-                  ? "bg-teal-700 text-white shadow-sm"
-                  : "text-slate-700 hover:bg-teal-50 hover:text-teal-900"
+                  ? "bg-[#50A9C0] text-[#06111f] shadow-sm"
+                  : "text-white/80 hover:bg-white/10 hover:text-[#50A9C0]"
               }`}
             >
               {item.label}

@@ -143,6 +143,9 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm public lead-intake rate limiting returns a safe 429 response after repeated submissions.
 - Confirm portal request, document upload, task update, and internal sync rate limits return safe 429 responses after repeated submissions.
 - Confirm the public contact form honeypot field is present and normal submissions still work.
+- Confirm the Phase 20 visual system matches the actual blue-themed Younity Consultancy website across the homepage, contact form, client portal, task workspace, document library, internal dashboard, admin lists, workflow errors, and sync controls.
+- Confirm status badges use consistent colors for submitted/new, in-progress/review, waiting/requested, approved/paid/completed, rejected/error/overdue, and neutral/closed states.
+- Confirm forms, action buttons, cards, empty states, mobile list views, table scrolling, and focus states remain usable on mobile and keyboard navigation.
 - Run multi-client access tests for request, document, invoice, update, and task detail isolation.
 - Confirm Zoho Books is not active and no `ZOHO_BOOKS_*` variables are configured.
 

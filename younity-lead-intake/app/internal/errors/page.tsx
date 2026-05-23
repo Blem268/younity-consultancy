@@ -206,7 +206,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
         </label>
         <button
           type="submit"
-          className="self-end rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+          className="self-end rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
         >
           Filter
         </button>
@@ -240,7 +240,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
                           {workflowError.resolved ? "Resolved" : "Open"}
                         </Badge>
                         {workflowError.retryable ? (
-                          <Badge tone="teal">Retryable</Badge>
+                          <Badge tone="accent">Retryable</Badge>
                         ) : (
                           <Badge tone="slate">Manual only</Badge>
                         )}
@@ -306,7 +306,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
 
                   {context ? (
                     <details className="mt-4">
-                      <summary className="cursor-pointer text-sm font-semibold text-teal-700">
+                      <summary className="cursor-pointer text-sm font-semibold text-[#244285]">
                         View sanitized context
                       </summary>
                       <pre className="mt-3 max-h-96 overflow-auto rounded-md bg-slate-950 p-4 text-xs leading-5 text-slate-100">

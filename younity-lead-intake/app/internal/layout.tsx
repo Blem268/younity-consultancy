@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import { brand } from "@/app/components/ui/brand";
 import { InternalNav } from "./internal-nav";
 
 export default async function InternalLayout({
@@ -10,10 +11,15 @@ export default async function InternalLayout({
   const admin = await requireInternalAdmin();
 
   return (
-    <main className="min-h-screen bg-[#f7faf8] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
+    <main className="min-h-screen bg-[#f6f9fc] px-4 py-6 text-[#06111f] sm:px-6 sm:py-8 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
-        <header className="border-b border-teal-900/10 pb-6">
-          <InternalNav />
+        <header className={`sticky top-0 z-20 -mx-4 px-4 py-4 sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8 ${brand.shellHeader}`}>
+          <div className="mx-auto max-w-6xl">
+            <p className="mb-3 text-xs font-black uppercase tracking-[0.3em] text-[#50A9C0]">
+              Younity Consultancy
+            </p>
+            <InternalNav />
+          </div>
         </header>
         {admin.isAdmin ? (
           children

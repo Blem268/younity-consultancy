@@ -107,7 +107,7 @@ export default async function ClientRequestsPage() {
       <section className="py-8">
         {clientRequests.length ? (
           <div className="overflow-hidden rounded-lg border border-slate-200/80 bg-white shadow-sm shadow-slate-200/50">
-            <div className="hidden grid-cols-[1.2fr_0.8fr_0.9fr_0.8fr_0.8fr_0.7fr] gap-4 border-b border-teal-900/10 bg-teal-50/70 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 lg:grid">
+            <div className="hidden grid-cols-[1.2fr_0.8fr_0.9fr_0.8fr_0.8fr_0.7fr] gap-4 border-b border-[#50A9C0]/20 bg-[#50A9C0]/15 px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600 lg:grid">
               <span>Service</span>
               <span>Status</span>
               <span>Invoice Status</span>
@@ -174,7 +174,7 @@ export default async function ClientRequestsPage() {
                       <Link
                         href={`/client/requests/${request.id}`}
                         prefetch={false}
-                        className="inline-flex min-h-10 items-center text-sm font-semibold text-teal-700 transition hover:text-teal-900"
+                        className="inline-flex min-h-10 items-center text-sm font-semibold text-[#244285] transition hover:text-[#06111f]"
                       >
                         View Details
                       </Link>

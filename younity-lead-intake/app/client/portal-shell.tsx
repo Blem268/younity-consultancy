@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
+import { brand } from "@/app/components/ui/brand";
 
 const navigationLinks = [
   { label: "Dashboard", href: "/client/dashboard" },
@@ -31,22 +32,22 @@ export function ClientPortalShell({ children }: { children: ReactNode }) {
 
   if (isLoginPage) {
     return (
-      <section className="min-h-screen bg-[#f7faf8] text-slate-950">
+      <section className="min-h-screen bg-[#f6f9fc] text-[#06111f]">
         {children}
       </section>
     );
   }
 
   return (
-    <section className="min-h-screen bg-[#f7faf8] text-slate-950">
-      <header className="sticky top-0 z-20 border-b border-teal-900/10 bg-white/95 backdrop-blur">
+    <section className="min-h-screen bg-[#f6f9fc] text-[#06111f]">
+      <header className={`sticky top-0 z-20 ${brand.shellHeader}`}>
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-4 px-4 py-4 sm:px-6 lg:px-8">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <Link href="/client/dashboard" prefetch={false} className="w-fit">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+              <p className="text-xs font-black uppercase tracking-[0.3em] text-[#50A9C0]">
                 Younity Consultancy
               </p>
-              <p className="mt-1 text-lg font-semibold tracking-tight text-slate-950">
+              <p className="mt-1 text-lg font-black tracking-wide text-white">
                 Client Portal
               </p>
             </Link>
@@ -63,10 +64,10 @@ export function ClientPortalShell({ children }: { children: ReactNode }) {
                     href={link.href}
                     prefetch={false}
                     aria-current={active ? "page" : undefined}
-                    className={`rounded-md px-3 py-2 text-sm font-semibold transition ${
+                    className={`rounded-xl px-3 py-2 text-sm font-black uppercase tracking-[0.08em] transition ${
                       active
-                        ? "bg-teal-700 text-white shadow-sm"
-                        : "text-slate-700 hover:bg-teal-50 hover:text-teal-900"
+                        ? "bg-[#50A9C0] text-[#06111f] shadow-sm"
+                        : "text-white/80 hover:bg-white/10 hover:text-[#50A9C0]"
                     }`}
                   >
                     {link.label}

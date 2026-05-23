@@ -1,5 +1,12 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
+import { ActionButtonLink } from "@/app/components/ui/action-button";
+import { brand } from "@/app/components/ui/brand";
+import {
+  DocumentStatusBadge,
+  InvoiceStatusBadge,
+  RequestStatusBadge,
+} from "@/app/components/ui/status-badges";
 
 export function PortalPage({
   children,
@@ -23,10 +30,10 @@ export function PageHeader({
   actions?: ReactNode;
 }) {
   return (
-    <header className="flex flex-col gap-5 border-b border-teal-900/10 pb-6 sm:flex-row sm:items-end sm:justify-between">
+    <header className="flex flex-col gap-5 border-b border-[#50A9C0]/20 pb-6 sm:flex-row sm:items-end sm:justify-between">
       <div>
         {eyebrow ? <div className="mb-3">{eyebrow}</div> : null}
-        <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+        <h1 className="text-3xl font-black tracking-tight text-[#06111f] sm:text-4xl">
           {title}
         </h1>
         {description ? (
@@ -49,7 +56,7 @@ export function Card({
 }) {
   return (
     <section
-      className={`rounded-lg border border-slate-200/80 bg-white p-5 shadow-sm shadow-slate-200/50 sm:p-6 ${className}`}
+      className={`${brand.card} ${brand.cardPadding} ${className}`}
     >
       {children}
     </section>
@@ -66,7 +73,7 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="rounded-lg border border-dashed border-teal-900/20 bg-teal-50/40 p-5">
+    <div className={brand.empty}>
       <p className="text-sm font-semibold text-slate-950">{title}</p>
       {description ? (
         <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
@@ -88,7 +95,7 @@ export function BackLinks({
           key={link.href}
           href={link.href}
           prefetch={false}
-          className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
+          className="text-sm font-black text-[#244285] transition hover:text-[#06111f]"
         >
           {link.label}
         </Link>
@@ -105,13 +112,9 @@ export function PrimaryButtonLink({
   children: ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      prefetch={false}
-      className="inline-flex min-h-11 items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
-    >
+    <ActionButtonLink href={href} variant="accent">
       {children}
-    </Link>
+    </ActionButtonLink>
   );
 }
 
@@ -123,76 +126,9 @@ export function SecondaryButtonLink({
   children: ReactNode;
 }) {
   return (
-    <Link
-      href={href}
-      prefetch={false}
-      className="inline-flex min-h-11 items-center justify-center rounded-md border border-teal-900/20 bg-white px-4 py-2.5 text-sm font-semibold text-slate-800 transition hover:border-teal-300 hover:bg-teal-50"
-    >
+    <ActionButtonLink href={href} variant="secondary">
       {children}
-    </Link>
-  );
-}
-
-function statusBadgeClass(status: string, kind: "request" | "invoice" | "document") {
-  const normalized = status.toLowerCase();
-
-  if (
-    normalized.includes("overdue") ||
-    normalized.includes("cancelled") ||
-    normalized.includes("canceled")
-  ) {
-    return "border-red-200 bg-red-50 text-red-800";
-  }
-
-  if (
-    normalized.includes("billing") ||
-    normalized.includes("drafted") ||
-    normalized.includes("sent") ||
-    normalized.includes("progress") ||
-    normalized.includes("review")
-  ) {
-    return kind === "invoice"
-      ? "border-blue-200 bg-blue-50 text-blue-800"
-      : "border-teal-200 bg-teal-50 text-teal-800";
-  }
-
-  if (
-    normalized.includes("partial") ||
-    normalized.includes("pending") ||
-    normalized.includes("requested")
-  ) {
-    return "border-amber-200 bg-amber-50 text-amber-800";
-  }
-
-  if (
-    normalized.includes("paid") ||
-    normalized.includes("completed") ||
-    normalized.includes("closed") ||
-    normalized.includes("received") ||
-    normalized.includes("submitted")
-  ) {
-    return "border-green-200 bg-green-50 text-green-800";
-  }
-
-  return "border-slate-200 bg-slate-100 text-slate-700";
-}
-
-function StatusBadge({
-  status,
-  kind,
-}: {
-  status: string;
-  kind: "request" | "invoice" | "document";
-}) {
-  return (
-    <span
-      className={`inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${statusBadgeClass(
-        status,
-        kind
-      )}`}
-    >
-      {status}
-    </span>
+    </ActionButtonLink>
   );
 }
 
@@ -200,14 +136,4 @@ export function getInvoiceStatus(value: string | null | undefined) {
   return value || "Not Ready";
 }
 
-export function RequestStatusBadge({ status }: { status: string }) {
-  return <StatusBadge status={status} kind="request" />;
-}
-
-export function InvoiceStatusBadge({ status }: { status: string }) {
-  return <StatusBadge status={status} kind="invoice" />;
-}
-
-export function DocumentStatusBadge({ status }: { status: string }) {
-  return <StatusBadge status={status} kind="document" />;
-}
+export { DocumentStatusBadge, InvoiceStatusBadge, RequestStatusBadge };

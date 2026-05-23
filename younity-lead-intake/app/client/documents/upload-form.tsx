@@ -113,7 +113,7 @@ export function UploadForm({
           value={documentType}
           onChange={(event) => setDocumentType(event.target.value)}
           disabled={lockDocumentType}
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         >
           {documentTypes.map((type) => (
             <option key={type} value={type}>
@@ -136,7 +136,7 @@ export function UploadForm({
             name="requestId"
             value={requestId}
             onChange={(event) => setRequestId(event.target.value)}
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
           >
             <option value="">General / Not linked to a request</option>
             {requests.map((request) => (
@@ -158,7 +158,7 @@ export function UploadForm({
           name="file"
           type="file"
           required
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-[#244285] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
         />
       </div>
 
@@ -175,18 +175,18 @@ export function UploadForm({
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
           rows={4}
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         />
       </div>
 
-      <div aria-live="polite" className={isError ? "text-red-700" : "text-teal-700"}>
+      <div aria-live="polite" className={isError ? "text-red-700" : "text-[#244285]"}>
         {message ? <p className="text-sm font-medium">{message}</p> : null}
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="inline-flex items-center justify-center rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Uploading..." : "Upload Document"}
       </button>

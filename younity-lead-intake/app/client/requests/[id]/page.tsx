@@ -465,7 +465,7 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                           prefetch={false}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-semibold text-teal-700 transition hover:text-teal-900"
+                          className="font-semibold text-[#244285] transition hover:text-[#06111f]"
                         >
                           Open
                         </Link>

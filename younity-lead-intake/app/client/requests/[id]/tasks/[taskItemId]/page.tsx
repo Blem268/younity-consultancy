@@ -9,6 +9,7 @@ import {
   PortalPage,
   RequestStatusBadge,
 } from "../../../../portal-ui";
+import { TaskCompletionBadge } from "@/app/components/ui/status-badges";
 import { SubtaskActionForm } from "./subtask-action-form";
 
 type ClientProfile = {
@@ -205,15 +206,7 @@ export default async function ClientTaskItemPage({
                 Completion
               </dt>
               <dd className="mt-2">
-                <span
-                  className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                    taskItem.completed
-                      ? "border-green-200 bg-green-50 text-green-800"
-                      : "border-amber-200 bg-amber-50 text-amber-800"
-                  }`}
-                >
-                  {taskItem.completed ? "Completed" : "Action available"}
-                </span>
+                <TaskCompletionBadge completed={taskItem.completed} />
               </dd>
             </div>
           </dl>

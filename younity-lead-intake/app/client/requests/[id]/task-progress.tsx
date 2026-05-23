@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import {
+  Badge,
+  StatusBadge,
+  TaskCompletionBadge,
+} from "@/app/components/ui/status-badges";
 
 type TaskProgressItem = {
   id: string;
@@ -33,22 +38,10 @@ function clampProgress(value: number) {
   return Math.min(100, Math.max(0, value));
 }
 
-function StatusBadge({ status }: { status: string }) {
-  return (
-    <span className="inline-flex w-fit items-center rounded-full border border-teal-200 bg-teal-50 px-2.5 py-1 text-xs font-semibold text-teal-800">
-      {status}
-    </span>
-  );
-}
-
 function TypeBadge({ type }: { type: TaskProgressItem["type"] }) {
   const label = type === "subtask" ? "Subtask" : "Checklist";
 
-  return (
-    <span className="inline-flex w-fit items-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-600">
-      {label}
-    </span>
-  );
+  return <Badge tone="slate">{label}</Badge>;
 }
 
 export function TaskProgress({ requestId }: { requestId: string }) {
@@ -123,7 +116,7 @@ export function TaskProgress({ requestId }: { requestId: string }) {
 
   if (!data.linked) {
     return (
-      <div className="mt-5 rounded-lg border border-dashed border-teal-900/20 bg-teal-50/40 p-5">
+      <div className="mt-5 rounded-lg border border-dashed border-[#50A9C0]/25 bg-[#50A9C0]/10 p-5">
         <p className="text-sm font-semibold text-slate-950">
           {data.message || "No operational task has been linked yet."}
         </p>
@@ -147,11 +140,11 @@ export function TaskProgress({ requestId }: { requestId: string }) {
               {progressPercent}% complete
             </p>
           </div>
-          {data.parentStatus ? <StatusBadge status={data.parentStatus} /> : null}
+          {data.parentStatus ? <StatusBadge>{data.parentStatus}</StatusBadge> : null}
         </div>
         <div className="mt-3 h-2.5 overflow-hidden rounded-full bg-slate-100">
           <div
-            className="h-full rounded-full bg-teal-700 transition-all"
+            className="h-full rounded-full bg-[#244285] transition-all"
             style={{ width: `${progressPercent}%` }}
           />
         </div>
@@ -172,23 +165,15 @@ export function TaskProgress({ requestId }: { requestId: string }) {
                 <p className="text-sm font-medium text-slate-800">{item.name}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
                   <TypeBadge type={item.type} />
-                  <StatusBadge status={item.status} />
+                  <StatusBadge>{item.status}</StatusBadge>
                 </div>
               </div>
-              <span
-                className={`inline-flex w-fit items-center rounded-full border px-2.5 py-1 text-xs font-semibold ${
-                  item.completed
-                    ? "border-green-200 bg-green-50 text-green-800"
-                    : "border-amber-200 bg-amber-50 text-amber-800"
-                }`}
-              >
-                {item.completed ? "Done" : "Open"}
-              </span>
+              <TaskCompletionBadge completed={item.completed} />
             </Link>
           ))}
         </div>
       ) : (
-        <div className="rounded-lg border border-dashed border-teal-900/20 bg-teal-50/40 p-5">
+        <div className="rounded-lg border border-dashed border-[#50A9C0]/25 bg-[#50A9C0]/10 p-5">
           <p className="text-sm font-semibold text-slate-950">
             Detailed task steps have not been published yet.
           </p>

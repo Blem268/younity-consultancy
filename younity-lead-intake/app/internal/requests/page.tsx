@@ -161,7 +161,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
         </label>
         <button
           type="submit"
-          className="self-end rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800"
+          className="self-end rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110"
         >
           Filter
         </button>
@@ -196,7 +196,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                       </div>
                       <Link
                         href={`/internal/requests/${request.id}`}
-                        className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                        className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
                       >
                         View detail
                       </Link>
@@ -220,7 +220,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
             </div>
             <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm xl:block">
               <table className="min-w-[1280px] w-full text-left text-sm">
-              <thead className="border-b border-teal-900/10 bg-teal-50/70 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
+              <thead className="border-b border-[#50A9C0]/20 bg-[#50A9C0]/15 text-xs font-semibold uppercase tracking-[0.12em] text-slate-600">
                 <tr>
                   <th className="px-4 py-3">Request</th>
                   <th className="px-4 py-3">Client</th>
@@ -282,7 +282,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                     <td className="px-4 py-4 text-right">
                       <Link
                         href={`/internal/requests/${request.id}`}
-                        className="font-semibold text-teal-700 transition hover:text-teal-900"
+                        className="font-semibold text-[#244285] transition hover:text-[#06111f]"
                       >
                         View
                       </Link>

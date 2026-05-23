@@ -77,7 +77,7 @@ export function ClientAdminForm({
           value={fullNameValue}
           onChange={(event) => setFullNameValue(event.target.value)}
           required
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         />
       </label>
 
@@ -87,7 +87,7 @@ export function ClientAdminForm({
           <input
             value={phoneValue}
             onChange={(event) => setPhoneValue(event.target.value)}
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
           />
         </label>
         <label className="block text-sm font-medium text-slate-800">
@@ -95,7 +95,7 @@ export function ClientAdminForm({
           <input
             value={companyValue}
             onChange={(event) => setCompanyValue(event.target.value)}
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
           />
         </label>
       </div>
@@ -105,7 +105,7 @@ export function ClientAdminForm({
         <select
           value={preferredContactValue}
           onChange={(event) => setPreferredContactValue(event.target.value)}
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         >
           {preferredContactOptions.map((option) => (
             <option key={option} value={option}>
@@ -121,7 +121,7 @@ export function ClientAdminForm({
           <input
             value={zohoLeadIdValue}
             onChange={(event) => setZohoLeadIdValue(event.target.value)}
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
           />
         </label>
         <label className="block text-sm font-medium text-slate-800">
@@ -129,19 +129,19 @@ export function ClientAdminForm({
           <input
             value={zohoContactIdValue}
             onChange={(event) => setZohoContactIdValue(event.target.value)}
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
           />
         </label>
       </div>
 
-      <div aria-live="polite" className={isError ? "text-red-700" : "text-teal-700"}>
+      <div aria-live="polite" className={isError ? "text-red-700" : "text-[#244285]"}>
         {message ? <p className="text-sm font-medium">{message}</p> : null}
       </div>
 
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="inline-flex items-center justify-center rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Updating..." : "Update Client"}
       </button>

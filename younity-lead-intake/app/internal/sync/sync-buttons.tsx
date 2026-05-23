@@ -55,7 +55,7 @@ function SyncResultPanel({ state }: { state: SyncState }) {
   }
 
   return (
-    <div className="mt-4 rounded-md border border-teal-900/10 bg-teal-50/40 p-4">
+    <div className="mt-4 rounded-md border border-[#50A9C0]/20 bg-[#50A9C0]/10 p-4">
       <div className="grid gap-3 text-sm text-slate-700 sm:grid-cols-3">
         <p>
           <span className="font-semibold text-slate-950">Checked:</span>{" "}
@@ -202,7 +202,7 @@ export function SyncButtons() {
           type="button"
           disabled={webhookRegistration.isLoading}
           onClick={registerWebhook}
-          className="mt-5 inline-flex items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="mt-5 inline-flex items-center justify-center rounded-xl bg-[#50A9C0] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-[#06111f] transition hover:-translate-y-0.5 hover:brightness-105 disabled:cursor-not-allowed disabled:translate-y-0 disabled:opacity-60"
         >
           {webhookRegistration.isLoading
             ? "Registering..."
@@ -214,7 +214,7 @@ export function SyncButtons() {
           </p>
         ) : null}
         {webhookRegistration.message ? (
-          <div className="mt-4 rounded-md border border-teal-900/10 bg-teal-50/40 p-4 text-sm leading-6 text-slate-700">
+          <div className="mt-4 rounded-md border border-[#50A9C0]/20 bg-[#50A9C0]/10 p-4 text-sm leading-6 text-slate-700">
             <p>{webhookRegistration.message}</p>
             {webhookRegistration.webhookId ? (
               <p className="mt-2 font-mono text-xs text-slate-600">
@@ -236,7 +236,7 @@ export function SyncButtons() {
           type="button"
           disabled={statusSync.isLoading}
           onClick={() => runSync("/api/internal/run-status-sync", setStatusSync)}
-          className="mt-5 inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="mt-5 inline-flex items-center justify-center rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           {statusSync.isLoading ? "Running..." : "Run Status Sync"}
         </button>
@@ -257,7 +257,7 @@ export function SyncButtons() {
           onClick={() =>
             runSync("/api/internal/run-billing-sync", setBillingSync)
           }
-          className="mt-5 inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+          className="mt-5 inline-flex items-center justify-center rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
         >
           {billingSync.isLoading ? "Running..." : "Run Billing Sync"}
         </button>

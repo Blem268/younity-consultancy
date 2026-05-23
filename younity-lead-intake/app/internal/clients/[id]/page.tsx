@@ -143,7 +143,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
         actions={
           <Link
             href="/internal/clients"
-            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-teal-50 hover:text-teal-900"
+            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
           >
             Back to clients
           </Link>
@@ -164,7 +164,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
       actions={
         <Link
           href="/internal/clients"
-          className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-teal-50 hover:text-teal-900"
+          className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
         >
           Back to clients
         </Link>
@@ -255,7 +255,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
                 <div key={request.id} className="py-4">
                   <Link
                     href={`/internal/requests/${request.id}`}
-                    className="font-semibold text-teal-700 transition hover:text-teal-900"
+                    className="font-semibold text-[#244285] transition hover:text-[#06111f]"
                   >
                     {request.service}
                   </Link>
@@ -304,7 +304,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
                   <Link
                     href={`/api/internal/documents/${document.id}/open`}
                     prefetch={false}
-                    className="w-fit rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white transition hover:bg-teal-800"
+                    className="w-fit rounded-md bg-[#244285] px-3 py-2 text-sm font-semibold text-white transition hover:brightness-110"
                   >
                     Open
                   </Link>

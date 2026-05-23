@@ -130,7 +130,7 @@ export function RequestForm() {
           name="service"
           value={service}
           onChange={(event) => setService(event.target.value)}
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         >
           {serviceOptions.map((option) => (
             <option key={option} value={option}>
@@ -151,7 +151,7 @@ export function RequestForm() {
           onChange={(event) => setMessage(event.target.value)}
           rows={6}
           required
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         />
       </div>
 
@@ -168,7 +168,7 @@ export function RequestForm() {
             name="preferredContactMethod"
             value={preferredContactMethod}
             onChange={(event) => setPreferredContactMethod(event.target.value)}
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
           >
             {preferredContactOptions.map((option) => (
               <option key={option} value={option}>
@@ -187,7 +187,7 @@ export function RequestForm() {
             name="urgency"
             value={urgency}
             onChange={(event) => setUrgency(event.target.value)}
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
           >
             {urgencyOptions.map((option) => (
               <option key={option} value={option}>
@@ -211,7 +211,7 @@ export function RequestForm() {
           value={billingNotes}
           onChange={(event) => setBillingNotes(event.target.value)}
           rows={4}
-          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+          className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
         />
       </div>
 
@@ -236,7 +236,7 @@ export function RequestForm() {
               name="documentType"
               value={documentType}
               onChange={(event) => setDocumentType(event.target.value)}
-              className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+              className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
             >
               {documentTypes.map((type) => (
                 <option key={type} value={type}>
@@ -255,7 +255,7 @@ export function RequestForm() {
               id="file"
               name="file"
               type="file"
-              className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-teal-700 file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+              className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-[#244285] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
             />
           </div>
         </div>
@@ -273,12 +273,12 @@ export function RequestForm() {
             value={documentNotes}
             onChange={(event) => setDocumentNotes(event.target.value)}
             rows={3}
-            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+            className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
           />
         </div>
       </fieldset>
 
-      <div aria-live="polite" className={isError ? "text-red-700" : "text-teal-700"}>
+      <div aria-live="polite" className={isError ? "text-red-700" : "text-[#244285]"}>
         {statusMessage ? (
           <p className="text-sm font-medium">{statusMessage}</p>
         ) : null}
@@ -286,7 +286,7 @@ export function RequestForm() {
           <Link
             href={`/client/requests/${createdRequestId}`}
             prefetch={false}
-            className="mt-2 inline-flex text-sm font-semibold text-teal-800 transition hover:text-teal-950"
+            className="mt-2 inline-flex text-sm font-semibold text-[#244285] transition hover:text-[#06111f]"
           >
             View request details
           </Link>
@@ -296,7 +296,7 @@ export function RequestForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center justify-center rounded-md bg-teal-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-teal-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="inline-flex items-center justify-center rounded-md bg-[#244285] px-4 py-2.5 text-sm font-semibold text-white transition hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Submitting..." : "Submit Request"}
       </button>

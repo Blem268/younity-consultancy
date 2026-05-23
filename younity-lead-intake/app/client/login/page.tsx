@@ -3,6 +3,7 @@
 import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { brand } from "@/app/components/ui/brand";
 
 export default function ClientLoginPage() {
   const router = useRouter();
@@ -36,7 +37,7 @@ export default function ClientLoginPage() {
     <main className="flex min-h-screen items-center justify-center px-6 py-12">
       <div className="w-full max-w-md">
         <div className="mb-8">
-          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-teal-700">
+          <p className="text-sm font-semibold uppercase tracking-[0.18em] text-[#244285]">
             Client Portal
           </p>
           <h1 className="mt-3 text-3xl font-semibold tracking-tight text-slate-950">
@@ -50,7 +51,7 @@ export default function ClientLoginPage() {
 
         <form
           onSubmit={handleSubmit}
-          className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm"
+          className={`${brand.card} p-6`}
         >
           <div className="space-y-5">
             <div>
@@ -68,7 +69,7 @@ export default function ClientLoginPage() {
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
                 required
-                className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+                className={`${brand.input} text-base`}
               />
             </div>
 
@@ -87,7 +88,7 @@ export default function ClientLoginPage() {
                 onChange={(event) => setPassword(event.target.value)}
                 autoComplete="current-password"
                 required
-                className="mt-2 block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-base text-slate-950 outline-none transition focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20"
+                className={`${brand.input} text-base`}
               />
             </div>
 
@@ -101,7 +102,7 @@ export default function ClientLoginPage() {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex w-full items-center justify-center rounded-md bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-400"
+              className={`${brand.primaryButton} w-full`}
             >
               {isSubmitting ? "Signing in..." : "Sign in"}
             </button>

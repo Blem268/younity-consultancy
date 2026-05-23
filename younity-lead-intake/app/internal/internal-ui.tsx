@@ -1,4 +1,13 @@
 import type { ReactNode } from "react";
+import { brand } from "@/app/components/ui/brand";
+import {
+  Badge,
+  type BadgeTone,
+  DocumentStatusBadge as SharedDocumentStatusBadge,
+  getStatusTone,
+  InvoiceStatusBadge as SharedInvoiceStatusBadge,
+  StatusBadge as SharedStatusBadge,
+} from "@/app/components/ui/status-badges";
 
 export type InternalNavKey =
   | "dashboard"
@@ -89,73 +98,28 @@ export function logInternalQueryError(label: string, error: unknown) {
   });
 }
 
-function badgeClass(tone: "teal" | "slate" | "amber" | "red" | "green" | "blue") {
-  const tones = {
-    teal: "border-teal-200 bg-teal-50 text-teal-800",
-    slate: "border-slate-200 bg-slate-50 text-slate-700",
-    amber: "border-amber-200 bg-amber-50 text-amber-800",
-    red: "border-red-200 bg-red-50 text-red-800",
-    green: "border-green-200 bg-green-50 text-green-800",
-    blue: "border-sky-200 bg-sky-50 text-sky-800",
-  };
-
-  return tones[tone];
-}
-
-export function Badge({
-  children,
-  tone = "slate",
-}: {
-  children: ReactNode;
-  tone?: "teal" | "slate" | "amber" | "red" | "green" | "blue";
-}) {
-  return (
-    <span
-      className={`inline-flex w-fit rounded-full border px-2.5 py-1 text-xs font-semibold ${badgeClass(
-        tone
-      )}`}
-    >
-      {children}
-    </span>
-  );
-}
+export { Badge };
 
 export function StatusBadge({ children }: { children: ReactNode }) {
-  const value = String(children).toLowerCase();
-  const tone =
-    value.includes("complete") || value.includes("approved") || value.includes("resolved")
-      ? "green"
-      : value.includes("hold") || value.includes("needs") || value.includes("warning")
-        ? "amber"
-        : value.includes("reject") || value.includes("error") || value.includes("failed")
-          ? "red"
-          : "teal";
-
-  return <Badge tone={tone}>{children}</Badge>;
+  return <SharedStatusBadge>{children}</SharedStatusBadge>;
 }
 
 export function InvoiceStatusBadge({ children }: { children: ReactNode }) {
-  const value = String(children).toLowerCase();
-  const tone =
-    value.includes("ready")
-      ? "green"
-      : value.includes("paid")
-        ? "teal"
-        : value.includes("overdue") || value.includes("failed")
-          ? "red"
-          : value.includes("pending") || value.includes("draft")
-            ? "amber"
-            : "slate";
-
-  return <Badge tone={tone}>{children}</Badge>;
+  return <SharedInvoiceStatusBadge status={String(children)} />;
 }
 
 export function DocumentStatusBadge({ children }: { children: ReactNode }) {
-  return <StatusBadge>{children}</StatusBadge>;
+  return <SharedDocumentStatusBadge status={String(children)} />;
 }
 
 export function MutedBadge({ children }: { children: ReactNode }) {
   return <Badge tone="slate">{children}</Badge>;
+}
+
+export function WorkflowSeverityBadge({ severity }: { severity: string }) {
+  const tone = getStatusTone(severity) as BadgeTone;
+
+  return <Badge tone={tone}>{severity}</Badge>;
 }
 
 export function AccessDenied({ title }: { title: string }) {
@@ -184,13 +148,13 @@ export function InternalPage({
 }) {
   return (
     <>
-      <div className="border-b border-teal-900/10 py-6">
+      <div className="border-b border-[#50A9C0]/20 py-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#50A9C0]">
               Younity Consultancy
             </p>
-            <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">
+            <h1 className="mt-4 text-3xl font-black tracking-tight text-[#06111f] sm:text-4xl">
               {title}
             </h1>
             {description ? (
@@ -209,7 +173,7 @@ export function InternalPage({
 
 export function EmptyCard({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-lg border border-dashed border-teal-900/20 bg-teal-50/40 p-5">
+    <div className={brand.empty}>
       <p className="text-sm font-semibold text-slate-950">{children}</p>
     </div>
   );
@@ -229,7 +193,7 @@ export function AdminCard({
   className?: string;
 }) {
   return (
-    <article className={`rounded-lg border border-slate-200 bg-white p-5 shadow-sm ${className}`}>
+    <article className={`${brand.card} p-5 ${className}`}>
       {title || actions ? (
         <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
