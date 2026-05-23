@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import { InternalNav } from "./internal-ui";
 
 type CardValue = string | number;
 
@@ -245,6 +246,9 @@ export default async function InternalDashboardPage() {
   const clientRequests = clientRequestsResult.data ?? [];
   const clientDocuments = clientDocumentsResult.data ?? [];
   const quickActions = [
+    { label: "Manage Clients", href: "/internal/clients" },
+    { label: "Manage Requests", href: "/internal/requests" },
+    { label: "Manage Documents", href: "/internal/documents" },
     { label: "Run Syncs", href: "/internal/sync" },
     { label: "View Workflow Errors", href: "/internal/errors" },
     { label: "Client Portal", href: "/client/dashboard" },
@@ -256,29 +260,8 @@ export default async function InternalDashboardPage() {
     <main className="min-h-screen bg-[#f7faf8] px-4 py-8 text-slate-950 sm:px-6 lg:px-8">
       <div className="mx-auto w-full max-w-6xl">
         <header className="border-b border-teal-900/10 pb-8">
-          <nav aria-label="Internal navigation" className="mb-6 overflow-x-auto">
-            <div className="flex min-w-max gap-2">
-              <Link
-                href="/internal"
-                className="rounded-md bg-teal-700 px-3 py-2 text-sm font-semibold text-white shadow-sm"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/internal/sync"
-                className="rounded-md px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-teal-50 hover:text-teal-900"
-              >
-                Sync Controls
-              </Link>
-              <Link
-                href="/internal/errors"
-                className="rounded-md px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-teal-50 hover:text-teal-900"
-              >
-                Workflow Errors
-              </Link>
-            </div>
-          </nav>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
+          <InternalNav active="dashboard" />
+          <p className="mt-6 text-xs font-semibold uppercase tracking-[0.18em] text-teal-700">
             Younity Consultancy
           </p>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight sm:text-4xl">

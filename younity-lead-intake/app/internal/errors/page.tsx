@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { InternalNav } from "../internal-ui";
 import { ErrorActions } from "./error-actions";
 
 type WorkflowErrorRecord = {
@@ -87,12 +87,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col bg-[#f7faf8] px-6 py-8">
         <header className="border-b border-teal-900/10 pb-8">
-          <Link
-            href="/internal"
-            className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
-          >
-            Dashboard
-          </Link>
+          <InternalNav active="errors" />
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
             Workflow Errors
           </h1>
@@ -145,26 +140,7 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col bg-[#f7faf8] px-6 py-8">
       <header className="border-b border-teal-900/10 pb-8">
-        <div className="flex flex-wrap gap-4">
-          <Link
-            href="/internal"
-            className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
-          >
-            Dashboard
-          </Link>
-          <Link
-            href="/internal/sync"
-            className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
-          >
-            Sync Controls
-          </Link>
-          <Link
-            href="/internal/errors"
-            className="text-sm font-semibold text-slate-950"
-          >
-            Workflow Errors
-          </Link>
-        </div>
+        <InternalNav active="errors" />
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
           Workflow Errors
         </h1>

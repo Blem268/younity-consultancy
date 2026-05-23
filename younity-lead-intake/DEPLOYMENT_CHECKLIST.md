@@ -104,6 +104,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Test `/internal/sync` after deployment.
 - Test `/internal/errors` after deployment.
 - Test `/internal` after deployment.
+- Test `/internal/clients`, `/internal/requests`, and `/internal/documents` after deployment.
 
 ### G. Production Test Plan
 
@@ -120,7 +121,9 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Run internal status sync.
 - Run internal billing sync.
 - Confirm `/internal` summarizes workflow errors, client requests, document uploads, billing readiness, and active rate-limit records for an authorized admin.
-- Confirm `/internal` links to `/internal/sync` and `/internal/errors`.
+- Confirm `/internal` links to client, request, document, sync, and workflow error management pages.
+- Confirm authorized admins can review `/internal/clients`, `/internal/requests`, and `/internal/documents`.
+- Confirm authorized admins can open private documents only through `/api/internal/documents/[id]/open` and receive a short-lived signed URL.
 - Confirm workflow errors can be reviewed at `/internal/errors` by an authorized admin.
 - Confirm authorized admins can mark workflow errors resolved with an optional note.
 - Confirm authorized admins can reopen resolved workflow errors.
@@ -185,6 +188,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 
 - Confirm `INTERNAL_SYNC_SECRET` is set to a strong random value.
 - Confirm `/internal` is protected by `INTERNAL_ADMIN_EMAILS`.
+- Confirm `/internal/clients`, `/internal/requests`, and `/internal/documents` are protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `/internal/sync` is protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `/internal/errors` remains protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `INTERNAL_ADMIN_EMAILS` contains only authorized internal admin email addresses, separated by commas.
@@ -210,8 +214,10 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Request detail pages verify the request belongs to the logged-in client.
 - Document metadata is shown only for the owning client.
 - `/internal` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
+- `/internal/clients`, `/internal/clients/[id]`, `/internal/requests`, `/internal/requests/[id]`, and `/internal/documents` require an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/internal/sync` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/internal/errors` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
+- `/api/internal/documents/[id]/open` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/errors/[id]/resolve` and `/api/internal/errors/[id]/reopen` require an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/errors/[id]/retry` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 
@@ -224,6 +230,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm public lead-intake has rate limiting and honeypot spam protection.
 - Confirm Cloudflare Turnstile remains documented as a future option, not active.
 - Confirm monitoring/error tracking is configured with secret redaction before broad production use.
+- Confirm internal request pages display ClickUp task IDs only and do not expose ClickUp API tokens or private URLs.
+- Confirm billing remains ClickUp-based/manual and no Zoho Books integration or `ZOHO_BOOKS_*` environment variables are introduced.
 - Confirm workflow error logs are sanitized and never include secrets.
 - Confirm workflow error resolution notes do not include secrets or raw provider payloads.
 - Confirm retry actions are admin-triggered only and limited to Google Sheets logging, Resend notifications, Twilio notifications, and ClickUp comment/attachment failures.

@@ -253,6 +253,20 @@ Implementation notes:
 - Service-role access remains server-only and is not used in client components.
 - `/internal/sync` and `/internal/errors` remain available and linked from the dashboard.
 
+## Internal Management Pages
+
+Phase 14 added read-only internal management pages for client operations review.
+
+Implementation notes:
+
+- `/internal/clients`, `/internal/clients/[id]`, `/internal/requests`, `/internal/requests/[id]`, and `/internal/documents` require Supabase auth and `INTERNAL_ADMIN_EMAILS`.
+- Logged-out users are redirected to `/client/login`; authenticated non-admin users see a safe access-denied message.
+- Management pages use server-side Supabase admin queries after the admin check and do not expose the service role key to browser code.
+- `/api/internal/documents/[id]/open` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`, validates document UUIDs, and redirects to a short-lived Supabase Storage signed URL.
+- The internal document list and related document sections do not render public file URLs or long-lived private storage paths.
+- ClickUp remains the operations and billing preparation hub. Request pages display ClickUp task IDs only, not private ClickUp URLs.
+- Billing remains ClickUp-based/manual; Zoho Books is not active and was not reintroduced.
+
 ## Issues Found
 
 - Document open route did not validate document UUID before querying Supabase.
@@ -278,6 +292,7 @@ Implementation notes:
 - Added admin-only workflow error resolve/reopen controls with optional resolution notes.
 - Added admin-only workflow error retry controls for safe retryable failures.
 - Added admin-only `/internal` dashboard for workflow health, client portal activity, billing readiness, rate-limit records, and quick links to existing internal tools.
+- Added admin-only client, request, and document management pages plus a short-lived admin document signed URL route.
 - Kept ClickUp billing sync and Supabase billing display active.
 - Confirmed Zoho Books integration is not active.
 
@@ -317,6 +332,10 @@ Implementation notes:
 - Logged-out users cannot access `/internal`.
 - Non-admin users cannot access `/internal` dashboard data.
 - `/internal` does not show raw workflow context or private document URLs.
+- Logged-out users cannot access `/internal/clients`, `/internal/requests`, or `/internal/documents`.
+- Non-admin users cannot access internal client, request, or document management pages.
+- Non-admin users cannot call `/api/internal/documents/[id]/open`.
+- Internal document open links generate short-lived signed URLs only after admin checks.
 - Non-admin users cannot access `/internal/errors`.
 - Non-admin users cannot call workflow error resolve or reopen API routes.
 - Admin users can mark a workflow error resolved with a note and reopen it if needed.
