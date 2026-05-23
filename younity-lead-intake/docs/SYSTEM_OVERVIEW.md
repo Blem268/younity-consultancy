@@ -18,9 +18,9 @@ Supabase provides client portal authentication, client-facing tables, request re
 
 ### ClickUp
 
-ClickUp is the main operations and billing preparation hub. Website leads and portal requests create ClickUp tasks. Internal task status and billing preparation fields sync back into Supabase for portal visibility.
+ClickUp is the main operations and billing preparation hub. Website leads and portal requests create ClickUp tasks. Internal task status and billing preparation fields sync back into Supabase for portal visibility through ClickUp webhooks and manual sync fallbacks.
 
-ClickUp remains the source of truth for operational task status, subtasks, and checklists. Client request detail pages pull a safe, client-facing task progress view from ClickUp without exposing private ClickUp links or API details.
+ClickUp remains the source of truth for operational task status, subtasks, and checklists. Client request detail pages pull a safe, client-facing task progress view from ClickUp without exposing private ClickUp links or API details. The webhook receiver lives at `/api/webhooks/clickup` and verifies ClickUp `X-Signature` requests with the server-only `CLICKUP_WEBHOOK_SECRET`.
 
 ### Zoho CRM
 
@@ -52,7 +52,7 @@ Client portal routes use Supabase Auth and resolve each portal user through `cli
 
 Private documents are stored in the private `client-documents` Supabase bucket. The portal opens documents through a server route that verifies ownership before issuing a short-lived signed URL.
 
-The central internal dashboard at `/internal`, internal client/request/document management pages, internal sync controls, and workflow error review pages require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Internal pages share a mobile-friendly admin navigation shell for Dashboard, Clients, Requests, Documents, Sync Controls, and Workflow Errors. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
+The central internal dashboard at `/internal`, internal client/request/document management pages, internal sync controls, webhook registration controls, and workflow error review pages require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Internal pages share a mobile-friendly admin navigation shell for Dashboard, Clients, Requests, Documents, Sync Controls, and Workflow Errors. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
 
 Public lead intake, portal write APIs, document upload, task updates, and internal sync wrapper routes use lightweight server-side rate limiting. Production rate limiting is backed by Supabase table `public.rate_limits`; deployments must run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
 
@@ -105,10 +105,23 @@ Client uploads document
 
 ```text
 ClickUp status/billing updates
--> Internal sync controls
+-> ClickUp webhook POST to /api/webhooks/clickup
+-> Signature and idempotency checks
 -> Supabase client_requests updated
 -> client_updates timeline entries
 -> Client sees latest portal status/billing
+```
+
+Manual ClickUp status and billing sync buttons remain available at `/internal/sync` as a fallback. Webhook registration uses `CLICKUP_API_TOKEN`, `CLICKUP_TEAM_ID`, and `NEXT_PUBLIC_SITE_URL`; incoming webhook verification uses server-only `CLICKUP_WEBHOOK_SECRET`. Deployments must run `supabase/clickup_webhook_events.sql` manually in Supabase so `public.clickup_webhook_events` can prevent duplicate processing.
+
+### D1. Manual Operations Sync Fallback
+
+```text
+Admin opens /internal/sync
+-> Supabase Auth and INTERNAL_ADMIN_EMAILS are checked
+-> Admin runs manual status or billing sync
+-> Supabase client_requests updated when ClickUp values changed
+-> client_updates timeline entries are added only for actual changes
 ```
 
 ### D2. Internal Client Operations Review
@@ -121,7 +134,7 @@ Admin opens /internal
 -> Short-lived signed Supabase Storage URL is issued after admin check
 ```
 
-Phase 17 improved the internal admin experience without changing public lead intake, client portal behavior, ClickUp integrations, Zoho CRM integrations, Resend/Twilio behavior, Supabase schema, or workflow retry behavior. ClickUp remains the operations and billing preparation hub. Email-dependent notification work remains paused until the production Younity email domain is reactivated and verified.
+Phase 18 added ClickUp webhook automation without changing public lead intake, client portal behavior, ClickUp task creation, Zoho CRM integrations, Resend/Twilio behavior, or workflow retry behavior. ClickUp remains the operations and billing preparation hub. Email-dependent notification work remains paused until the production Younity email domain is reactivated and verified.
 
 ### D3. Controlled Internal Admin Actions
 

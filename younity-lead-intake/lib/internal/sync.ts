@@ -45,8 +45,266 @@ export type SyncResult = {
   errors: SyncError[];
 };
 
+export type SingleRequestSyncResult = {
+  success: true;
+  found: boolean;
+  requestId?: string;
+  statusChanged: boolean;
+  billingChanged: boolean;
+  warnings: string[];
+};
+
 function valuesDiffer(left: string | number | null, right: string | number | null) {
   return left !== right;
+}
+
+async function syncRequestStatus(
+  clientRequest: ClientRequestStatusRecord,
+  sourcePrefix: string
+) {
+  if (!clientRequest.clickup_task_id) {
+    return false;
+  }
+
+  const supabaseAdmin = createAdminClient();
+  const clickUpTask = await getClickUpTaskStatus(clientRequest.clickup_task_id);
+
+  if (clickUpTask.status === clientRequest.status) {
+    return false;
+  }
+
+  const oldStatus = clientRequest.status;
+  const newStatus = clickUpTask.status;
+  const now = new Date().toISOString();
+
+  const { error: updateError } = await supabaseAdmin
+    .from("client_requests")
+    .update({
+      status: newStatus,
+      updated_at: now,
+    })
+    .eq("id", clientRequest.id);
+
+  if (updateError) {
+    console.error("Supabase request status update failed:", {
+      message: updateError.message,
+      code: updateError.code,
+    });
+    await logWorkflowError({
+      source: `${sourcePrefix}.status.update`,
+      severity: "error",
+      message: "Supabase request status update failed.",
+      context: {
+        error: updateError,
+        oldStatus,
+        newStatus,
+        clickUpTaskId: clientRequest.clickup_task_id,
+      },
+      relatedClientId: clientRequest.client_id,
+      relatedRequestId: clientRequest.id,
+    });
+    throw new Error("Supabase request status update failed.");
+  }
+
+  const { error: timelineError } = await supabaseAdmin
+    .from("client_updates")
+    .insert({
+      client_id: clientRequest.client_id,
+      request_id: clientRequest.id,
+      title: "Request status updated",
+      message: `Your request status changed from ${oldStatus} to ${newStatus}.`,
+      created_by: "Younity Consultancy",
+    });
+
+  if (timelineError) {
+    console.error("Supabase status timeline insert failed:", {
+      message: timelineError.message,
+      code: timelineError.code,
+    });
+    await logWorkflowError({
+      source: `${sourcePrefix}.status.timeline`,
+      severity: "warning",
+      message: "Supabase status timeline insert failed.",
+      context: {
+        error: timelineError,
+        oldStatus,
+        newStatus,
+        clickUpTaskId: clientRequest.clickup_task_id,
+      },
+      relatedClientId: clientRequest.client_id,
+      relatedRequestId: clientRequest.id,
+    });
+    throw new Error("Supabase status timeline insert failed.");
+  }
+
+  return true;
+}
+
+async function syncRequestBilling(
+  clientRequest: ClientRequestBillingRecord,
+  sourcePrefix: string
+) {
+  if (!clientRequest.clickup_task_id) {
+    return false;
+  }
+
+  const supabaseAdmin = createAdminClient();
+  const billingFields = await getClickUpTaskBillingFields(clientRequest.clickup_task_id);
+
+  const nextBilling = {
+    billing_type: billingFields.billingType ?? null,
+    estimated_fee: billingFields.estimatedFee ?? null,
+    deposit_required: billingFields.depositRequired ?? null,
+    amount_paid: billingFields.amountPaid ?? null,
+    balance_due: billingFields.balanceDue ?? null,
+    invoice_status: billingFields.invoiceStatus ?? null,
+    zoho_books_invoice_id: billingFields.invoiceId ?? null,
+  };
+
+  const hasChanges =
+    valuesDiffer(clientRequest.billing_type, nextBilling.billing_type) ||
+    valuesDiffer(clientRequest.estimated_fee, nextBilling.estimated_fee) ||
+    valuesDiffer(clientRequest.deposit_required, nextBilling.deposit_required) ||
+    valuesDiffer(clientRequest.amount_paid, nextBilling.amount_paid) ||
+    valuesDiffer(clientRequest.balance_due, nextBilling.balance_due) ||
+    valuesDiffer(clientRequest.invoice_status, nextBilling.invoice_status) ||
+    valuesDiffer(
+      clientRequest.zoho_books_invoice_id,
+      nextBilling.zoho_books_invoice_id
+    );
+
+  if (!hasChanges) {
+    return false;
+  }
+
+  const updatePayload: BillingUpdate = {
+    ...nextBilling,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error: updateError } = await supabaseAdmin
+    .from("client_requests")
+    .update(updatePayload)
+    .eq("id", clientRequest.id);
+
+  if (updateError) {
+    console.error("Supabase billing update failed:", {
+      message: updateError.message,
+      code: updateError.code,
+    });
+    await logWorkflowError({
+      source: `${sourcePrefix}.billing.update`,
+      severity: "error",
+      message: "Supabase billing update failed.",
+      context: {
+        error: updateError,
+        clickUpTaskId: clientRequest.clickup_task_id,
+        service: clientRequest.service,
+      },
+      relatedClientId: clientRequest.client_id,
+      relatedRequestId: clientRequest.id,
+    });
+    throw new Error("Supabase billing update failed.");
+  }
+
+  const { error: timelineError } = await supabaseAdmin
+    .from("client_updates")
+    .insert({
+      client_id: clientRequest.client_id,
+      request_id: clientRequest.id,
+      title: "Billing information updated",
+      message: "Billing information for your request has been updated.",
+      created_by: "Younity Consultancy",
+    });
+
+  if (timelineError) {
+    console.error("Supabase billing timeline insert failed:", {
+      message: timelineError.message,
+      code: timelineError.code,
+    });
+    await logWorkflowError({
+      source: `${sourcePrefix}.billing.timeline`,
+      severity: "warning",
+      message: "Supabase billing timeline insert failed.",
+      context: {
+        error: timelineError,
+        clickUpTaskId: clientRequest.clickup_task_id,
+        service: clientRequest.service,
+      },
+      relatedClientId: clientRequest.client_id,
+      relatedRequestId: clientRequest.id,
+    });
+    throw new Error("Supabase billing timeline insert failed.");
+  }
+
+  return true;
+}
+
+export async function syncClickUpRequestByTaskId(
+  clickUpTaskId: string
+): Promise<SingleRequestSyncResult> {
+  const supabaseAdmin = createAdminClient();
+  const { data: clientRequest, error: requestError } = await supabaseAdmin
+    .from("client_requests")
+    .select(
+      "id, client_id, service, status, clickup_task_id, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, invoice_status, zoho_books_invoice_id"
+    )
+    .eq("clickup_task_id", clickUpTaskId)
+    .maybeSingle<ClientRequestBillingRecord>();
+
+  if (requestError) {
+    await logWorkflowError({
+      source: "webhook.clickup.request-query",
+      severity: "error",
+      message: "ClickUp webhook request lookup failed.",
+      context: {
+        error: requestError,
+        clickUpTaskId,
+      },
+    });
+    throw new Error("Unable to load linked request.");
+  }
+
+  if (!clientRequest) {
+    return {
+      success: true,
+      found: false,
+      statusChanged: false,
+      billingChanged: false,
+      warnings: [],
+    };
+  }
+
+  const warnings: string[] = [];
+  const statusChanged = await syncRequestStatus(clientRequest, "webhook.clickup");
+  let billingChanged = false;
+
+  try {
+    billingChanged = await syncRequestBilling(clientRequest, "webhook.clickup");
+  } catch (error) {
+    warnings.push("Billing fields could not be synced from ClickUp.");
+    await logWorkflowError({
+      source: "webhook.clickup.billing",
+      severity: "warning",
+      message: "ClickUp webhook billing sync failed for a linked request.",
+      context: {
+        error,
+        clickUpTaskId,
+        service: clientRequest.service,
+      },
+      relatedClientId: clientRequest.client_id,
+      relatedRequestId: clientRequest.id,
+    });
+  }
+
+  return {
+    success: true,
+    found: true,
+    requestId: clientRequest.id,
+    statusChanged,
+    billingChanged,
+    warnings,
+  };
 }
 
 export async function runClickUpStatusSync(): Promise<SyncResult> {
@@ -95,81 +353,15 @@ export async function runClickUpStatusSync(): Promise<SyncResult> {
     }
 
     try {
-      const clickUpTask = await getClickUpTaskStatus(clientRequest.clickup_task_id);
+      const statusChanged = await syncRequestStatus(clientRequest, "sync");
 
-      if (clickUpTask.status === clientRequest.status) {
+      if (!statusChanged) {
         skipped += 1;
         continue;
       }
 
-      const oldStatus = clientRequest.status;
-      const newStatus = clickUpTask.status;
-      const now = new Date().toISOString();
-
-      const { error: updateError } = await supabaseAdmin
-        .from("client_requests")
-        .update({
-          status: newStatus,
-          updated_at: now,
-        })
-        .eq("id", clientRequest.id);
-
-      if (updateError) {
-        console.error("Supabase request status update failed:", {
-          message: updateError.message,
-          code: updateError.code,
-        });
-        await logWorkflowError({
-          source: "sync.status.update",
-          severity: "error",
-          message: "Supabase request status update failed.",
-          context: {
-            error: updateError,
-            oldStatus,
-            newStatus,
-            clickUpTaskId: clientRequest.clickup_task_id,
-          },
-          relatedClientId: clientRequest.client_id,
-          relatedRequestId: clientRequest.id,
-        });
-        throw new Error("Supabase request status update failed.");
-      }
-
-      const { error: timelineError } = await supabaseAdmin
-        .from("client_updates")
-        .insert({
-          client_id: clientRequest.client_id,
-          request_id: clientRequest.id,
-          title: "Request status updated",
-          message: `Your request status changed from ${oldStatus} to ${newStatus}.`,
-          created_by: "Younity Consultancy",
-        });
-
-      if (timelineError) {
-        console.error("Supabase status timeline insert failed:", {
-          message: timelineError.message,
-          code: timelineError.code,
-        });
-        await logWorkflowError({
-          source: "sync.status.timeline",
-          severity: "warning",
-          message: "Supabase status timeline insert failed.",
-          context: {
-            error: timelineError,
-            oldStatus,
-            newStatus,
-            clickUpTaskId: clientRequest.clickup_task_id,
-          },
-          relatedClientId: clientRequest.client_id,
-          relatedRequestId: clientRequest.id,
-        });
-        throw new Error("Supabase status timeline insert failed.");
-      }
-
       updated += 1;
-      console.log(
-        `ClickUp status sync updated request ${clientRequest.id}: ${oldStatus} -> ${newStatus}`
-      );
+      console.log(`ClickUp status sync updated request ${clientRequest.id}.`);
     } catch (error) {
       const message = "Status sync failed for this request.";
 
@@ -255,95 +447,11 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
     }
 
     try {
-      const billingFields = await getClickUpTaskBillingFields(
-        clientRequest.clickup_task_id
-      );
+      const billingChanged = await syncRequestBilling(clientRequest, "sync");
 
-      const nextBilling = {
-        billing_type: billingFields.billingType ?? null,
-        estimated_fee: billingFields.estimatedFee ?? null,
-        deposit_required: billingFields.depositRequired ?? null,
-        amount_paid: billingFields.amountPaid ?? null,
-        balance_due: billingFields.balanceDue ?? null,
-        invoice_status: billingFields.invoiceStatus ?? null,
-        zoho_books_invoice_id: billingFields.invoiceId ?? null,
-      };
-
-      const hasChanges =
-        valuesDiffer(clientRequest.billing_type, nextBilling.billing_type) ||
-        valuesDiffer(clientRequest.estimated_fee, nextBilling.estimated_fee) ||
-        valuesDiffer(clientRequest.deposit_required, nextBilling.deposit_required) ||
-        valuesDiffer(clientRequest.amount_paid, nextBilling.amount_paid) ||
-        valuesDiffer(clientRequest.balance_due, nextBilling.balance_due) ||
-        valuesDiffer(clientRequest.invoice_status, nextBilling.invoice_status) ||
-        valuesDiffer(
-          clientRequest.zoho_books_invoice_id,
-          nextBilling.zoho_books_invoice_id
-        );
-
-      if (!hasChanges) {
+      if (!billingChanged) {
         skipped += 1;
         continue;
-      }
-
-      const updatePayload: BillingUpdate = {
-        ...nextBilling,
-        updated_at: new Date().toISOString(),
-      };
-
-      const { error: updateError } = await supabaseAdmin
-        .from("client_requests")
-        .update(updatePayload)
-        .eq("id", clientRequest.id);
-
-      if (updateError) {
-        console.error("Supabase billing update failed:", {
-          message: updateError.message,
-          code: updateError.code,
-        });
-        await logWorkflowError({
-          source: "sync.billing.update",
-          severity: "error",
-          message: "Supabase billing update failed.",
-          context: {
-            error: updateError,
-            clickUpTaskId: clientRequest.clickup_task_id,
-            service: clientRequest.service,
-          },
-          relatedClientId: clientRequest.client_id,
-          relatedRequestId: clientRequest.id,
-        });
-        throw new Error("Supabase billing update failed.");
-      }
-
-      const { error: timelineError } = await supabaseAdmin
-        .from("client_updates")
-        .insert({
-          client_id: clientRequest.client_id,
-          request_id: clientRequest.id,
-          title: "Billing information updated",
-          message: "Billing information for your request has been updated.",
-          created_by: "Younity Consultancy",
-        });
-
-      if (timelineError) {
-        console.error("Supabase billing timeline insert failed:", {
-          message: timelineError.message,
-          code: timelineError.code,
-        });
-        await logWorkflowError({
-          source: "sync.billing.timeline",
-          severity: "warning",
-          message: "Supabase billing timeline insert failed.",
-          context: {
-            error: timelineError,
-            clickUpTaskId: clientRequest.clickup_task_id,
-            service: clientRequest.service,
-          },
-          relatedClientId: clientRequest.client_id,
-          relatedRequestId: clientRequest.id,
-        });
-        throw new Error("Supabase billing timeline insert failed.");
       }
 
       updated += 1;

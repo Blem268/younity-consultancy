@@ -13,7 +13,7 @@ export default async function InternalSyncPage() {
     <InternalPage
       active="sync"
       title="Younity Internal Sync Controls"
-      description="Run manual ClickUp syncs without exposing internal secrets in the browser."
+      description="Manage ClickUp webhook automation and run manual sync fallbacks without exposing internal secrets in the browser."
     >
       <section className="py-8">
         <SyncButtons />

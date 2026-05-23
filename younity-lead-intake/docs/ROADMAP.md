@@ -34,6 +34,7 @@
 - Phase 14 internal client, request, and document management pages at `/internal/clients`, `/internal/requests`, and `/internal/documents`, including admin-only signed document access.
 - Phase 15 controlled internal admin actions for request status updates, manual billing/invoice status updates, client-visible update notes, selected client profile edits, document review status changes, and additional document requests.
 - Phase 17 internal admin UX polish for `/internal`, `/internal/clients`, `/internal/clients/[id]`, `/internal/requests`, `/internal/requests/[id]`, `/internal/documents`, `/internal/sync`, and `/internal/errors`, including a shared internal navigation shell, clearer cards, mobile-friendly list views, improved filters, better empty states, and safer workflow error context display.
+- Phase 18 ClickUp webhook automation for task status and billing field changes, with `/api/webhooks/clickup`, admin-only webhook registration from `/internal/sync`, and Supabase-backed idempotency in `public.clickup_webhook_events`.
 
 ## Next Recommended Work
 
@@ -43,7 +44,7 @@
 - Handle actual invoicing manually or outside the portal for now.
 - Keep email-dependent notification phases paused until the production Younity sending domain is reactivated and verified.
 - Add Cloudflare Turnstile to the public contact form if spam volume increases.
-- Add ClickUp webhook automation instead of manual sync.
+- Monitor ClickUp webhook delivery and keep manual sync available as the fallback.
 - Add client document download via signed URLs.
 - Perform multi-client testing.
 - Add duplicate Zoho handling.

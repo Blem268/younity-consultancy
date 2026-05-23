@@ -1,6 +1,6 @@
 # Security Audit
 
-Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase. Phase 12A added sanitized workflow error logging backed by Supabase. Phase 12B added admin resolution and reopen controls for workflow errors. Phase 12C added controlled admin retries for safe retryable workflow errors.
+Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase. Phase 12A added sanitized workflow error logging backed by Supabase. Phase 12B added admin resolution and reopen controls for workflow errors. Phase 12C added controlled admin retries for safe retryable workflow errors. Phase 18 added ClickUp webhook automation with signature verification and Supabase-backed idempotency.
 
 ## Summary
 
@@ -10,7 +10,7 @@ The active architecture remains:
 
 - Supabase for auth, portal data, private storage, and short-lived signed document URLs.
 - Supabase for production rate limiting and sanitized internal workflow error logs.
-- ClickUp as the operations and billing preparation hub.
+- ClickUp as the operations and billing preparation hub, with signed webhooks for status and billing sync plus manual sync fallback.
 - Zoho CRM for lead and client relationship records.
 - Resend for email notifications.
 - Twilio for WhatsApp alerts.
@@ -25,7 +25,8 @@ Zoho Books integration is not active and was not reintroduced.
 - Public lead intake API.
 - Supabase client portal pages.
 - Client request, document, profile, and task-update APIs.
-- Internal sync page and sync API routes.
+- Internal sync page, sync API routes, and admin-only ClickUp webhook registration route.
+- Public ClickUp webhook receiver at `/api/webhooks/clickup`.
 - Supabase server/admin clients.
 - ClickUp, Zoho CRM, Resend, Twilio, and Google Sheets integrations.
 - Workflow error logging and the `/internal/errors` admin operations page.
@@ -94,6 +95,8 @@ Findings:
 - Browser-triggered wrapper routes require Supabase auth and admin email allowlist.
 - Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
 - Browser wrapper routes do not expose `INTERNAL_SYNC_SECRET`.
+- `/api/internal/clickup-webhook/register` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`.
+- Webhook registration uses server-only `CLICKUP_API_TOKEN` and `CLICKUP_TEAM_ID` and does not expose the ClickUp API token.
 
 Fixes applied:
 
@@ -180,6 +183,8 @@ Reviewed server-only variables:
 - `ZOHO_CLIENT_SECRET`
 - `ZOHO_REFRESH_TOKEN`
 - `CLICKUP_API_TOKEN`
+- `CLICKUP_TEAM_ID`
+- `CLICKUP_WEBHOOK_SECRET`
 - `RESEND_API_KEY`
 - `TWILIO_AUTH_TOKEN`
 - `INTERNAL_SYNC_SECRET`
@@ -192,6 +197,24 @@ Findings:
 - Secrets are not sent in browser API responses.
 - Browser-visible variables remain limited to `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `NEXT_PUBLIC_SITE_URL`.
 - Rate limiting uses the existing server-only Supabase service role key through the admin client.
+- Incoming ClickUp webhooks require a valid `X-Signature` HMAC created with `CLICKUP_WEBHOOK_SECRET`; requests fail closed when the signature or secret is unavailable.
+- `CLICKUP_WEBHOOK_SECRET` is server-only and is not returned by webhook or admin registration responses.
+
+## ClickUp Webhook Security
+
+Phase 18 added `/api/webhooks/clickup` for ClickUp task update events.
+
+Implementation notes:
+
+- The route reads the raw request body and verifies the ClickUp `X-Signature` header using HMAC SHA-256 and `CLICKUP_WEBHOOK_SECRET`.
+- The route returns only safe JSON messages and never returns raw webhook payloads.
+- Task events are linked to Supabase by `client_requests.clickup_task_id`.
+- Request status and billing timeline rows are inserted only when values actually change, preventing duplicate client updates for repeated webhook deliveries.
+- Idempotency is backed by `public.clickup_webhook_events`; run `supabase/clickup_webhook_events.sql` manually in the Supabase SQL Editor.
+- `public.clickup_webhook_events` has RLS enabled and no public/client policies; writes are server/admin only.
+- If ClickUp omits `webhook_id` or `history_items.id`, the webhook still processes but logs a sanitized info-level workflow error noting that no idempotency key was available.
+- Manual sync buttons remain available at `/internal/sync` if webhook delivery, signature setup, or Supabase idempotency setup needs investigation.
+- Clients and non-admin users cannot register ClickUp webhooks or trigger internal sync routes.
 
 ## Logging Review
 
@@ -299,12 +322,15 @@ Implementation notes:
 - Added admin-only `/internal` dashboard for workflow health, client portal activity, billing readiness, rate-limit records, and quick links to existing internal tools.
 - Added admin-only client, request, and document management pages plus a short-lived admin document signed URL route.
 - Added admin-only controlled actions for request status, manual billing/invoice status, client update notes, selected client profile fields, document review status, and additional document requests.
+- Added signed ClickUp webhook receiver, idempotency table SQL, shared single-request sync logic, and admin-only webhook registration action.
 - Kept ClickUp billing sync and Supabase billing display active.
 - Confirmed Zoho Books integration is not active.
 
 ## Remaining Risks And Recommendations
 
 - Run `supabase/rate_limits.sql` in production so rate limiting works consistently across serverless instances.
+- Run `supabase/clickup_webhook_events.sql` in production before enabling ClickUp webhooks.
+- Confirm `NEXT_PUBLIC_SITE_URL` exactly matches the production URL before registering ClickUp webhooks.
 - Add Cloudflare Turnstile to the public contact form if spam persists beyond the honeypot and rate limits.
 - Add production monitoring and error tracking with secret redaction.
 - Consider Sentry for alerting, release tracking, and cross-service error correlation.

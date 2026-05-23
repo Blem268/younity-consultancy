@@ -24,6 +24,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 
 - `CLICKUP_API_TOKEN`
 - `CLICKUP_LIST_ID`
+- `CLICKUP_TEAM_ID`
+- `CLICKUP_WEBHOOK_SECRET`
 
 ### Google Sheets
 
@@ -55,6 +57,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 
 - Add every variable above to the production hosting environment.
 - Set `NEXT_PUBLIC_SITE_URL` to the production URL, for example `https://www.example.com`.
+- Confirm `NEXT_PUBLIC_SITE_URL` is the exact HTTPS production URL before registering the ClickUp webhook.
 - Confirm the build command is `npm run build`.
 - Confirm the app starts with the hosting provider's standard Next.js start/runtime configuration.
 
@@ -101,6 +104,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 
 - Confirm `INTERNAL_ADMIN_EMAILS` includes approved admin emails.
 - Confirm `INTERNAL_SYNC_SECRET` is long and secure.
+- Confirm `CLICKUP_TEAM_ID` is set for webhook registration.
+- Confirm `CLICKUP_WEBHOOK_SECRET` is set server-side for incoming webhook signature verification.
 - Test `/internal/sync` after deployment.
 - Test `/internal/errors` after deployment.
 - Test `/internal` after deployment.
@@ -121,6 +126,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Upload portal document.
 - Run internal status sync.
 - Run internal billing sync.
+- Register the ClickUp webhook from `/internal/sync` or with the documented ClickUp API call.
+- Confirm `/api/webhooks/clickup` receives signed ClickUp task update events and updates only linked requests.
 - Confirm `/internal` summarizes workflow errors, client requests, document uploads, billing readiness, and active rate-limit records for an authorized admin.
 - Confirm `/internal` links to client, request, document, sync, and workflow error management pages.
 - Confirm the shared internal navigation highlights Dashboard, Clients, Requests, Documents, Sync Controls, and Workflow Errors on desktop and mobile widths.
@@ -152,6 +159,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm `public.workflow_errors` includes `resolved_by`, `resolution_note`, `reopened_at`, and `reopened_by`.
 - Run `supabase/workflow_errors_retry.sql` manually in the Supabase SQL Editor.
 - Confirm `public.workflow_errors` includes `retryable`, `retry_status`, `retry_attempts`, `last_retry_at`, `last_retry_by`, and `last_retry_message`.
+- Run `supabase/clickup_webhook_events.sql` manually in the Supabase SQL Editor.
+- Confirm `public.clickup_webhook_events` exists with RLS enabled and no public/client policies.
 - Confirm the Supabase Storage bucket `client-documents` exists.
 - Confirm `client-documents` is private.
 - Confirm document uploads store private storage paths only and do not expose public file URLs or signed download links.
@@ -166,6 +175,11 @@ Add all required environment variables to the hosting provider. Keep secret valu
 
 - Confirm `CLICKUP_API_TOKEN` belongs to an account or workspace member with access to the target list.
 - Confirm `CLICKUP_LIST_ID` points to the production operations list.
+- Confirm `CLICKUP_TEAM_ID` points to the production Workspace/team used for API webhook registration.
+- Confirm `CLICKUP_WEBHOOK_SECRET` is server-only and matches the ClickUp webhook signing secret.
+- Confirm the registered webhook endpoint is `${NEXT_PUBLIC_SITE_URL}/api/webhooks/clickup`.
+- If capturing the initial ClickUp signing secret, register from a secure server-side terminal or approved secret-management workflow and store the returned secret in `CLICKUP_WEBHOOK_SECRET`; do not paste the secret into client-visible tools or docs.
+- Confirm manual status and billing sync remains available at `/internal/sync` as a fallback.
 - Confirm ClickUp custom fields used by billing sync still match the field names expected by the app.
 - Confirm ClickUp remains the operations and billing preparation hub.
 - Confirm any actual invoicing is handled manually or outside the portal for now.
@@ -225,6 +239,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - `/api/internal/documents/[id]/open` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/errors/[id]/resolve` and `/api/internal/errors/[id]/reopen` require an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/errors/[id]/retry` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
+- `/api/internal/clickup-webhook/register` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 
 ## Security Review
 
@@ -236,6 +251,9 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm Cloudflare Turnstile remains documented as a future option, not active.
 - Confirm monitoring/error tracking is configured with secret redaction before broad production use.
 - Confirm internal request pages display ClickUp task IDs only and do not expose ClickUp API tokens or private URLs.
+- Confirm `/api/webhooks/clickup` verifies ClickUp `X-Signature` with `CLICKUP_WEBHOOK_SECRET` and returns safe JSON only.
+- Confirm raw ClickUp webhook payloads are not displayed publicly or returned to browsers.
+- Confirm `public.clickup_webhook_events` prevents duplicate webhook processing when ClickUp retries the same history item.
 - Confirm billing remains ClickUp-based/manual and no Zoho Books integration or `ZOHO_BOOKS_*` environment variables are introduced.
 - Confirm Phase 15 admin action routes require Supabase auth plus `INTERNAL_ADMIN_EMAILS`.
 - Confirm request status and billing actions update only allowlisted `client_requests` fields and add client timeline entries only when intended.

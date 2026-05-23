@@ -60,6 +60,15 @@ type ClickUpTaskResponse = {
   checklists?: ClickUpChecklist[];
 };
 
+type ClickUpWebhookResponse = {
+  id?: string;
+  webhook?: {
+    id?: string;
+    secret?: string;
+  };
+  secret?: string;
+};
+
 type ClickUpTaskItem = {
   id?: string;
   name?: string;
@@ -342,6 +351,51 @@ async function createClickUpTaskComment(taskId: string, commentText: string) {
   }
 
   return data;
+}
+
+export async function registerClickUpWebhook({
+  endpoint,
+  events = ["taskUpdated", "taskStatusUpdated"],
+}: {
+  endpoint: string;
+  events?: string[];
+}) {
+  if (!process.env.CLICKUP_API_TOKEN) {
+    throw new Error("Missing CLICKUP_API_TOKEN");
+  }
+
+  if (!process.env.CLICKUP_TEAM_ID) {
+    throw new Error("Missing CLICKUP_TEAM_ID");
+  }
+
+  const response = await fetch(
+    `https://api.clickup.com/api/v2/team/${process.env.CLICKUP_TEAM_ID}/webhook`,
+    {
+      method: "POST",
+      headers: {
+        Authorization: process.env.CLICKUP_API_TOKEN,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        endpoint,
+        events,
+      }),
+    }
+  );
+
+  const data = (await response.json().catch(() => ({}))) as ClickUpWebhookResponse;
+
+  if (!response.ok) {
+    throw new Error(`ClickUp webhook registration failed with status ${response.status}.`);
+  }
+
+  const webhookId = data.webhook?.id || data.id || null;
+  const secretReturned = Boolean(data.webhook?.secret || data.secret);
+
+  return {
+    webhookId,
+    secretReturned,
+  };
 }
 
 export async function attachFileToClickUpTask({
