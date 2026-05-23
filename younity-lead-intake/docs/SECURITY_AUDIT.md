@@ -239,6 +239,20 @@ Implementation notes:
 - Zoho CRM lead creation, ClickUp task creation, Supabase storage uploads, Supabase document metadata inserts, request creation, auth/authorization failures, and validation failures remain manual and are not configured for automatic retry.
 - Sentry or another external error tracker remains a future recommendation for broader monitoring, alerting, and release correlation.
 
+## Internal Admin Dashboard
+
+Phase 13 added a central internal dashboard at `/internal`.
+
+Implementation notes:
+
+- `/internal` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`.
+- Logged-out users are redirected to `/client/login`; authenticated non-admin users see a safe access-denied message.
+- Dashboard summaries cover open workflow errors, recent client requests, recent document uploads, active client requests, requests ready for billing, and active Supabase rate-limit records.
+- Recent sections show unresolved workflow errors, recent client requests, and recent document uploads without exposing workflow context or private document URLs.
+- Dashboard data is loaded server-side with the Supabase admin client after the admin check.
+- Service-role access remains server-only and is not used in client components.
+- `/internal/sync` and `/internal/errors` remain available and linked from the dashboard.
+
 ## Issues Found
 
 - Document open route did not validate document UUID before querying Supabase.
@@ -263,6 +277,7 @@ Implementation notes:
 - Added Supabase-backed workflow error logging and an admin-only `/internal/errors` page.
 - Added admin-only workflow error resolve/reopen controls with optional resolution notes.
 - Added admin-only workflow error retry controls for safe retryable failures.
+- Added admin-only `/internal` dashboard for workflow health, client portal activity, billing readiness, rate-limit records, and quick links to existing internal tools.
 - Kept ClickUp billing sync and Supabase billing display active.
 - Confirmed Zoho Books integration is not active.
 
@@ -299,6 +314,9 @@ Implementation notes:
 - Filling the hidden contact honeypot returns a success-like response and creates no integrations.
 - Browser responses never include server-only secrets, raw provider responses, ClickUp private URLs, or raw exception details.
 - Workflow failures create sanitized rows in `public.workflow_errors`.
+- Logged-out users cannot access `/internal`.
+- Non-admin users cannot access `/internal` dashboard data.
+- `/internal` does not show raw workflow context or private document URLs.
 - Non-admin users cannot access `/internal/errors`.
 - Non-admin users cannot call workflow error resolve or reopen API routes.
 - Admin users can mark a workflow error resolved with a note and reopen it if needed.

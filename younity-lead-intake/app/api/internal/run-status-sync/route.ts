@@ -1,42 +1,17 @@
 import { NextResponse } from "next/server";
 import { runClickUpStatusSync } from "@/lib/internal/sync";
 import { logWorkflowError } from "@/lib/internal/workflowErrors";
+import { getInternalAdminUser } from "@/lib/internal/adminAuth";
 import { rateLimit } from "@/lib/security/rateLimit";
-import { createClient } from "@/lib/supabase/server";
-
-function getAllowedAdminEmails() {
-  return (process.env.INTERNAL_ADMIN_EMAILS || "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
-
-async function assertInternalAdmin() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { error: NextResponse.json({ message: "Unauthorized." }, { status: 401 }) };
-  }
-
-  const allowedEmails = getAllowedAdminEmails();
-  const userEmail = user.email?.toLowerCase() || "";
-
-  if (!allowedEmails.length || !allowedEmails.includes(userEmail)) {
-    return { error: NextResponse.json({ message: "Forbidden." }, { status: 403 }) };
-  }
-
-  return { error: null, userEmail };
-}
 
 export async function POST() {
-  const { error, userEmail } = await assertInternalAdmin();
+  const { user, errorResponse } = await getInternalAdminUser();
 
-  if (error) {
-    return error;
+  if (errorResponse) {
+    return errorResponse;
   }
+
+  const userEmail = user.email?.toLowerCase() || user.id;
 
   const rateLimitResult = await rateLimit({
     key: `internal-sync:${userEmail}`,

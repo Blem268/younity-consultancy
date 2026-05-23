@@ -30,6 +30,7 @@
 - Phase 12A Supabase-backed workflow error logging.
 - Phase 12B workflow error resolution controls and retry readiness documentation.
 - Phase 12C controlled retry actions for safe retryable workflow errors.
+- Phase 13 central internal admin dashboard at `/internal`, summarizing workflow errors, requests, documents, billing readiness, and rate-limit records while keeping `/internal/sync` and `/internal/errors` available.
 
 ## Next Recommended Work
 
@@ -40,7 +41,7 @@
 - Add Cloudflare Turnstile to the public contact form if spam volume increases.
 - Add ClickUp webhook automation instead of manual sync.
 - Add client document download via signed URLs.
-- Build an admin portal for managing clients.
+- Expand the internal admin dashboard into a fuller client management portal.
 - Perform multi-client testing.
 - Add duplicate Zoho handling.
 - Add production monitoring and error tracking.

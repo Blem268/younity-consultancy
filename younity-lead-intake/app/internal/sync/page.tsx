@@ -1,60 +1,19 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { SyncButtons } from "./sync-buttons";
 
-function getAllowedAdminEmails() {
-  return (process.env.INTERNAL_ADMIN_EMAILS || "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
-
 export default async function InternalSyncPage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const admin = await requireInternalAdmin();
 
-  if (!user) {
-    redirect("/client/login");
-  }
-
-  const allowedEmails = getAllowedAdminEmails();
-  const userEmail = user.email?.toLowerCase() || "";
-
-  if (!allowedEmails.length) {
+  if (!admin.isAdmin) {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col bg-[#f7faf8] px-6 py-8">
         <header className="border-b border-teal-900/10 pb-8">
           <Link
-            href="/client/dashboard"
+            href="/internal"
             className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
           >
-            Back to Dashboard
-          </Link>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
-            Younity Internal Sync Controls
-          </h1>
-        </header>
-        <section className="mt-8 rounded-lg border border-amber-200 bg-amber-50 p-6 shadow-sm">
-          <p className="text-sm leading-6 text-slate-700">
-            Internal admin access is not configured.
-          </p>
-        </section>
-      </main>
-    );
-  }
-
-  if (!allowedEmails.includes(userEmail)) {
-    return (
-      <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col bg-[#f7faf8] px-6 py-8">
-        <header className="border-b border-teal-900/10 pb-8">
-          <Link
-            href="/client/dashboard"
-            className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
-          >
-            Back to Dashboard
+            Dashboard
           </Link>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
             Younity Internal Sync Controls
@@ -74,10 +33,16 @@ export default async function InternalSyncPage() {
       <header className="border-b border-teal-900/10 pb-8">
         <div className="flex flex-wrap gap-4">
           <Link
-            href="/client/dashboard"
+            href="/internal"
             className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
           >
-            Back to Dashboard
+            Dashboard
+          </Link>
+          <Link
+            href="/internal/sync"
+            className="text-sm font-semibold text-slate-950"
+          >
+            Sync Controls
           </Link>
           <Link
             href="/internal/errors"

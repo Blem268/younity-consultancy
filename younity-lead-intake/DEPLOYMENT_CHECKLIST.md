@@ -103,6 +103,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm `INTERNAL_SYNC_SECRET` is long and secure.
 - Test `/internal/sync` after deployment.
 - Test `/internal/errors` after deployment.
+- Test `/internal` after deployment.
 
 ### G. Production Test Plan
 
@@ -118,6 +119,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Upload portal document.
 - Run internal status sync.
 - Run internal billing sync.
+- Confirm `/internal` summarizes workflow errors, client requests, document uploads, billing readiness, and active rate-limit records for an authorized admin.
+- Confirm `/internal` links to `/internal/sync` and `/internal/errors`.
 - Confirm workflow errors can be reviewed at `/internal/errors` by an authorized admin.
 - Confirm authorized admins can mark workflow errors resolved with an optional note.
 - Confirm authorized admins can reopen resolved workflow errors.
@@ -181,7 +184,9 @@ Add all required environment variables to the hosting provider. Keep secret valu
 ## Internal Sync
 
 - Confirm `INTERNAL_SYNC_SECRET` is set to a strong random value.
+- Confirm `/internal` is protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `/internal/sync` is protected by `INTERNAL_ADMIN_EMAILS`.
+- Confirm `/internal/errors` remains protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `INTERNAL_ADMIN_EMAILS` contains only authorized internal admin email addresses, separated by commas.
 
 ## Rate Limiting And Spam Protection
@@ -204,6 +209,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Client dashboard, requests, request detail, new request, documents, and profile pages scope data through the logged-in user's client profile.
 - Request detail pages verify the request belongs to the logged-in client.
 - Document metadata is shown only for the owning client.
+- `/internal` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/internal/sync` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/internal/errors` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/errors/[id]/resolve` and `/api/internal/errors/[id]/reopen` require an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.

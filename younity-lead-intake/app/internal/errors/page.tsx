@@ -1,7 +1,6 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
+import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
 import { ErrorActions } from "./error-actions";
 
 type WorkflowErrorRecord = {
@@ -31,13 +30,6 @@ type PageProps = {
     severity?: string | string[];
   }>;
 };
-
-function getAllowedAdminEmails() {
-  return (process.env.INTERNAL_ADMIN_EMAILS || "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
-    .filter(Boolean);
-}
 
 function getSearchParam(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] || "" : value || "";
@@ -89,27 +81,17 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
   const statusFilter = getSearchParam(params.status) || (legacyUnresolvedOnly ? "open" : "all");
   const sourceFilter = getSearchParam(params.source).trim();
   const severityFilter = getSearchParam(params.severity).trim();
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const admin = await requireInternalAdmin();
 
-  if (!user) {
-    redirect("/client/login");
-  }
-
-  const allowedEmails = getAllowedAdminEmails();
-  const userEmail = user.email?.toLowerCase() || "";
-
-  if (!allowedEmails.length || !allowedEmails.includes(userEmail)) {
+  if (!admin.isAdmin) {
     return (
       <main className="mx-auto flex min-h-screen w-full max-w-6xl flex-col bg-[#f7faf8] px-6 py-8">
         <header className="border-b border-teal-900/10 pb-8">
           <Link
-            href="/client/dashboard"
+            href="/internal"
             className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
           >
-            Back to Dashboard
+            Dashboard
           </Link>
           <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
             Workflow Errors
@@ -165,16 +147,22 @@ export default async function InternalErrorsPage({ searchParams }: PageProps) {
       <header className="border-b border-teal-900/10 pb-8">
         <div className="flex flex-wrap gap-4">
           <Link
-            href="/client/dashboard"
+            href="/internal"
             className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
           >
-            Back to Dashboard
+            Dashboard
           </Link>
           <Link
             href="/internal/sync"
             className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
           >
-            Internal Sync
+            Sync Controls
+          </Link>
+          <Link
+            href="/internal/errors"
+            className="text-sm font-semibold text-slate-950"
+          >
+            Workflow Errors
           </Link>
         </div>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">

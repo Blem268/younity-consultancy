@@ -52,11 +52,11 @@ Client portal routes use Supabase Auth and resolve each portal user through `cli
 
 Private documents are stored in the private `client-documents` Supabase bucket. The portal opens documents through a server route that verifies ownership before issuing a short-lived signed URL.
 
-Internal sync controls require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
+The central internal dashboard at `/internal`, internal sync controls, and workflow error review pages require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
 
 Public lead intake, portal write APIs, document upload, task updates, and internal sync wrapper routes use lightweight server-side rate limiting. Production rate limiting is backed by Supabase table `public.rate_limits`; deployments must run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
 
-Production workflow failures are written to Supabase table `public.workflow_errors` through a server-side helper that sanitizes context before insert. Admin users can review the latest workflow errors at `/internal/errors`, mark errors resolved, reopen resolved errors, retry safe retryable errors when safe context is available, and store resolution notes.
+Production workflow failures are written to Supabase table `public.workflow_errors` through a server-side helper that sanitizes context before insert. Admin users can review operational health at `/internal`, including workflow error counts, recent client requests, recent document uploads, billing readiness, and active rate-limit records. Admin users can review the latest workflow errors at `/internal/errors`, mark errors resolved, reopen resolved errors, retry safe retryable errors when safe context is available, and store resolution notes.
 
 The public contact form includes a hidden honeypot field. Cloudflare Turnstile is not active and remains a future option if spam increases.
 
@@ -116,6 +116,7 @@ ClickUp status/billing updates
 ```text
 Workflow failure
 -> Sanitized public.workflow_errors row
+-> Admin sees summarized health at /internal
 -> Admin reviews /internal/errors
 -> Admin marks resolved with optional note
 -> Admin can reopen if follow-up is needed
