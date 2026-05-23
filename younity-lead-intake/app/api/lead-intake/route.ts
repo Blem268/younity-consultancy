@@ -10,10 +10,40 @@ import {
   sendLeadNotificationEmail,
   sendClientConfirmationEmail,
 } from "@/lib/integrations/email";
+import { getRateLimitIdentifier, rateLimit } from "@/lib/security/rateLimit";
 import { sendInternalWhatsAppLeadNotification } from "@/lib/integrations/whatsapp";
 
 export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
+
+  if (
+    body &&
+    typeof body === "object" &&
+    "companyWebsite" in body &&
+    typeof body.companyWebsite === "string" &&
+    body.companyWebsite.trim()
+  ) {
+    return NextResponse.json({
+      success: true,
+      message: "Your request was received successfully.",
+    });
+  }
+
+  const rateLimitResult = await rateLimit({
+    key: `lead-intake:${getRateLimitIdentifier(request)}`,
+    limit: 5,
+    windowSeconds: 10 * 60,
+  });
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      {
+        success: false,
+        message: "Too many requests. Please wait a few minutes and try again.",
+      },
+      { status: 429 }
+    );
+  }
 
   const parsed = leadSchema.safeParse(body);
 

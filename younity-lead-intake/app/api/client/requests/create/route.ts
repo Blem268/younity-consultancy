@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { createClickUpPortalRequestTask } from "@/lib/integrations/clickup";
 import { sendPortalRequestNotificationEmail } from "@/lib/integrations/email";
+import { rateLimit } from "@/lib/security/rateLimit";
 import { sendInternalWhatsAppPortalRequestNotification } from "@/lib/integrations/whatsapp";
 
 const allowedServices = new Set([
@@ -56,6 +57,22 @@ export async function POST(request: Request) {
 
   if (!user) {
     return NextResponse.json({ message: "Unauthorized." }, { status: 401 });
+  }
+
+  const rateLimitResult = await rateLimit({
+    key: `client-request-create:${user.id}`,
+    limit: 10,
+    windowSeconds: 60 * 60,
+  });
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      {
+        message:
+          "Too many requests submitted. Please wait before submitting another request.",
+      },
+      { status: 429 }
+    );
   }
 
   const { data: clientProfile, error: clientProfileError } = await supabase

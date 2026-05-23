@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runClickUpStatusSync } from "@/lib/internal/sync";
+import { rateLimit } from "@/lib/security/rateLimit";
 import { createClient } from "@/lib/supabase/server";
 
 function getAllowedAdminEmails() {
@@ -26,14 +27,29 @@ async function assertInternalAdmin() {
     return { error: NextResponse.json({ message: "Forbidden." }, { status: 403 }) };
   }
 
-  return { error: null };
+  return { error: null, userEmail };
 }
 
 export async function POST() {
-  const { error } = await assertInternalAdmin();
+  const { error, userEmail } = await assertInternalAdmin();
 
   if (error) {
     return error;
+  }
+
+  const rateLimitResult = await rateLimit({
+    key: `internal-sync:${userEmail}`,
+    limit: 10,
+    windowSeconds: 10 * 60,
+  });
+
+  if (!rateLimitResult.success) {
+    return NextResponse.json(
+      {
+        message: "Too many sync attempts. Please wait before running another sync.",
+      },
+      { status: 429 }
+    );
   }
 
   try {

@@ -7,6 +7,7 @@ type FormState = {
   email: string;
   phone: string;
   company: string;
+  companyWebsite: string;
   service: string;
   message: string;
 };
@@ -16,6 +17,7 @@ const initialFormState: FormState = {
   email: "",
   phone: "",
   company: "",
+  companyWebsite: "",
   service: "",
   message: "",
 };
@@ -82,6 +84,18 @@ export default function ContactPage() {
         </p>
 
         <form onSubmit={handleSubmit} className="mt-8 grid gap-5">
+          <label className="sr-only" aria-hidden="true">
+            Company website
+            <input
+              tabIndex={-1}
+              autoComplete="off"
+              value={form.companyWebsite}
+              onChange={(event) =>
+                updateField("companyWebsite", event.target.value)
+              }
+            />
+          </label>
+
           <div className="grid gap-5 md:grid-cols-2">
             <label className="grid gap-2 text-sm font-bold">
               Full Name *
