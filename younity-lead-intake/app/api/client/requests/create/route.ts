@@ -3,6 +3,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 import { createClickUpPortalRequestTask } from "@/lib/integrations/clickup";
 import { sendPortalRequestNotificationEmail } from "@/lib/integrations/email";
+import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { rateLimit } from "@/lib/security/rateLimit";
 import { sendInternalWhatsAppPortalRequestNotification } from "@/lib/integrations/whatsapp";
 
@@ -164,6 +165,17 @@ export async function POST(request: Request) {
       message: requestInsertError.message,
       code: requestInsertError.code,
     });
+    await logWorkflowError({
+      source: "client-request-create.supabase",
+      severity: "error",
+      message: "Client request insert failed.",
+      context: {
+        error: requestInsertError,
+        service,
+        urgency,
+      },
+      relatedClientId: clientProfile.id,
+    });
     return NextResponse.json(
       { message: "Request could not be submitted." },
       { status: 500 }
@@ -202,10 +214,34 @@ export async function POST(request: Request) {
         message: clickUpUpdateError.message,
         code: clickUpUpdateError.code,
       });
+      await logWorkflowError({
+        source: "client-request-create.clickup-id-save",
+        severity: "warning",
+        message: "ClickUp task ID could not be saved to the portal request.",
+        context: {
+          error: clickUpUpdateError,
+          clickUpTaskId: clickUpTask.id,
+          service,
+        },
+        relatedClientId: clientProfile.id,
+        relatedRequestId: insertedRequest.id,
+      });
       warnings.push("ClickUp task ID could not be saved to the portal request.");
     }
   } catch (error) {
     console.error("ClickUp portal request task creation failed:", error);
+    await logWorkflowError({
+      source: "client-request-create.clickup",
+      severity: "error",
+      message: "ClickUp portal request task creation failed.",
+      context: {
+        error,
+        service,
+        urgency,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: insertedRequest.id,
+    });
     warnings.push("Internal task creation needs review.");
   }
 
@@ -238,6 +274,17 @@ export async function POST(request: Request) {
       message: updateInsertError.message,
       code: updateInsertError.code,
     });
+    await logWorkflowError({
+      source: "client-request-create.timeline",
+      severity: "warning",
+      message: "Client request timeline insert failed.",
+      context: {
+        error: updateInsertError,
+        service,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: insertedRequest.id,
+    });
     warnings.push("Portal timeline update could not be saved.");
   }
 
@@ -259,6 +306,18 @@ export async function POST(request: Request) {
     await sendPortalRequestNotificationEmail(notificationInput);
   } catch (error) {
     console.error("Portal request email notification failed:", error);
+    await logWorkflowError({
+      source: "client-request-create.email",
+      severity: "warning",
+      message: "Portal request email notification failed.",
+      context: {
+        error,
+        service,
+        clickUpTaskId,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: insertedRequest.id,
+    });
     warnings.push("Email notification needs review.");
   }
 
@@ -266,6 +325,18 @@ export async function POST(request: Request) {
     await sendInternalWhatsAppPortalRequestNotification(notificationInput);
   } catch (error) {
     console.error("Portal request WhatsApp notification failed:", error);
+    await logWorkflowError({
+      source: "client-request-create.whatsapp",
+      severity: "warning",
+      message: "Portal request WhatsApp notification failed.",
+      context: {
+        error,
+        service,
+        clickUpTaskId,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: insertedRequest.id,
+    });
     warnings.push("WhatsApp notification needs review.");
   }
 

@@ -10,6 +10,7 @@ import {
   sendLeadNotificationEmail,
   sendClientConfirmationEmail,
 } from "@/lib/integrations/email";
+import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { getRateLimitIdentifier, rateLimit } from "@/lib/security/rateLimit";
 import { sendInternalWhatsAppLeadNotification } from "@/lib/integrations/whatsapp";
 
@@ -90,6 +91,16 @@ export async function POST(request: Request) {
     zohoLeadId = zohoResult?.data?.[0]?.details?.id || "";
   } catch (error) {
     console.error("Zoho lead creation failed:", error);
+    await logWorkflowError({
+      source: "lead-intake.zoho",
+      severity: "error",
+      message: "Zoho lead creation failed.",
+      context: {
+        error,
+        leadEmail: lead.email,
+        service: lead.service,
+      },
+    });
     integrationErrors.push("Zoho lead creation failed.");
   }
 
@@ -104,6 +115,17 @@ export async function POST(request: Request) {
     clickUpTaskUrl = clickUpTask.url || "";
   } catch (error) {
     console.error("ClickUp task creation failed:", error);
+    await logWorkflowError({
+      source: "lead-intake.clickup",
+      severity: "error",
+      message: "ClickUp lead task creation failed.",
+      context: {
+        error,
+        leadEmail: lead.email,
+        service: lead.service,
+        zohoLeadId,
+      },
+    });
     integrationErrors.push("ClickUp task creation failed.");
   }
 
@@ -119,6 +141,17 @@ export async function POST(request: Request) {
     console.log("Google Sheet log successful.");
   } catch (error) {
     console.error("Google Sheet log failed:", error);
+    await logWorkflowError({
+      source: "lead-intake.google-sheets",
+      severity: "warning",
+      message: "Google Sheets lead logging failed.",
+      context: {
+        error,
+        leadEmail: lead.email,
+        service: lead.service,
+        clickUpTaskId,
+      },
+    });
     integrationErrors.push("Google Sheet log failed.");
   }
 
@@ -135,6 +168,17 @@ export async function POST(request: Request) {
     console.log("Email notification sent.");
   } catch (error) {
     console.error("Email notification failed:", error);
+    await logWorkflowError({
+      source: "lead-intake.email",
+      severity: "warning",
+      message: "Lead notification email failed.",
+      context: {
+        error,
+        leadEmail: lead.email,
+        service: lead.service,
+        clickUpTaskId,
+      },
+    });
     integrationErrors.push("Email notification failed.");
   }
 
@@ -150,6 +194,16 @@ export async function POST(request: Request) {
     console.log("Client confirmation email sent.");
   } catch (error) {
     console.error("Client confirmation email failed:", error);
+    await logWorkflowError({
+      source: "lead-intake.client-email",
+      severity: "warning",
+      message: "Client confirmation email failed.",
+      context: {
+        error,
+        leadEmail: lead.email,
+        service: lead.service,
+      },
+    });
     integrationErrors.push("Client confirmation email failed.");
   }
 
@@ -167,6 +221,17 @@ export async function POST(request: Request) {
     console.log("WhatsApp notification sent.");
   } catch (error) {
     console.error("WhatsApp notification failed:", error);
+    await logWorkflowError({
+      source: "lead-intake.whatsapp",
+      severity: "warning",
+      message: "Internal WhatsApp lead notification failed.",
+      context: {
+        error,
+        leadEmail: lead.email,
+        service: lead.service,
+        clickUpTaskId,
+      },
+    });
     integrationErrors.push("WhatsApp notification failed.");
   }
 
@@ -185,6 +250,17 @@ export async function POST(request: Request) {
     console.log("Zoho integration status updated.");
   } catch (error) {
     console.error("Zoho integration status update failed:", error);
+    await logWorkflowError({
+      source: "lead-intake.zoho-status",
+      severity: "warning",
+      message: "Zoho lead integration status update failed.",
+      context: {
+        error,
+        zohoLeadId,
+        clickUpTaskId,
+        integrationErrorCount: integrationErrors.length,
+      },
+    });
     integrationErrors.push("Zoho integration status update failed.");
   }
 

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runClickUpStatusSync } from "@/lib/internal/sync";
+import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { rateLimit } from "@/lib/security/rateLimit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -57,6 +58,15 @@ export async function POST() {
     return NextResponse.json(result);
   } catch (syncError) {
     console.error("Status sync failed:", syncError);
+    await logWorkflowError({
+      source: "internal-sync.status",
+      severity: "error",
+      message: "Manual ClickUp status sync failed.",
+      context: {
+        error: syncError,
+        adminEmail: userEmail,
+      },
+    });
     return NextResponse.json(
       { message: "Status sync failed." },
       { status: 500 }

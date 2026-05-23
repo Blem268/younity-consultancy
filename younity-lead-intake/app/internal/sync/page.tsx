@@ -72,12 +72,20 @@ export default async function InternalSyncPage() {
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-5xl flex-col bg-[#f7faf8] px-6 py-8">
       <header className="border-b border-teal-900/10 pb-8">
-        <Link
-          href="/client/dashboard"
-          className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
-        >
-          Back to Dashboard
-        </Link>
+        <div className="flex flex-wrap gap-4">
+          <Link
+            href="/client/dashboard"
+            className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
+          >
+            Back to Dashboard
+          </Link>
+          <Link
+            href="/internal/errors"
+            className="text-sm font-semibold text-teal-700 transition hover:text-teal-900"
+          >
+            Workflow Errors
+          </Link>
+        </div>
         <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-950">
           Younity Internal Sync Controls
         </h1>

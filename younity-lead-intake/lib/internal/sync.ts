@@ -1,5 +1,6 @@
 import { getClickUpTaskBillingFields, getClickUpTaskStatus } from "@/lib/integrations/clickup";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { logWorkflowError } from "@/lib/internal/workflowErrors";
 
 type ClientRequestStatusRecord = {
   id: string;
@@ -66,6 +67,14 @@ export async function runClickUpStatusSync(): Promise<SyncResult> {
       message: requestsError.message,
       code: requestsError.code,
     });
+    await logWorkflowError({
+      source: "sync.status.query",
+      severity: "error",
+      message: "ClickUp status sync request query failed.",
+      context: {
+        error: requestsError,
+      },
+    });
     throw new Error("Unable to load requests for sync.");
   }
 
@@ -110,6 +119,19 @@ export async function runClickUpStatusSync(): Promise<SyncResult> {
           message: updateError.message,
           code: updateError.code,
         });
+        await logWorkflowError({
+          source: "sync.status.update",
+          severity: "error",
+          message: "Supabase request status update failed.",
+          context: {
+            error: updateError,
+            oldStatus,
+            newStatus,
+            clickUpTaskId: clientRequest.clickup_task_id,
+          },
+          relatedClientId: clientRequest.client_id,
+          relatedRequestId: clientRequest.id,
+        });
         throw new Error("Supabase request status update failed.");
       }
 
@@ -128,6 +150,19 @@ export async function runClickUpStatusSync(): Promise<SyncResult> {
           message: timelineError.message,
           code: timelineError.code,
         });
+        await logWorkflowError({
+          source: "sync.status.timeline",
+          severity: "warning",
+          message: "Supabase status timeline insert failed.",
+          context: {
+            error: timelineError,
+            oldStatus,
+            newStatus,
+            clickUpTaskId: clientRequest.clickup_task_id,
+          },
+          relatedClientId: clientRequest.client_id,
+          relatedRequestId: clientRequest.id,
+        });
         throw new Error("Supabase status timeline insert failed.");
       }
 
@@ -142,6 +177,18 @@ export async function runClickUpStatusSync(): Promise<SyncResult> {
         `ClickUp status sync error for request ${clientRequest.id}:`,
         error instanceof Error ? error.message : "Unknown sync error."
       );
+      await logWorkflowError({
+        source: "sync.status.request",
+        severity: "warning",
+        message: "ClickUp status sync failed for a request.",
+        context: {
+          error,
+          clickUpTaskId: clientRequest.clickup_task_id,
+          service: clientRequest.service,
+        },
+        relatedClientId: clientRequest.client_id,
+        relatedRequestId: clientRequest.id,
+      });
 
       errors.push({
         requestId: clientRequest.id,
@@ -179,6 +226,14 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
     console.error("ClickUp billing sync query failed:", {
       message: requestsError.message,
       code: requestsError.code,
+    });
+    await logWorkflowError({
+      source: "sync.billing.query",
+      severity: "error",
+      message: "ClickUp billing sync request query failed.",
+      context: {
+        error: requestsError,
+      },
     });
     throw new Error("Unable to load requests for billing sync.");
   }
@@ -246,6 +301,18 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
           message: updateError.message,
           code: updateError.code,
         });
+        await logWorkflowError({
+          source: "sync.billing.update",
+          severity: "error",
+          message: "Supabase billing update failed.",
+          context: {
+            error: updateError,
+            clickUpTaskId: clientRequest.clickup_task_id,
+            service: clientRequest.service,
+          },
+          relatedClientId: clientRequest.client_id,
+          relatedRequestId: clientRequest.id,
+        });
         throw new Error("Supabase billing update failed.");
       }
 
@@ -264,6 +331,18 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
           message: timelineError.message,
           code: timelineError.code,
         });
+        await logWorkflowError({
+          source: "sync.billing.timeline",
+          severity: "warning",
+          message: "Supabase billing timeline insert failed.",
+          context: {
+            error: timelineError,
+            clickUpTaskId: clientRequest.clickup_task_id,
+            service: clientRequest.service,
+          },
+          relatedClientId: clientRequest.client_id,
+          relatedRequestId: clientRequest.id,
+        });
         throw new Error("Supabase billing timeline insert failed.");
       }
 
@@ -278,6 +357,18 @@ export async function runClickUpBillingSync(): Promise<SyncResult> {
         `ClickUp billing sync error for request ${clientRequest.id}:`,
         error instanceof Error ? error.message : "Unknown billing sync error."
       );
+      await logWorkflowError({
+        source: "sync.billing.request",
+        severity: "warning",
+        message: "ClickUp billing sync failed for a request.",
+        context: {
+          error,
+          clickUpTaskId: clientRequest.clickup_task_id,
+          service: clientRequest.service,
+        },
+        relatedClientId: clientRequest.client_id,
+        relatedRequestId: clientRequest.id,
+      });
 
       errors.push({
         requestId: clientRequest.id,

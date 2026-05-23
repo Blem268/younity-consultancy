@@ -14,7 +14,7 @@ The Next.js website provides the public homepage, contact form, and client porta
 
 ### Supabase
 
-Supabase provides client portal authentication, client-facing tables, request records, update timelines, and private document storage.
+Supabase provides client portal authentication, client-facing tables, request records, update timelines, private document storage, production rate limiting, and sanitized internal workflow error logs.
 
 ### ClickUp
 
@@ -55,6 +55,8 @@ Private documents are stored in the private `client-documents` Supabase bucket. 
 Internal sync controls require a logged-in user whose email is listed in `INTERNAL_ADMIN_EMAILS`. Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
 
 Public lead intake, portal write APIs, document upload, task updates, and internal sync wrapper routes use lightweight server-side rate limiting. Production rate limiting is backed by Supabase table `public.rate_limits`; deployments must run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
+
+Production workflow failures are written to Supabase table `public.workflow_errors` through a server-side helper that sanitizes context before insert. Admin users can review the latest workflow errors at `/internal/errors`.
 
 The public contact form includes a hidden honeypot field. Cloudflare Turnstile is not active and remains a future option if spam increases.
 

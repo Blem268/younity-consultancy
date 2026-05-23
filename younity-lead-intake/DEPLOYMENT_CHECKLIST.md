@@ -102,6 +102,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm `INTERNAL_ADMIN_EMAILS` includes approved admin emails.
 - Confirm `INTERNAL_SYNC_SECRET` is long and secure.
 - Test `/internal/sync` after deployment.
+- Test `/internal/errors` after deployment.
 
 ### G. Production Test Plan
 
@@ -117,6 +118,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Upload portal document.
 - Run internal status sync.
 - Run internal billing sync.
+- Confirm workflow errors can be reviewed at `/internal/errors` by an authorized admin.
 - Confirm client-facing billing/invoice status reflects ClickUp billing sync data.
 - Confirm public lead-intake rate limiting returns a safe 429 response after repeated submissions.
 - Confirm portal request, document upload, task update, and internal sync rate limits return safe 429 responses after repeated submissions.
@@ -131,6 +133,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Run `supabase/rate_limits.sql` manually in the Supabase SQL Editor.
 - Confirm `public.rate_limits` exists with RLS enabled and no public/client policies.
 - Confirm `public.increment_rate_limit` exists.
+- Run `supabase/workflow_errors.sql` manually in the Supabase SQL Editor.
+- Confirm `public.workflow_errors` exists with RLS enabled and no public/client policies.
 - Confirm the Supabase Storage bucket `client-documents` exists.
 - Confirm `client-documents` is private.
 - Confirm document uploads store private storage paths only and do not expose public file URLs or signed download links.
@@ -194,6 +198,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Request detail pages verify the request belongs to the logged-in client.
 - Document metadata is shown only for the owning client.
 - `/internal/sync` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
+- `/internal/errors` requires an authenticated user whose email is listed in `INTERNAL_ADMIN_EMAILS`.
 
 ## Security Review
 
@@ -204,6 +209,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 - Confirm public lead-intake has rate limiting and honeypot spam protection.
 - Confirm Cloudflare Turnstile remains documented as a future option, not active.
 - Confirm monitoring/error tracking is configured with secret redaction before broad production use.
+- Confirm workflow error logs are sanitized and never include secrets.
+- Keep Sentry or another external error tracker as a future monitoring option.
 - Confirm API keys and OAuth refresh tokens have an owner and rotation cadence.
 
 ## Final Verification

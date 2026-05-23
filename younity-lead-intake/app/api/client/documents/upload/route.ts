@@ -6,6 +6,7 @@ import {
   attachFileToClickUpTask,
 } from "@/lib/integrations/clickup";
 import { sendDocumentUploadNotificationEmail } from "@/lib/integrations/email";
+import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { rateLimit } from "@/lib/security/rateLimit";
 import { sendInternalWhatsAppDocumentUploadNotification } from "@/lib/integrations/whatsapp";
 
@@ -235,6 +236,20 @@ export async function POST(request: Request) {
     console.error("Supabase storage upload failed:", {
       message: uploadError.message,
     });
+    await logWorkflowError({
+      source: "client-document-upload.storage",
+      severity: "error",
+      message: "Supabase document storage upload failed.",
+      context: {
+        error: uploadError,
+        documentType,
+        requestId: requestId || null,
+        fileSize: fileValue.size,
+        fileType: fileValue.type,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: requestId || null,
+    });
     return NextResponse.json(
       { message: "Document upload failed." },
       { status: 500 }
@@ -261,6 +276,20 @@ export async function POST(request: Request) {
       message: insertError.message,
       code: insertError.code,
     });
+    await logWorkflowError({
+      source: "client-document-upload.metadata",
+      severity: "error",
+      message: "Client document metadata insert failed.",
+      context: {
+        error: insertError,
+        documentType,
+        requestId: requestId || null,
+        fileSize: fileValue.size,
+        fileType: fileValue.type,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: requestId || null,
+    });
     return NextResponse.json(
       { message: "Document metadata could not be saved." },
       { status: 500 }
@@ -285,6 +314,20 @@ export async function POST(request: Request) {
     await sendDocumentUploadNotificationEmail(notificationInput);
   } catch (error) {
     console.error("Document upload email notification failed:", error);
+    await logWorkflowError({
+      source: "client-document-upload.email",
+      severity: "warning",
+      message: "Document upload email notification failed.",
+      context: {
+        error,
+        documentType,
+        requestId: linkedRequest?.id,
+        documentId: insertedDocument.id,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: linkedRequest?.id,
+      relatedDocumentId: insertedDocument.id,
+    });
     notificationWarnings.push("Document uploaded, but the email notification failed.");
   }
 
@@ -292,6 +335,20 @@ export async function POST(request: Request) {
     await sendInternalWhatsAppDocumentUploadNotification(notificationInput);
   } catch (error) {
     console.error("Document upload WhatsApp notification failed:", error);
+    await logWorkflowError({
+      source: "client-document-upload.whatsapp",
+      severity: "warning",
+      message: "Document upload WhatsApp notification failed.",
+      context: {
+        error,
+        documentType,
+        requestId: linkedRequest?.id,
+        documentId: insertedDocument.id,
+      },
+      relatedClientId: clientProfile.id,
+      relatedRequestId: linkedRequest?.id,
+      relatedDocumentId: insertedDocument.id,
+    });
     notificationWarnings.push("Document uploaded, but the WhatsApp notification failed.");
   }
 
@@ -306,6 +363,20 @@ export async function POST(request: Request) {
       clickUpAttachmentSucceeded = true;
     } catch (error) {
       console.error("ClickUp document attachment failed:", error);
+      await logWorkflowError({
+        source: "client-document-upload.clickup-attachment",
+        severity: "warning",
+        message: "ClickUp document attachment failed.",
+        context: {
+          error,
+          clickUpTaskId: linkedRequest.clickup_task_id,
+          requestId: linkedRequest.id,
+          documentId: insertedDocument.id,
+        },
+        relatedClientId: clientProfile.id,
+        relatedRequestId: linkedRequest.id,
+        relatedDocumentId: insertedDocument.id,
+      });
       notificationWarnings.push("Document saved, but the ClickUp file attachment failed.");
     }
 
@@ -318,6 +389,20 @@ export async function POST(request: Request) {
       });
     } catch (error) {
       console.error("ClickUp document upload comment failed:", error);
+      await logWorkflowError({
+        source: "client-document-upload.clickup-comment",
+        severity: "warning",
+        message: "ClickUp document upload comment failed.",
+        context: {
+          error,
+          clickUpTaskId: linkedRequest.clickup_task_id,
+          requestId: linkedRequest.id,
+          documentId: insertedDocument.id,
+        },
+        relatedClientId: clientProfile.id,
+        relatedRequestId: linkedRequest.id,
+        relatedDocumentId: insertedDocument.id,
+      });
       notificationWarnings.push("Document saved, but the ClickUp comment failed.");
     }
   }

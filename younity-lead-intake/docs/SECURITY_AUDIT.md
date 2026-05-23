@@ -1,6 +1,6 @@
 # Security Audit
 
-Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase.
+Phase 10 security review completed for the Younity Consultancy Next.js application. Phase 11 added lightweight rate limiting and a public lead-intake honeypot. Phase 11B moved production rate limiting storage to Supabase. Phase 12A added sanitized workflow error logging backed by Supabase.
 
 ## Summary
 
@@ -9,6 +9,7 @@ The review covered client portal access control, client API routes, internal syn
 The active architecture remains:
 
 - Supabase for auth, portal data, private storage, and short-lived signed document URLs.
+- Supabase for production rate limiting and sanitized internal workflow error logs.
 - ClickUp as the operations and billing preparation hub.
 - Zoho CRM for lead and client relationship records.
 - Resend for email notifications.
@@ -27,6 +28,7 @@ Zoho Books integration is not active and was not reintroduced.
 - Internal sync page and sync API routes.
 - Supabase server/admin clients.
 - ClickUp, Zoho CRM, Resend, Twilio, and Google Sheets integrations.
+- Workflow error logging and the `/internal/errors` admin page.
 
 ## Client Route Protections
 
@@ -199,11 +201,29 @@ Findings:
 - No environment variable, token, cookie, or session logs were found.
 - Some server-side logs retain sanitized Supabase error metadata for operations debugging.
 - Third-party provider errors are logged server-side, but raw provider messages are no longer returned to browser clients for the audited flows.
+- Critical workflow failures are stored in `public.workflow_errors` with sanitized context for internal admin review.
 
 Fixes applied:
 
 - Public lead-intake responses no longer return internal integration IDs, ClickUp URLs, or raw integration warning text.
 - Client request/document/task routes no longer return raw provider error messages in warning arrays.
+- Added `logWorkflowError()` helper that redacts token, secret, authorization, cookie, password, refresh, bearer, and session-shaped context keys.
+- Added `/internal/errors` for admin-only review of latest sanitized workflow errors.
+
+## Workflow Error Logging
+
+Phase 12A added a Supabase-backed workflow error log.
+
+Implementation notes:
+
+- Manual setup is required: run `supabase/workflow_errors.sql` in the Supabase SQL Editor.
+- `public.workflow_errors` has RLS enabled and no public/client policies.
+- The app writes workflow logs only through server-side service-role/admin client code.
+- `logWorkflowError()` never throws to callers; if logging fails, the original workflow continues with existing behavior.
+- Logged context is intentionally small and sanitized.
+- `/internal/errors` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`.
+- Context is hidden by default and shown only in a collapsible preformatted block.
+- Sentry or another external error tracker remains a future recommendation for broader monitoring, alerting, and release correlation.
 
 ## Issues Found
 
@@ -215,6 +235,7 @@ Fixes applied:
 - File upload routes had extension validation but no MIME validation.
 - Public and sensitive write routes did not have request rate limiting.
 - Public lead-intake form did not have a honeypot field.
+- Production workflow failures were only visible in server logs and were not queryable from an internal admin page.
 
 ## Fixes Applied
 
@@ -225,6 +246,7 @@ Fixes applied:
 - Sanitized internal sync top-level error responses.
 - Added rate limiting to public lead intake, portal request creation, document uploads, task updates, and internal sync wrapper routes.
 - Added a hidden public contact form honeypot.
+- Added Supabase-backed workflow error logging and an admin-only `/internal/errors` page.
 - Kept ClickUp billing sync and Supabase billing display active.
 - Confirmed Zoho Books integration is not active.
 
@@ -233,6 +255,7 @@ Fixes applied:
 - Run `supabase/rate_limits.sql` in production so rate limiting works consistently across serverless instances.
 - Add Cloudflare Turnstile to the public contact form if spam persists beyond the honeypot and rate limits.
 - Add production monitoring and error tracking with secret redaction.
+- Consider Sentry for alerting, release tracking, and cross-service error correlation.
 - Rotate API keys and OAuth refresh tokens periodically.
 - Perform multi-client access testing before each major portal release.
 - Consider centralized safe logging helpers to standardize server-side error metadata.
@@ -259,3 +282,5 @@ Fixes applied:
 - Internal sync wrapper routes return HTTP 429 after more than 10 runs by the same admin in 10 minutes.
 - Filling the hidden contact honeypot returns a success-like response and creates no integrations.
 - Browser responses never include server-only secrets, raw provider responses, ClickUp private URLs, or raw exception details.
+- Workflow failures create sanitized rows in `public.workflow_errors`.
+- Non-admin users cannot access `/internal/errors`.

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { runClickUpBillingSync } from "@/lib/internal/sync";
+import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { rateLimit } from "@/lib/security/rateLimit";
 import { createClient } from "@/lib/supabase/server";
 
@@ -57,6 +58,15 @@ export async function POST() {
     return NextResponse.json(result);
   } catch (syncError) {
     console.error("Billing sync failed:", syncError);
+    await logWorkflowError({
+      source: "internal-sync.billing",
+      severity: "error",
+      message: "Manual ClickUp billing sync failed.",
+      context: {
+        error: syncError,
+        adminEmail: userEmail,
+      },
+    });
     return NextResponse.json(
       { message: "Billing sync failed." },
       { status: 500 }

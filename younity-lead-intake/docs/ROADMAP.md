@@ -27,6 +27,7 @@
 - Phase 10 security review, data protection, and access control audit.
 - Phase 11 rate limiting and public contact form honeypot.
 - Phase 11B Supabase-backed production rate limiting.
+- Phase 12A Supabase-backed workflow error logging.
 
 ## Next Recommended Work
 
@@ -41,4 +42,5 @@
 - Perform multi-client testing.
 - Add duplicate Zoho handling.
 - Add production monitoring and error tracking.
+- Consider Sentry for alerting, release tracking, and error correlation.
 - Establish periodic key rotation for Supabase, ClickUp, Zoho CRM, Resend, Twilio, and Google Sheets credentials.
