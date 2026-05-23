@@ -209,6 +209,9 @@ Add all required environment variables to the hosting provider. Keep secret valu
 ## Internal Sync
 
 - Confirm `INTERNAL_SYNC_SECRET` is set to a strong random value.
+- Confirm admins sign in through `/internal/login` and client users still sign in through `/client/login`.
+- Confirm logged-out visits to `/internal`, `/internal/clients`, and `/internal/errors` redirect to `/internal/login`.
+- Confirm authenticated non-admin users see access denied for `/internal` and receive 403 responses from internal admin action routes.
 - Confirm `/internal` is protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `/internal/clients`, `/internal/requests`, and `/internal/documents` are protected by `INTERNAL_ADMIN_EMAILS`.
 - Confirm `/internal/clients/[id]` and `/internal/requests/[id]` are protected by `INTERNAL_ADMIN_EMAILS`.
@@ -233,6 +236,8 @@ Add all required environment variables to the hosting provider. Keep secret valu
 ## Protected Routes
 
 - Client routes redirect unauthenticated users to `/client/login`.
+- Internal admin routes redirect unauthenticated users to `/internal/login`.
+- Public navigation links to the client portal only and does not expose the internal admin login.
 - Client dashboard, requests, request detail, new request, documents, and profile pages scope data through the logged-in user's client profile.
 - Request detail pages verify the request belongs to the logged-in client.
 - Document metadata is shown only for the owning client.

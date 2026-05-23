@@ -34,7 +34,7 @@ export async function requireInternalAdmin(): Promise<InternalAdminResult> {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    redirect("/client/login");
+    redirect("/internal/login");
   }
 
   if (!isInternalAdminEmail(user.email)) {

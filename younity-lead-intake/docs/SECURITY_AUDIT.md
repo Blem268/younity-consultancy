@@ -271,7 +271,8 @@ Phase 13 added a central internal dashboard at `/internal`.
 Implementation notes:
 
 - `/internal` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`.
-- Logged-out users are redirected to `/client/login`; authenticated non-admin users see a safe access-denied message.
+- Admins use the dedicated `/internal/login` page. Logged-out users are redirected to `/internal/login`; authenticated non-admin users see a safe access-denied message.
+- `/client/login` remains the separate client portal entry point and is not used for internal admin access.
 - Dashboard summaries cover open workflow errors, recent client requests, recent document uploads, active client requests, requests ready for billing, and active Supabase rate-limit records.
 - Recent sections show unresolved workflow errors, recent client requests, and recent document uploads without exposing workflow context or private document URLs.
 - Dashboard data is loaded server-side with the Supabase admin client after the admin check.
@@ -285,7 +286,7 @@ Phase 14 added read-only internal management pages for client operations review.
 Implementation notes:
 
 - `/internal/clients`, `/internal/clients/[id]`, `/internal/requests`, `/internal/requests/[id]`, and `/internal/documents` require Supabase auth and `INTERNAL_ADMIN_EMAILS`.
-- Logged-out users are redirected to `/client/login`; authenticated non-admin users see a safe access-denied message.
+- Logged-out users are redirected to `/internal/login`; authenticated non-admin users see a safe access-denied message.
 - Management pages use server-side Supabase admin queries after the admin check and do not expose the service role key to browser code.
 - `/api/internal/documents/[id]/open` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`, validates document UUIDs, and redirects to a short-lived Supabase Storage signed URL.
 - `/api/internal/documents/[id]/open` refuses pending placeholder rows and only signs real uploaded storage paths.

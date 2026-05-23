@@ -10,6 +10,7 @@ const internalNavItems = [
   { label: "Documents", href: "/internal/documents" },
   { label: "Sync Controls", href: "/internal/sync" },
   { label: "Workflow Errors", href: "/internal/errors" },
+  { label: "Logout", href: "/internal/logout" },
 ];
 
 function isActivePath(pathname: string, href: string) {
