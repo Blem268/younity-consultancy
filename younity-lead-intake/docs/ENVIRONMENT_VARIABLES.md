@@ -25,7 +25,7 @@ Do not commit real values. `NEXT_PUBLIC_` variables can be visible in the browse
 | Variable | Purpose | Used By | Visibility |
 | --- | --- | --- | --- |
 | `CLICKUP_API_TOKEN` | ClickUp API token for task creation, comments, and task reads. | ClickUp integration. | Server-only |
-| `CLICKUP_LIST_ID` | Target ClickUp list for lead and portal request tasks. | ClickUp task creation. | Server-only |
+| `CLICKUP_LIST_ID` | Target ClickUp list for lead and portal request tasks. Use `901713882310` for Client Services -> Services -> Client Requests. | ClickUp task creation. | Server-only |
 | `CLICKUP_TEAM_ID` | ClickUp Workspace/team ID used when registering API webhooks. | Admin-only ClickUp webhook registration route. | Server-only |
 | `CLICKUP_WEBHOOK_SECRET` | Secret used to verify incoming ClickUp webhook `X-Signature` HMAC signatures. | `/api/webhooks/clickup`. | Server-only |
 

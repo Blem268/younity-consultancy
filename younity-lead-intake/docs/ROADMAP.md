@@ -41,6 +41,7 @@
 - Phase 22 client onboarding flow at `/internal/onboarding`: admins can manually create client portal profiles, link existing profiles to Supabase Auth user IDs, review recent unlinked/onboarded clients, and clients see an onboarding checklist on their dashboard. Email invitations remain paused until Younity email services are reactivated; admins manually create users in Supabase Authentication and link `clients.user_id`.
 - Phase 23 simplified the client dashboard for non-technical clients with a clearer welcome section, next-best-action guidance, plain-language request/document/profile cards, friendlier recent updates, a lower-priority getting-started checklist, and mobile-first action buttons without changing backend workflows.
 - Phase 25 client portal launch operations documentation: created the Client Portal Launch Checklist, Client Portal SOP, and Troubleshooting Guide for internal staff operation without codebase knowledge.
+- Phase 26 ClickUp workflow alignment: standardized the Client Services -> Services -> Client Requests list as the portal operations hub, documented list ID `901713882310`, aligned request statuses and custom field names, kept generic Invoice ID terminology, and added a safe internal setup checklist while preserving manual sync fallback.
 
 ## Next Recommended Work
 
@@ -53,6 +54,7 @@
 - Use the Phase 25 launch checklist, SOP, and troubleshooting guide for staff training, launch readiness checks, and repeatable client portal operations.
 - Add Cloudflare Turnstile to the public contact form if spam volume increases.
 - Monitor ClickUp webhook delivery and keep manual sync available as the fallback.
+- Keep `CLICKUP_LIST_ID` pointed to Client Services -> Services -> Client Requests (`901713882310`) and review `docs/CLICKUP_WORKFLOW_SETUP.md` before ClickUp workflow changes.
 - Continue using private signed URL document access only for uploaded files.
 - Perform multi-client testing.
 - Add duplicate Zoho handling.

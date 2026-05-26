@@ -23,7 +23,7 @@ Add all required environment variables to the hosting provider. Keep secret valu
 ### ClickUp
 
 - `CLICKUP_API_TOKEN`
-- `CLICKUP_LIST_ID`
+- `CLICKUP_LIST_ID` (`901713882310` for Client Services -> Services -> Client Requests)
 - `CLICKUP_TEAM_ID`
 - `CLICKUP_WEBHOOK_SECRET`
 
@@ -185,13 +185,15 @@ Add all required environment variables to the hosting provider. Keep secret valu
 ## ClickUp
 
 - Confirm `CLICKUP_API_TOKEN` belongs to an account or workspace member with access to the target list.
-- Confirm `CLICKUP_LIST_ID` points to the production operations list.
+- Confirm `CLICKUP_LIST_ID=901713882310` points to Client Services -> Services -> Client Requests.
 - Confirm `CLICKUP_TEAM_ID` points to the production Workspace/team used for API webhook registration.
 - Confirm `CLICKUP_WEBHOOK_SECRET` is server-only and matches the ClickUp webhook signing secret.
 - Confirm the registered webhook endpoint is `${NEXT_PUBLIC_SITE_URL}/api/webhooks/clickup`.
 - If capturing the initial ClickUp signing secret, register from a secure server-side terminal or approved secret-management workflow and store the returned secret in `CLICKUP_WEBHOOK_SECRET`; do not paste the secret into client-visible tools or docs.
 - Confirm manual status and billing sync remains available at `/internal/sync` as a fallback.
-- Confirm ClickUp custom fields used by billing sync still match the field names expected by the app.
+- Confirm `/internal/sync` shows the ClickUp Setup Checklist and `/api/internal/clickup/setup-check` is accessible only to admins.
+- Confirm ClickUp request statuses are Submitted, Under Review, Waiting on Documents, In Progress, Internal Review, Waiting on Client, Ready for Billing, Completed, and Closed.
+- Confirm ClickUp custom fields match `docs/CLICKUP_WORKFLOW_SETUP.md`, including generic `Invoice ID`.
 - Confirm ClickUp remains the operations and billing preparation hub.
 - Confirm any actual invoicing is handled manually or outside the portal for now.
 

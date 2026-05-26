@@ -20,6 +20,8 @@ Supabase provides client portal authentication, client-facing tables, request re
 
 ClickUp is the main operations and billing preparation hub. Website leads and portal requests create ClickUp tasks. Internal task status and billing preparation fields sync back into Supabase for portal visibility through ClickUp webhooks and manual sync fallbacks.
 
+The main ClickUp operations list for portal-created tasks is Client Services -> Services -> Client Requests, list ID `901713882310`. `CLICKUP_LIST_ID` should point to that list.
+
 ClickUp remains the source of truth for operational task status, subtasks, and checklists. Client request detail pages pull a safe, client-facing task progress view from ClickUp without exposing private ClickUp links or API details. The webhook receiver lives at `/api/webhooks/clickup` and verifies ClickUp `X-Signature` requests with the server-only `CLICKUP_WEBHOOK_SECRET`.
 
 ### Zoho CRM
@@ -129,6 +131,8 @@ ClickUp status/billing updates
 -> Client sees latest portal status/billing
 ```
 
+Supported ClickUp request statuses are Submitted, Under Review, Waiting on Documents, In Progress, Internal Review, Waiting on Client, Ready for Billing, Completed, and Closed.
+
 Manual ClickUp status and billing sync buttons remain available at `/internal/sync` as a fallback. Webhook registration uses `CLICKUP_API_TOKEN`, `CLICKUP_TEAM_ID`, and `NEXT_PUBLIC_SITE_URL`; incoming webhook verification uses server-only `CLICKUP_WEBHOOK_SECRET`. Deployments must run `supabase/clickup_webhook_events.sql` manually in Supabase so `public.clickup_webhook_events` can prevent duplicate processing.
 
 ### D1. Manual Operations Sync Fallback
@@ -140,6 +144,8 @@ Admin opens /internal/sync
 -> Supabase client_requests updated when ClickUp values changed
 -> client_updates timeline entries are added only for actual changes
 ```
+
+The `/internal/sync` page also shows a ClickUp Setup Checklist for the expected Client Requests list, required statuses, custom fields, and webhook environment configuration. `/api/internal/clickup/setup-check` returns safe admin-only setup status without exposing secrets.
 
 ### D2. Internal Client Operations Review
 

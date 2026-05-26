@@ -1,4 +1,9 @@
 import type { LeadInput } from "@/lib/validators/leadSchema";
+import {
+  CLICKUP_CLIENT_REQUESTS_LIST_NAME,
+  CLICKUP_CLIENT_REQUESTS_LIST_PATH,
+  CLICKUP_CUSTOM_FIELD,
+} from "@/lib/clickup/setup";
 
 type DocumentUploadCommentInput = {
   clickUpTaskId: string;
@@ -282,6 +287,10 @@ function getProgressFromParentStatus(status: string) {
     return 100;
   }
 
+  if (normalized.includes("ready for billing")) {
+    return 80;
+  }
+
   if (isInProgressStatus(normalized)) {
     return 50;
   }
@@ -513,9 +522,21 @@ export async function createClickUpPortalRequestTask({
   }
 
   const description = [
-    "New client portal request.",
+    `New client portal request for the ${CLICKUP_CLIENT_REQUESTS_LIST_NAME} list.`,
+    `Operations list: ${CLICKUP_CLIENT_REQUESTS_LIST_PATH}`,
     "",
-    "Client:",
+    "Client / Portal Fields:",
+    `- ${CLICKUP_CUSTOM_FIELD.portalRequestId}: ${portalRequestId}`,
+    `- ${CLICKUP_CUSTOM_FIELD.clientName}: ${clientName}`,
+    `- ${CLICKUP_CUSTOM_FIELD.clientEmail}: ${clientEmail}`,
+    `- ${CLICKUP_CUSTOM_FIELD.clientPhone}: ${clientPhone || "Not provided"}`,
+    `- ${CLICKUP_CUSTOM_FIELD.company}: ${company || "Not provided"}`,
+    `- ${CLICKUP_CUSTOM_FIELD.serviceRequested}: ${service}`,
+    `- ${CLICKUP_CUSTOM_FIELD.preferredContactMethod}: ${preferredContactMethod}`,
+    `- ${CLICKUP_CUSTOM_FIELD.urgency}: ${urgency}`,
+    `- ${CLICKUP_CUSTOM_FIELD.source}: Client Portal`,
+    "",
+    "Client Details:",
     `- Name: ${clientName}`,
     `- Email: ${clientEmail}`,
     `- Phone: ${clientPhone || "Not provided"}`,
@@ -527,13 +548,18 @@ export async function createClickUpPortalRequestTask({
     `- Preferred Contact Method: ${preferredContactMethod}`,
     `- Message: ${message}`,
     "",
-    "Billing Preparation:",
+    "Document / Workflow Fields:",
+    `- ${CLICKUP_CUSTOM_FIELD.documentStatus}: Not Started`,
+    `- ${CLICKUP_CUSTOM_FIELD.integrationStatus}: Created from portal`,
+    "",
+    "Billing preparation:",
     "- Billing Type: To Be Reviewed",
     "- Estimated Fee: To Be Reviewed",
     "- Deposit Required: To Be Reviewed",
     "- Amount Paid: 0",
     "- Balance Due: To Be Reviewed",
     "- Invoice Status: Not Ready",
+    "- Invoice ID: Not assigned",
     "",
     "Portal:",
     `- Portal Request ID: ${portalRequestId}`,
@@ -658,25 +684,25 @@ export async function getClickUpTaskBillingFields(clickUpTaskId: string) {
   return {
     id: data.id || clickUpTaskId,
     billingType: normalizeTextFromField(
-      getCustomFieldValueByName(customFields, "Billing Type")
+      getCustomFieldValueByName(customFields, CLICKUP_CUSTOM_FIELD.billingType)
     ),
     estimatedFee: normalizeNumberFromField(
-      getCustomFieldValueByName(customFields, "Estimated Fee")
+      getCustomFieldValueByName(customFields, CLICKUP_CUSTOM_FIELD.estimatedFee)
     ),
     depositRequired: normalizeNumberFromField(
-      getCustomFieldValueByName(customFields, "Deposit Required")
+      getCustomFieldValueByName(customFields, CLICKUP_CUSTOM_FIELD.depositRequired)
     ),
     amountPaid: normalizeNumberFromField(
-      getCustomFieldValueByName(customFields, "Amount Paid")
+      getCustomFieldValueByName(customFields, CLICKUP_CUSTOM_FIELD.amountPaid)
     ),
     balanceDue: normalizeNumberFromField(
-      getCustomFieldValueByName(customFields, "Balance Due")
+      getCustomFieldValueByName(customFields, CLICKUP_CUSTOM_FIELD.balanceDue)
     ),
     invoiceStatus: normalizeTextFromField(
-      getCustomFieldValueByName(customFields, "Invoice Status")
+      getCustomFieldValueByName(customFields, CLICKUP_CUSTOM_FIELD.invoiceStatus)
     ),
     invoiceId: normalizeTextFromField(
-      getCustomFieldValueByName(customFields, "Invoice ID")
+      getCustomFieldValueByName(customFields, CLICKUP_CUSTOM_FIELD.invoiceId)
     ),
   };
 }

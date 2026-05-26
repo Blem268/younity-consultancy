@@ -11,6 +11,7 @@ The active architecture remains:
 - Supabase for auth, portal data, private storage, and short-lived signed document URLs.
 - Supabase for production rate limiting and sanitized internal workflow error logs.
 - ClickUp as the operations and billing preparation hub, with signed webhooks for status and billing sync plus manual sync fallback.
+- ClickUp Client Services -> Services -> Client Requests, list ID `901713882310`, as the primary operations list for portal-created tasks.
 - Zoho CRM for lead and client relationship records.
 - Resend for email notifications.
 - Twilio for WhatsApp alerts.
@@ -97,6 +98,7 @@ Findings:
 - Direct sync endpoints require `INTERNAL_SYNC_SECRET`.
 - Browser wrapper routes do not expose `INTERNAL_SYNC_SECRET`.
 - `/api/internal/clickup-webhook/register` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`.
+- `/api/internal/clickup/setup-check` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`, returns only safe setup metadata, and never exposes ClickUp tokens or webhook secrets.
 - Webhook registration uses server-only `CLICKUP_API_TOKEN` and `CLICKUP_TEAM_ID` and does not expose the ClickUp API token.
 - `/internal/onboarding` requires Supabase auth and `INTERNAL_ADMIN_EMAILS`.
 - `/api/internal/onboarding/create-client` and `/api/internal/onboarding/link-auth-user` require Supabase auth and `INTERNAL_ADMIN_EMAILS`.
@@ -207,6 +209,7 @@ Findings:
 - Rate limiting uses the existing server-only Supabase service role key through the admin client.
 - Incoming ClickUp webhooks require a valid `X-Signature` HMAC created with `CLICKUP_WEBHOOK_SECRET`; requests fail closed when the signature or secret is unavailable.
 - `CLICKUP_WEBHOOK_SECRET` is server-only and is not returned by webhook or admin registration responses.
+- `CLICKUP_LIST_ID` should be `901713882310` for the Client Requests operations list. The safe setup check may reveal whether env vars are present, but not their secret values.
 
 ## ClickUp Webhook Security
 
@@ -222,6 +225,7 @@ Implementation notes:
 - `public.clickup_webhook_events` has RLS enabled and no public/client policies; writes are server/admin only.
 - If ClickUp omits `webhook_id` or `history_items.id`, the webhook still processes but logs a sanitized info-level workflow error noting that no idempotency key was available.
 - Manual sync buttons remain available at `/internal/sync` if webhook delivery, signature setup, or Supabase idempotency setup needs investigation.
+- `/internal/sync` includes a ClickUp Setup Checklist for the expected list, statuses, custom fields, and webhook secret presence without calling ClickUp or exposing secrets.
 - Clients and non-admin users cannot register ClickUp webhooks or trigger internal sync routes.
 
 ## Logging Review
