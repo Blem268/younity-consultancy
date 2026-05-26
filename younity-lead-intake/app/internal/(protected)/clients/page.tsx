@@ -178,6 +178,7 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
                       </p>
                       <Link
                         href={`/internal/clients/${client.id}`}
+                        prefetch={false}
                         className="rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
                       >
                         View detail
@@ -229,6 +230,7 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
                       <td className="px-4 py-4 text-right">
                         <Link
                           href={`/internal/clients/${client.id}`}
+                          prefetch={false}
                           className="font-semibold text-[#244285] transition hover:text-[#06111f]"
                         >
                           View

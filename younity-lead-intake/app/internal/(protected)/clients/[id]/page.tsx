@@ -143,6 +143,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
         actions={
           <Link
             href="/internal/clients"
+            prefetch={false}
             className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
           >
             Back to clients
@@ -164,6 +165,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
       actions={
         <Link
           href="/internal/clients"
+          prefetch={false}
           className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
         >
           Back to clients
@@ -255,6 +257,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
                 <div key={request.id} className="py-4">
                   <Link
                     href={`/internal/requests/${request.id}`}
+                    prefetch={false}
                     className="font-semibold text-[#244285] transition hover:text-[#06111f]"
                   >
                     {request.service}

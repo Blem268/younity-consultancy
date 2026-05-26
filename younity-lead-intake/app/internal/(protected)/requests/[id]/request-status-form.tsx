@@ -2,17 +2,9 @@
 
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { CLICKUP_REQUEST_STATUSES } from "@/lib/clickup/setup";
 
-const statusOptions = [
-  "Submitted",
-  "Under Review",
-  "Waiting on Documents",
-  "In Progress",
-  "Internal Review",
-  "Waiting on Client",
-  "Completed",
-  "Closed",
-];
+const statusOptions = [...CLICKUP_REQUEST_STATUSES];
 
 export function RequestStatusForm({
   requestId,

@@ -196,6 +196,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                       </div>
                       <Link
                         href={`/internal/requests/${request.id}`}
+                        prefetch={false}
                         className="w-fit rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
                       >
                         View detail
@@ -282,6 +283,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                     <td className="px-4 py-4 text-right">
                       <Link
                         href={`/internal/requests/${request.id}`}
+                        prefetch={false}
                         className="font-semibold text-[#244285] transition hover:text-[#06111f]"
                       >
                         View

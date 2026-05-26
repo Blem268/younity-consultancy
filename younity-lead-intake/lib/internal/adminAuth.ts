@@ -28,12 +28,28 @@ export function isInternalAdminEmail(email: string | null | undefined) {
   return allowedEmails.length > 0 && allowedEmails.includes(userEmail);
 }
 
-export async function requireInternalAdmin(): Promise<InternalAdminResult> {
+async function getUserSafely() {
   const supabase = await createClient();
+
+  try {
+    return await supabase.auth.getUser();
+  } catch (error) {
+    if (isStaleRefreshTokenError(error)) {
+      return {
+        data: { user: null },
+        error,
+      } as Awaited<ReturnType<typeof supabase.auth.getUser>>;
+    }
+
+    throw error;
+  }
+}
+
+export async function requireInternalAdmin(): Promise<InternalAdminResult> {
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await getUserSafely();
 
   if (isStaleRefreshTokenError(error)) {
     redirect("/internal/login");
@@ -67,11 +83,10 @@ type InternalAdminApiResult =
     };
 
 export async function getInternalAdminUser(): Promise<InternalAdminApiResult> {
-  const supabase = await createClient();
   const {
     data: { user },
     error,
-  } = await supabase.auth.getUser();
+  } = await getUserSafely();
 
   if (isStaleRefreshTokenError(error)) {
     return {

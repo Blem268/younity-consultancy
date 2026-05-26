@@ -59,6 +59,7 @@ function ClientTable({
               <td className="px-4 py-4 text-right">
                 <Link
                   href={`/internal/clients/${client.id}`}
+                  prefetch={false}
                   className="font-semibold text-[#244285] transition hover:text-[#06111f]"
                 >
                   View

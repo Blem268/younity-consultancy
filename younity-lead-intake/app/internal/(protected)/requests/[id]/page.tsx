@@ -143,6 +143,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
         actions={
           <Link
             href="/internal/requests"
+            prefetch={false}
             className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
           >
             Back to requests
@@ -208,6 +209,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
         <>
           <Link
             href="/internal/requests"
+            prefetch={false}
             className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
           >
             Back to requests
@@ -215,6 +217,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
           {request.clients ? (
             <Link
               href={`/internal/clients/${request.clients.id}`}
+              prefetch={false}
               className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
             >
               View client
@@ -222,6 +225,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
           ) : null}
           <Link
             href="/internal/sync"
+            prefetch={false}
             className="rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
           >
             Run sync controls
@@ -285,6 +289,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
               <p>{request.clients.preferred_contact_method || "Preferred contact unavailable"}</p>
               <Link
                 href={`/internal/clients/${request.clients.id}`}
+                prefetch={false}
                 className="inline-flex font-semibold text-[#244285] transition hover:text-[#06111f]"
               >
                 View client profile

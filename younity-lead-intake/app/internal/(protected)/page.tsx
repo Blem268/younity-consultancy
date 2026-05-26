@@ -280,6 +280,7 @@ export default async function InternalDashboardPage() {
             actions={
               <Link
                 href="/internal/errors"
+                prefetch={false}
                 className="text-sm font-semibold text-[#244285] transition hover:text-[#06111f]"
               >
                 View all
@@ -321,6 +322,7 @@ export default async function InternalDashboardPage() {
                 <Link
                   key={action.href}
                   href={action.href}
+                  prefetch={false}
                   className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-[#50A9C0]/30 hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
                 >
                   {action.label}

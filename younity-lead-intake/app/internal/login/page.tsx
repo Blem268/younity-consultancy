@@ -29,6 +29,7 @@ export default async function InternalLoginPage() {
           </p>
           <Link
             href="/internal/logout"
+            prefetch={false}
             className="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl border border-[#244285]/20 bg-white px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-[#244285] transition hover:-translate-y-0.5 hover:border-[#50A9C0] hover:text-[#06111f]"
           >
             Sign out

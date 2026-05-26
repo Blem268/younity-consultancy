@@ -238,6 +238,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                     {document.request_id ? (
                       <Link
                         href={`/internal/requests/${document.request_id}`}
+                        prefetch={false}
                         className="text-sm font-semibold text-[#244285] transition hover:text-[#06111f]"
                       >
                         {document.client_requests?.service || "View related request"}
@@ -287,6 +288,7 @@ export default async function InternalDocumentsPage({ searchParams }: PageProps)
                       {document.request_id ? (
                         <Link
                           href={`/internal/requests/${document.request_id}`}
+                          prefetch={false}
                           className="font-semibold text-[#244285] transition hover:text-[#06111f]"
                         >
                           {document.client_requests?.service || document.request_id}

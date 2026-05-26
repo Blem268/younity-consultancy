@@ -4,6 +4,8 @@ import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { brand } from "@/app/components/ui/brand";
 import { InternalNav } from "./internal-nav";
 
+export const dynamic = "force-dynamic";
+
 export default async function InternalLayout({
   children,
 }: {
