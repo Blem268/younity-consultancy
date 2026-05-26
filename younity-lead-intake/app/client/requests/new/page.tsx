@@ -40,7 +40,7 @@ export default async function NewClientRequestPage() {
           eyebrow={
             <BackLinks links={[{ href: "/client/dashboard", label: "Back to Dashboard" }]} />
           }
-          title="Submit New Request"
+          title="Submit Request"
           description={`Signed in as ${user.email}`}
         />
 
@@ -65,7 +65,7 @@ export default async function NewClientRequestPage() {
             ]}
           />
         }
-        title="Submit New Request"
+        title="Submit Request"
         description="Tell us what you need, and the Younity team will review your request."
       />
 

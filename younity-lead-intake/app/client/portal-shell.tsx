@@ -9,8 +9,10 @@ import { brand } from "@/app/components/ui/brand";
 const navigationLinks = [
   { label: "Dashboard", href: "/client/dashboard" },
   { label: "Requests", href: "/client/requests" },
-  { label: "New Request", href: "/client/requests/new" },
   { label: "Documents", href: "/client/documents" },
+  { label: "Updates", href: "/client/updates" },
+  { label: "Resources", href: "/client/resources" },
+  { label: "Support", href: "/client/support" },
   { label: "Profile", href: "/client/profile" },
   { label: "Logout", href: "/client/logout" },
 ];
@@ -22,6 +24,10 @@ function isActivePath(pathname: string, href: string) {
       (pathname.startsWith("/client/requests/") &&
         pathname !== "/client/requests/new")
     );
+  }
+
+  if (href === "/client/dashboard") {
+    return pathname === href || pathname === "/client/welcome";
   }
 
   return pathname === href;

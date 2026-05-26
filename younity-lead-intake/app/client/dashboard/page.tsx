@@ -2,6 +2,10 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import {
+  formatPortalDate,
+  friendlyPortalText,
+} from "@/lib/client/portal-text";
+import {
   Card,
   EmptyState,
   PageHeader,
@@ -27,27 +31,8 @@ type ClientUpdate = {
   created_at: string | null;
 };
 
-function friendlyPortalText(value: string) {
-  return value
-    .replaceAll("client_requests", "requests")
-    .replaceAll("Client Requests", "Requests")
-    .replaceAll("client requests", "requests")
-    .replaceAll("sync", "update")
-    .replaceAll("Sync", "Update")
-    .replaceAll("billing fields", "profile details")
-    .replaceAll("Billing fields", "Profile details");
-}
-
 function formatUpdateDate(value: string | null) {
-  if (!value) {
-    return "Date unavailable";
-  }
-
-  return new Intl.DateTimeFormat("en", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }).format(new Date(value));
+  return formatPortalDate(value);
 }
 
 export default async function ClientDashboardPage() {
@@ -165,7 +150,7 @@ export default async function ClientDashboardPage() {
             title: "Start your first request",
             message:
               "Tell us what you need help with and we’ll guide you from there.",
-            buttonLabel: "Start New Request",
+            buttonLabel: "Start Request",
             href: "/client/requests/new",
           };
   const actionCards = [
@@ -326,9 +311,20 @@ export default async function ClientDashboardPage() {
       </section>
 
       <Card>
-        <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-          Recent Updates
-        </h2>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
+            Recent Updates
+          </h2>
+          {recentUpdates.length ? (
+            <Link
+              href="/client/updates"
+              prefetch={false}
+              className="text-sm font-black text-[#244285] transition hover:text-[#06111f]"
+            >
+              View all updates →
+            </Link>
+          ) : null}
+        </div>
 
         {recentUpdates.length ? (
           <div className="mt-5 divide-y divide-slate-200">
@@ -367,6 +363,13 @@ export default async function ClientDashboardPage() {
               complete.
             </p>
           </div>
+          <Link
+            href="/client/welcome"
+            prefetch={false}
+            className="text-sm font-black text-[#244285] transition hover:text-[#06111f]"
+          >
+            Open welcome guide →
+          </Link>
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -400,8 +403,9 @@ export default async function ClientDashboardPage() {
         <p className="mt-2 text-sm leading-6 text-slate-700">
           Contact Younity Consultancy if you need assistance using the portal.
         </p>
-        <div className="mt-5">
-          <SecondaryButtonLink href="/contact">Contact Younity</SecondaryButtonLink>
+        <div className="mt-5 flex flex-wrap gap-3">
+          <SecondaryButtonLink href="/client/support">Get Support</SecondaryButtonLink>
+          <SecondaryButtonLink href="/contact">Contact Form</SecondaryButtonLink>
         </div>
       </Card>
     </PortalPage>

@@ -99,7 +99,7 @@ export default async function ClientRequestsPage() {
         description="Review requests already shared with Younity Consultancy."
         actions={
           <PrimaryButtonLink href="/client/requests/new">
-            Submit New Request
+            Submit Request
           </PrimaryButtonLink>
         }
       />
@@ -190,7 +190,7 @@ export default async function ClientRequestsPage() {
               title="No requests have been submitted yet."
               action={
                 <PrimaryButtonLink href="/client/requests/new">
-                  Submit New Request
+                  Submit Request
                 </PrimaryButtonLink>
               }
             />

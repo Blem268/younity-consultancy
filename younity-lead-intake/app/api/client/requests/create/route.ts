@@ -39,7 +39,7 @@ type RequestBody = {
   message?: unknown;
   preferredContactMethod?: unknown;
   urgency?: unknown;
-  // Accepted for older clients only. New Request no longer sends or uses this.
+  // Accepted for older clients only. The current request form does not use this.
   billingNotes?: unknown;
 };
 
