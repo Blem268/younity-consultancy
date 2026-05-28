@@ -42,24 +42,23 @@
 - Phase 23 simplified the client dashboard for non-technical clients with a clearer welcome section, next-best-action guidance, plain-language request/document/profile cards, friendlier recent updates, a lower-priority getting-started checklist, and mobile-first action buttons without changing backend workflows.
 - Phase 25 client portal launch operations documentation: created the Client Portal Launch Checklist, Client Portal SOP, and Troubleshooting Guide for internal staff operation without codebase knowledge.
 - Phase 26 ClickUp workflow alignment: standardized the Client Services -> Services -> Client Requests list as the portal operations hub, documented list ID `901713882310`, aligned request statuses and custom field names, kept generic Invoice ID terminology, and added a safe internal setup checklist while preserving manual sync fallback.
+- Phase 27 architectural pivot: removed ClickUp and Google Sheets from the integration stack. The custom Younity Operations backend (under `app/internal/`) is now the sole request and task management layer, backed entirely by Supabase. Zoho Books reinstated as the invoicing and billing system, replacing ClickUp billing fields. Twilio expanded from internal-only alerts to two-way client-facing WhatsApp messaging. Resend retained for transactional email. Updated `.cursorrules`, `ENVIRONMENT_VARIABLES.md`, and created `docs/NEW_ARCHITECTURE.md`.
 
 ## Next Recommended Work
 
-- Verify Resend domain and set `RESEND_FROM_EMAIL` to a production sender on that verified domain.
-- Move Twilio from sandbox to production WhatsApp setup.
-- Keep billing preparation in ClickUp and display synced billing/invoice status in Supabase.
-- Handle actual invoicing manually or outside the portal for now.
-- Keep email-dependent notification phases paused until the production Younity sending domain is reactivated and verified.
+- Remove ClickUp integration code: task creation route, webhook receiver (`/api/webhooks/clickup`), status sync, billing sync, setup check endpoint, and all ClickUp env var references.
+- Remove Google Sheets lead logging integration code.
+- Build Zoho Books integration: OAuth token refresh, invoice creation on request completion, invoice status sync into Supabase `client_requests`.
+- Upgrade Twilio to a production Business WhatsApp number (move off sandbox).
+- Build outbound client WhatsApp notifications for key events: request status changes, document requests, invoice ready.
+- Build inbound Twilio webhook (`/api/webhooks/twilio`) to receive client WhatsApp replies and forward to the internal team.
+- Verify Resend domain and set `RESEND_FROM_EMAIL` to a production sender on the verified domain.
 - Keep automated client onboarding invitations paused until Younity email services are reactivated; use manual login instructions after linking the Supabase Auth user ID.
-- Use the Phase 25 launch checklist, SOP, and troubleshooting guide for staff training, launch readiness checks, and repeatable client portal operations.
+- Build the Younity Operations backend pages: Clients, Requests, Documents, Billing, Analytics, Settings (designs completed in Phase 27).
+- Use the Phase 25 launch checklist, SOP, and troubleshooting guide for staff training and launch readiness.
 - Add Cloudflare Turnstile to the public contact form if spam volume increases.
-- Monitor ClickUp webhook delivery and keep manual sync available as the fallback.
-- Keep `CLICKUP_LIST_ID` pointed to Client Services -> Services -> Client Requests (`901713882310`) and review `docs/CLICKUP_WORKFLOW_SETUP.md` before ClickUp workflow changes.
 - Continue using private signed URL document access only for uploaded files.
 - Perform multi-client testing.
-- Add duplicate Zoho handling.
-- Add production monitoring and error tracking.
-- Consider Sentry for alerting, release tracking, and error correlation.
-- Expand retry payload capture only where it can be done safely without storing secrets.
-- Keep Zoho CRM lead creation, ClickUp task creation, Supabase storage uploads, Supabase document metadata inserts, request creation, auth/authorization failures, and validation failures out of automatic retry flows unless a future design adds explicit safeguards.
-- Establish periodic key rotation for Supabase, ClickUp, Zoho CRM, Resend, Twilio, and Google Sheets credentials.
+- Add duplicate Zoho CRM lead handling.
+- Add production monitoring and error tracking; consider Sentry for alerting and error correlation.
+- Establish periodic key rotation for Supabase, Zoho CRM, Zoho Books, Resend, and Twilio credentials.

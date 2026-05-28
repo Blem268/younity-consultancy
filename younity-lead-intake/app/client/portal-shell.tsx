@@ -17,6 +17,29 @@ const navigationLinks = [
   { label: "Logout", href: "/client/logout" },
 ];
 
+function usesStandalonePortalChrome(pathname: string) {
+  if (
+    pathname === "/client/login" ||
+    pathname === "/client/dashboard" ||
+    pathname === "/client/requests" ||
+    pathname === "/client/requests/new" ||
+    pathname === "/client/documents" ||
+    pathname === "/client/profile" ||
+    pathname === "/client/resources" ||
+    pathname === "/client/welcome" ||
+    pathname === "/client/support" ||
+    pathname === "/client/updates"
+  ) {
+    return true;
+  }
+
+  if (pathname.startsWith("/client/resources/")) {
+    return true;
+  }
+
+  return /^\/client\/requests\/[^/]+$/.test(pathname);
+}
+
 function isActivePath(pathname: string, href: string) {
   if (href === "/client/requests") {
     return (
@@ -36,8 +59,9 @@ function isActivePath(pathname: string, href: string) {
 export function ClientPortalShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isLoginPage = pathname === "/client/login";
+  const isStandaloneChrome = usesStandalonePortalChrome(pathname);
 
-  if (isLoginPage) {
+  if (isLoginPage || isStandaloneChrome) {
     return (
       <section className="min-h-screen bg-[#f6f9fc] text-[#06111f]">
         {children}
@@ -60,11 +84,11 @@ export function ClientPortalShell({ children }: { children: ReactNode }) {
                 priority
               />
               <span className="leading-tight">
-                <span className="block text-lg font-black tracking-wide text-white">
-                  YOUNITY
+                <span className="block text-lg font-medium tracking-wide text-white">
+                  Younity
                 </span>
-                <span className="block text-xs font-bold tracking-[0.3em] text-white/80">
-                  CLIENT PORTAL
+                <span className="block text-xs font-medium tracking-[0.2em] text-white/70">
+                  Client Portal
                 </span>
               </span>
             </Link>
@@ -81,7 +105,7 @@ export function ClientPortalShell({ children }: { children: ReactNode }) {
                     href={link.href}
                     prefetch={false}
                     aria-current={active ? "page" : undefined}
-                    className={`rounded-xl px-3 py-2 text-sm font-black uppercase tracking-[0.08em] transition ${
+                    className={`rounded-xl px-3 py-2 text-sm font-medium transition-colors duration-150 ${
                       active
                         ? "bg-[#50A9C0] text-[#06111f] shadow-sm"
                         : "text-white/80 hover:bg-white/10 hover:text-[#50A9C0]"

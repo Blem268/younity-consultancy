@@ -165,7 +165,7 @@ export function ProfileForm({
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center justify-center rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="btn btn-primary inline-flex items-center justify-center rounded-xl bg-[#244285] px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Saving..." : "Save Profile"}
       </button>

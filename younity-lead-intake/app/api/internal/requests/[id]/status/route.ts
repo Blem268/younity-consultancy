@@ -1,10 +1,19 @@
 import { NextResponse } from "next/server";
 import { getInternalAdminUser } from "@/lib/internal/adminAuth";
 import { logWorkflowError } from "@/lib/internal/workflowErrors";
-import { CLICKUP_REQUEST_STATUSES } from "@/lib/clickup/setup";
 import { createAdminClient } from "@/lib/supabase/admin";
 
-const allowedStatuses = new Set<string>(CLICKUP_REQUEST_STATUSES);
+const allowedStatuses = new Set<string>([
+  "Submitted",
+  "Under Review",
+  "Waiting on Documents",
+  "In Progress",
+  "Internal Review",
+  "Waiting on Client",
+  "Ready for Billing",
+  "Completed",
+  "Closed",
+]);
 
 type RequestRecord = {
   id: string;

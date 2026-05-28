@@ -57,7 +57,7 @@ export function SiteFooter() {
 
         <div>
           <p className="text-xs font-black uppercase tracking-[0.18em] text-white/50">
-            Client Access
+            Contact
           </p>
           <ul className="mt-4 space-y-2 text-sm">
             <li>
@@ -76,6 +76,17 @@ export function SiteFooter() {
                 {supportChannels.email}
               </a>
             </li>
+            <li>
+              <a
+                href={`tel:${supportChannels.phone}`}
+                className="text-white/75 transition hover:text-[#50A9C0]"
+              >
+                {supportChannels.phone}
+              </a>
+            </li>
+            <li className="pt-1 text-white/45">
+              Antigua, West Indies
+            </li>
           </ul>
         </div>
       </div>
@@ -83,7 +94,7 @@ export function SiteFooter() {
       <div className="border-t border-white/10">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-2 px-4 py-5 text-xs text-white/45 sm:flex-row sm:items-center sm:justify-between lg:px-8">
           <p>© {new Date().getFullYear()} Younity Consultancy. All rights reserved.</p>
-          <p>{supportChannels.hours}</p>
+          <p>{supportChannels.hours} · Based in Antigua, West Indies</p>
         </div>
       </div>
     </footer>

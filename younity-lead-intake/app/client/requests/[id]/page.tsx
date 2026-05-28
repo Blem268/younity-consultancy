@@ -1,22 +1,53 @@
+import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { friendlyPortalText } from "@/lib/client/portal-text";
+import { PortalClientHeader } from "../../portal-client-header";
 import {
-  BackLinks,
-  Card,
   DocumentStatusBadge,
-  EmptyState,
-  getInvoiceStatus,
   InvoiceStatusBadge,
-  PageHeader,
-  PortalPage,
   RequestStatusBadge,
-} from "../../portal-ui";
+} from "@/app/components/ui/status-badges";
 import { UploadForm } from "../../documents/upload-form";
-import { TaskProgress } from "./task-progress";
+import { brand } from "@/app/components/ui/brand";
+
+const STATUS_STEPS = [
+  "Submitted",
+  "Under Review",
+  "In Progress",
+  "Internal Review",
+  "Completed",
+] as const;
+
+const SECTION_CARD =
+  "rounded-xl border-[0.5px] border-[#06111f]/10 bg-white p-4 sm:p-5";
+const SECTION_HEADING = "text-[14px] font-medium text-[#06111f]";
+
+function getInvoiceStatus(value: string | null | undefined) {
+  return value || "Not Ready";
+}
+
+function EmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="rounded-3xl border border-dashed border-[#50A9C0]/30 bg-[#50A9C0]/10 p-6">
+      <p className="text-sm font-medium text-slate-950">{title}</p>
+      {description ? (
+        <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+      ) : null}
+    </div>
+  );
+}
 
 type ClientProfile = {
   id: string;
+  full_name: string;
 };
 
 type ClientRequest = {
@@ -24,8 +55,6 @@ type ClientRequest = {
   service: string;
   status: string;
   message: string | null;
-  source: string | null;
-  clickup_task_id: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -118,48 +147,163 @@ function isRealUploadedDocument(document: ClientDocument) {
   return document.file_path !== "pending" && document.file_name !== "Pending upload";
 }
 
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: React.ReactNode;
-}) {
+function getStepperIndex(status: string) {
+  if (status === "Closed") {
+    return { currentIndex: 4, showClientInputCallout: false };
+  }
+
+  if (status === "Ready for Billing") {
+    return { currentIndex: 3, showClientInputCallout: false };
+  }
+
+  if (status === "Waiting on Documents" || status === "Waiting on Client") {
+    return { currentIndex: 2, showClientInputCallout: true };
+  }
+
+  const exactIndex = STATUS_STEPS.indexOf(status as (typeof STATUS_STEPS)[number]);
+
+  if (exactIndex >= 0) {
+    return { currentIndex: exactIndex, showClientInputCallout: false };
+  }
+
+  return { currentIndex: 0, showClientInputCallout: false };
+}
+
+function DetailRow({ label, value }: { label: string; value: ReactNode }) {
   return (
-    <div className="border-b border-slate-200 py-4 last:border-b-0">
-      <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-        {label}
-      </dt>
-      <dd className="mt-1 break-words text-sm leading-6 text-slate-800">
-        {value}
-      </dd>
+    <div className="border-b border-[#06111f]/8 py-3.5 last:border-b-0">
+      <dt className="text-[11.5px] text-slate-500">{label}</dt>
+      <dd className="mt-1 text-sm text-[#06111f]">{value}</dd>
     </div>
   );
 }
 
-function RequestNotFoundState({
-  title,
+function StatusStepper({ status }: { status: string }) {
+  const { currentIndex, showClientInputCallout } = getStepperIndex(status);
+
+  return (
+    <section className={SECTION_CARD}>
+      <h2 className={SECTION_HEADING}>Request progress</h2>
+      <ol className="mt-4 space-y-0">
+        {STATUS_STEPS.map((step, index) => {
+          const isDone = index < currentIndex;
+          const isCurrent = index === currentIndex;
+          const isFuture = index > currentIndex;
+
+          return (
+            <li key={step} className="flex gap-3">
+              <div className="flex flex-col items-center">
+                <span
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+                    isDone
+                      ? "bg-[#50A9C0] text-white"
+                      : isCurrent
+                        ? "bg-[#244285] text-white"
+                        : "border border-[#06111f]/15 bg-white"
+                  }`}
+                  aria-hidden="true"
+                >
+                  {isDone ? (
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-3.5 w-3.5"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M20 6 9 17 4 12"
+                        stroke="currentColor"
+                        strokeWidth="2.2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  ) : isCurrent ? (
+                    <span className="h-2 w-2 rounded-full bg-white" />
+                  ) : null}
+                </span>
+                {index < STATUS_STEPS.length - 1 ? (
+                  <span
+                    className={`my-1 w-px flex-1 min-h-6 ${
+                      isDone ? "bg-[#50A9C0]" : "bg-[#06111f]/10"
+                    }`}
+                    aria-hidden="true"
+                  />
+                ) : null}
+              </div>
+              <div className={`pb-5 ${index === STATUS_STEPS.length - 1 ? "pb-0" : ""}`}>
+                <p
+                  className={`text-sm ${
+                    isCurrent
+                      ? "font-medium text-[#06111f]"
+                      : isFuture
+                        ? "text-slate-400"
+                        : "text-slate-600"
+                  }`}
+                >
+                  {step}
+                </p>
+                {isCurrent && showClientInputCallout ? (
+                  <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                    Your input is needed — see the Documents section below.
+                  </p>
+                ) : null}
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+  );
+}
+
+function RequestDetailShell({
+  fullName,
+  breadcrumb,
+  children,
 }: {
-  title: string;
+  fullName?: string;
+  breadcrumb?: ReactNode;
+  children: ReactNode;
 }) {
   return (
-    <PortalPage>
-      <PageHeader
-        eyebrow={
-          <BackLinks
-            links={[
-              { href: "/client/dashboard", label: "Back to Dashboard" },
-              { href: "/client/requests", label: "Back to Requests" },
-            ]}
-          />
-        }
-        title="Request Details"
-      />
+    <div className="req-detail flex min-h-screen flex-col">
+      <PortalClientHeader fullName={fullName} />
+      <div className={`${brand.pageBackground} flex-1 p-6`}>
+        <div className="mx-auto w-full max-w-6xl space-y-6">
+          {breadcrumb}
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+}
 
-      <Card className="mt-8">
+function RequestNotFoundState({ title }: { title: string }) {
+  return (
+    <RequestDetailShell
+      breadcrumb={
+        <nav
+          className="detail-fade-up text-[12px] text-slate-500"
+          style={{ animationDelay: "0ms" }}
+          aria-label="Breadcrumb"
+        >
+          <Link
+            href="/client/dashboard"
+            prefetch={false}
+            className="action-link text-[#244285] hover:text-[#06111f]"
+          >
+            ← Dashboard
+          </Link>
+          <span className="text-slate-400"> / </span>
+          <span>Request unavailable</span>
+        </nav>
+      }
+    >
+      <section className={`${SECTION_CARD} detail-fade-up`} style={{ animationDelay: "40ms" }}>
         <EmptyState title={title} />
-      </Card>
-    </PortalPage>
+      </section>
+    </RequestDetailShell>
   );
 }
 
@@ -184,7 +328,7 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
 
   const { data: clientProfile, error: clientProfileError } = await supabase
     .from("clients")
-    .select("id")
+    .select("id, full_name")
     .eq("user_id", user.id)
     .maybeSingle<ClientProfile>();
 
@@ -194,30 +338,20 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
 
   if (!clientProfile) {
     return (
-      <PortalPage>
-        <PageHeader
-          eyebrow={
-            <BackLinks links={[{ href: "/client/dashboard", label: "Back to Dashboard" }]} />
-          }
-          title="Request Details"
-          description={`Signed in as ${user.email}`}
-        />
-
-        <Card className="mt-8 border-amber-200 bg-amber-50">
-          <p className="text-sm leading-6 text-slate-700">
-            Your portal profile has not been set up yet. Please contact Younity
-            Consultancy.
-          </p>
-        </Card>
-      </PortalPage>
+      <RequestDetailShell>
+        <section className={SECTION_CARD}>
+          <EmptyState
+            title="Portal profile pending"
+            description={`Signed in as ${user.email}. Please contact Younity Consultancy to finish setting up your portal access.`}
+          />
+        </section>
+      </RequestDetailShell>
     );
   }
 
   const { data: request, error: requestError } = await supabase
     .from("client_requests")
-    .select(
-      "id, service, status, message, source, clickup_task_id, created_at, updated_at"
-    )
+    .select("id, service, status, message, created_at, updated_at")
     .eq("id", requestId)
     .eq("client_id", clientProfile.id)
     .maybeSingle<ClientRequest>();
@@ -281,109 +415,111 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
   const uploadedDocuments = documents.filter(
     (document) => document.status !== "Requested" || isRealUploadedDocument(document)
   );
+  const serviceLabel = friendlyPortalText(request.service);
 
   return (
-    <PortalPage>
-      <PageHeader
-        eyebrow={
-          <BackLinks
-            links={[
-              { href: "/client/dashboard", label: "Back to Dashboard" },
-              { href: "/client/requests", label: "Back to Requests" },
-            ]}
-          />
-        }
-        title={request.service}
-        description={<RequestStatusBadge status={request.status} />}
-      />
+    <RequestDetailShell
+      fullName={clientProfile.full_name}
+      breadcrumb={
+        <nav
+          className="detail-fade-up text-[12px] text-slate-500"
+          style={{ animationDelay: "0ms" }}
+          aria-label="Breadcrumb"
+        >
+          <Link
+            href="/client/dashboard"
+            prefetch={false}
+            className="action-link text-[#244285] hover:text-[#06111f]"
+          >
+            ← Dashboard
+          </Link>
+          <span className="text-slate-400"> / </span>
+          <span className="text-[#06111f]">{serviceLabel}</span>
+        </nav>
+      }
+    >
+      <section className="grid gap-6 lg:grid-cols-[1.2fr_0.8fr]">
+        <div
+          className="detail-fade-up space-y-6"
+          style={{ animationDelay: "40ms" }}
+        >
+          <section className={SECTION_CARD}>
+            <h2 className={SECTION_HEADING}>Request Details</h2>
+            <dl className="mt-3">
+              <DetailRow
+                label="Service"
+                value={serviceLabel}
+              />
+              <DetailRow
+                label="Status"
+                value={<RequestStatusBadge status={request.status} />}
+              />
+              <DetailRow
+                label="Message"
+                value={request.message || "Not provided"}
+              />
+              <DetailRow
+                label="Created date"
+                value={formatDate(request.created_at)}
+              />
+              <DetailRow
+                label="Last updated"
+                value={formatDate(request.updated_at)}
+              />
+            </dl>
+          </section>
 
-      <section className="grid gap-6 py-8 lg:grid-cols-[1.1fr_0.9fr]">
-        <Card>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-            Request Details
-          </h2>
-          <dl className="mt-4">
-            <DetailRow label="Service" value={request.service} />
-            <DetailRow
-              label="Status"
-              value={<RequestStatusBadge status={request.status} />}
-            />
-            <DetailRow
-              label="Message"
-              value={request.message || "Not provided"}
-            />
-            <DetailRow label="Source" value={request.source || "Not provided"} />
-            <DetailRow
-              label="Created Date"
-              value={formatDate(request.created_at)}
-            />
-            <DetailRow
-              label="Last Updated"
-              value={formatDate(request.updated_at)}
-            />
-            {request.clickup_task_id ? (
-              <DetailRow label="ClickUp Task ID" value={request.clickup_task_id} />
-            ) : null}
-          </dl>
-        </Card>
+          <StatusStepper status={request.status} />
+        </div>
 
         <div className="space-y-6">
-          <Card>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Work Progress
-            </h2>
-            <p className="mt-2 text-sm leading-6 text-slate-600">
-              Track the operational tasks connected to this request. Click a
-              task item to submit notes, upload documents, or mark it complete.
-            </p>
-            <TaskProgress requestId={request.id} />
-          </Card>
-
-          <Card>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Recent Updates
-            </h2>
+          <section
+            className={`${SECTION_CARD} detail-fade-up`}
+            style={{ animationDelay: "100ms" }}
+          >
+            <h2 className={SECTION_HEADING}>Recent Updates</h2>
 
             {updates.length ? (
-              <div className="mt-5 divide-y divide-slate-200">
+              <div className="mt-4 divide-y divide-[#06111f]/8">
                 {updates.map((update) => (
                   <article
                     key={update.id}
                     className="py-4 first:pt-0 last:pb-0"
                   >
                     <div className="flex flex-col gap-1 sm:flex-row sm:items-start sm:justify-between">
-                      <h3 className="text-sm font-semibold text-slate-950">
-                        {update.title}
+                      <h3 className="text-sm font-medium text-[#06111f]">
+                        {friendlyPortalText(update.title)}
                       </h3>
-                      <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">
+                      <p className="text-xs text-slate-500">
                         {formatDate(update.created_at)}
                       </p>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-slate-600">
-                      {update.message}
+                      {friendlyPortalText(update.message)}
                     </p>
                   </article>
                 ))}
               </div>
             ) : (
-              <div className="mt-5">
+              <div className="mt-4">
                 <EmptyState title="No recent updates yet." />
               </div>
             )}
-          </Card>
+          </section>
 
-          <Card>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Documents Needed
-            </h2>
+          <section
+            className={`${SECTION_CARD} detail-fade-up`}
+            style={{ animationDelay: "160ms" }}
+          >
+            <h2 className={SECTION_HEADING}>Documents Needed</h2>
 
             {documentsNeeded.length ? (
-              <div className="mt-5 divide-y divide-slate-200">
+              <div className="mt-4 divide-y divide-[#06111f]/8">
                 {documentsNeeded.map((document) => (
                   <article key={document.id} className="py-5 first:pt-0 last:pb-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <p className="text-sm font-semibold text-slate-950">
-                        {document.document_type}
+                      <p className="text-sm font-medium text-[#06111f]">
+                        {friendlyPortalText(document.document_type)}
                       </p>
                       <DocumentStatusBadge status={document.status} />
                     </div>
@@ -392,10 +528,10 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                         {document.notes}
                       </p>
                     ) : null}
-                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                    <p className="mt-2 text-xs text-slate-500">
                       Requested {formatDate(document.requested_at)}
                     </p>
-                    <div className="mt-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="mt-4 rounded-xl border border-[#06111f]/10 bg-[#f6f9fc] p-4">
                       <UploadForm
                         requests={[
                           {
@@ -415,42 +551,46 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                 ))}
               </div>
             ) : (
-              <div className="mt-5">
+              <div className="mt-4">
                 <EmptyState title="No requested documents are outstanding for this request." />
               </div>
             )}
-          </Card>
+          </section>
 
-          <Card>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Upload Additional Document
-            </h2>
+          <section
+            className={`${SECTION_CARD} detail-fade-up`}
+            style={{ animationDelay: "220ms" }}
+          >
+            <h2 className={SECTION_HEADING}>Upload Additional Document</h2>
             <p className="mt-2 text-sm leading-6 text-slate-600">
               Supporting files are stored securely and linked directly to this
               request.
             </p>
             <UploadForm
-              requests={[{ id: request.id, service: request.service, status: request.status }]}
+              requests={[
+                { id: request.id, service: request.service, status: request.status },
+              ]}
               fixedRequestId={request.id}
               compact
             />
-          </Card>
+          </section>
 
-          <Card>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Uploaded Documents
-            </h2>
+          <section
+            className={`${SECTION_CARD} detail-fade-up`}
+            style={{ animationDelay: "280ms" }}
+          >
+            <h2 className={SECTION_HEADING}>Uploaded Documents</h2>
 
             {uploadedDocuments.length ? (
-              <div className="mt-5 divide-y divide-slate-200">
+              <div className="mt-4 divide-y divide-[#06111f]/8">
                 {uploadedDocuments.map((document) => (
                   <article
                     key={document.id}
-                    className="grid gap-2 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto]"
+                    className="doc-row grid gap-2 rounded-lg px-2 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto]"
                   >
                     <div>
-                      <p className="text-sm font-semibold text-slate-950">
-                        {document.document_type}
+                      <p className="text-sm font-medium text-[#06111f]">
+                        {friendlyPortalText(document.document_type)}
                       </p>
                       <p className="mt-1 break-words text-sm text-slate-600">
                         {document.file_name}
@@ -465,7 +605,7 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                           prefetch={false}
                           target="_blank"
                           rel="noreferrer"
-                          className="font-semibold text-[#244285] transition hover:text-[#06111f]"
+                          className="action-link font-medium text-[#244285] hover:text-[#06111f]"
                         >
                           Open
                         </Link>
@@ -475,19 +615,20 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                 ))}
               </div>
             ) : (
-              <div className="mt-5">
+              <div className="mt-4">
                 <EmptyState title="No documents have been uploaded for this request yet." />
               </div>
             )}
-          </Card>
+          </section>
 
-          <Card>
-            <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-              Related Invoices
-            </h2>
+          <section
+            className={`${SECTION_CARD} detail-fade-up`}
+            style={{ animationDelay: "340ms" }}
+          >
+            <h2 className={SECTION_HEADING}>Related Invoices</h2>
 
             {invoices.length ? (
-              <div className="mt-5 divide-y divide-slate-200">
+              <div className="mt-4 divide-y divide-[#06111f]/8">
                 {invoices.map((invoice) => {
                   const status = getInvoiceStatus(invoice.status);
 
@@ -497,7 +638,7 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                       className="grid gap-2 py-4 first:pt-0 last:pb-0 sm:grid-cols-[1fr_auto]"
                     >
                       <div>
-                        <p className="text-sm font-semibold text-slate-950">
+                        <p className="text-sm font-medium text-[#06111f]">
                           {invoice.invoice_number || "Invoice number pending"}
                         </p>
                         <p className="mt-1 text-sm text-slate-600">
@@ -513,13 +654,13 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
                 })}
               </div>
             ) : (
-              <div className="mt-5">
+              <div className="mt-4">
                 <EmptyState title="No invoices are available for this request yet." />
               </div>
             )}
-          </Card>
+          </section>
         </div>
       </section>
-    </PortalPage>
+    </RequestDetailShell>
   );
 }

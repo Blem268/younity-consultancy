@@ -65,7 +65,6 @@ export function RequestForm() {
       success?: boolean;
       message?: string;
       requestId?: string;
-      clickUpTaskId?: string;
       warnings?: string[];
     };
 
@@ -196,8 +195,8 @@ export function RequestForm() {
         </div>
       </div>
 
-      <fieldset className="rounded-3xl border border-slate-200 bg-slate-50 p-4">
-        <legend className="px-1 text-sm font-semibold text-slate-950">
+      <fieldset className="rounded-xl border border-slate-200 bg-[#f6f9fc] p-4">
+        <legend className="px-1 text-sm font-medium text-slate-950">
           Optional Document
         </legend>
         <p className="mt-1 text-sm leading-6 text-slate-600">
@@ -236,7 +235,7 @@ export function RequestForm() {
               id="file"
               name="file"
               type="file"
-              className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-[#244285] file:px-3 file:py-2 file:text-sm file:font-semibold file:text-white"
+              className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 file:mr-4 file:rounded-md file:border-0 file:bg-[#244285] file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
             />
           </div>
         </div>
@@ -267,7 +266,7 @@ export function RequestForm() {
           <Link
             href={`/client/requests/${createdRequestId}`}
             prefetch={false}
-            className="mt-2 inline-flex text-sm font-semibold text-[#244285] transition hover:text-[#06111f]"
+            className="mt-2 inline-flex text-sm font-medium text-[#244285] transition-colors duration-150 hover:text-[#06111f]"
           >
             View request details
           </Link>
@@ -277,7 +276,7 @@ export function RequestForm() {
       <button
         type="submit"
         disabled={isSubmitting}
-        className="inline-flex items-center justify-center rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="btn btn-primary inline-flex items-center justify-center rounded-xl bg-[#244285] px-5 py-2.5 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-400"
       >
         {isSubmitting ? "Submitting..." : "Submit Request"}
       </button>

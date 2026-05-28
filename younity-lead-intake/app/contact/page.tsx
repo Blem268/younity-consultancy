@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { PublicPageShell } from "@/app/components/site/public-page-shell";
 import { brand } from "@/app/components/ui/brand";
-import { siteServices } from "@/lib/content/site-content";
+import { siteServices, supportChannels } from "@/lib/content/site-content";
 
 type FormState = {
   name: string;
@@ -97,7 +97,8 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-3xl px-6 py-10 sm:py-14">
+      <section className="mx-auto max-w-5xl px-6 py-10 sm:py-14">
+        <div className="grid gap-8 lg:grid-cols-[1fr_280px] lg:items-start">
         <div className="rounded-3xl bg-white p-6 shadow-sm sm:p-10">
           <form onSubmit={handleSubmit} className="grid gap-5">
             <label className="sr-only" aria-hidden="true">
@@ -208,6 +209,70 @@ export default function ContactPage() {
               </p>
             )}
           </form>
+        </div>
+
+        <div className="space-y-4">
+          <div className="rounded-3xl bg-white p-6 shadow-sm">
+            <h2 className="text-sm font-black text-[#06111f]">
+              Prefer to reach us directly?
+            </h2>
+            <div className="mt-4 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#50A9C0]/15 text-[#244285]">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+                    <polyline points="22,6 12,13 2,6" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Email</p>
+                  <a href={`mailto:${supportChannels.email}`} className="mt-0.5 break-all text-sm font-semibold text-[#244285] transition hover:text-[#06111f]">
+                    {supportChannels.email}
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#50A9C0]/15 text-[#244285]">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.59 3.44 2 2 0 0 1 3.56 2h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 9.91a16 16 0 0 0 6.09 6.09l.9-.9a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Phone / WhatsApp</p>
+                  <a href={`tel:${supportChannels.phone}`} className="mt-0.5 text-sm font-semibold text-[#244285] transition hover:text-[#06111f]">
+                    {supportChannels.phone}
+                  </a>
+                </div>
+              </div>
+
+              <div className="flex items-start gap-3">
+                <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-[#50A9C0]/15 text-[#244285]">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4" aria-hidden="true">
+                    <circle cx="12" cy="12" r="10" />
+                    <polyline points="12 6 12 12 16 14" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.12em] text-slate-500">Hours</p>
+                  <p className="mt-0.5 text-sm text-slate-700">{supportChannels.hours}</p>
+                  <p className="mt-1 text-xs text-slate-500">{supportChannels.responseTime}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-[#50A9C0]/30 bg-[#50A9C0]/8 p-5">
+            <p className="text-sm leading-6 text-slate-700">
+              Already a client?{" "}
+              <Link href="/client/login" className="font-black text-[#244285] transition hover:text-[#06111f]">
+                Sign in to the portal
+              </Link>{" "}
+              to submit requests directly.
+            </p>
+          </div>
+        </div>
+
         </div>
       </section>
     </PublicPageShell>

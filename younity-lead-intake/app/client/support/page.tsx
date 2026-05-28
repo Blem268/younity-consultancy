@@ -1,14 +1,9 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { supportChannels } from "@/lib/content/site-content";
-import {
-  BackLinks,
-  Card,
-  PageHeader,
-  PortalPage,
-  PrimaryButtonLink,
-  SecondaryButtonLink,
-} from "../portal-ui";
+import { PortalClientHeader } from "../portal-client-header";
+import { brand } from "@/app/components/ui/brand";
 
 type ClientProfile = {
   id: string;
@@ -41,6 +36,15 @@ const faqItems = [
   },
 ];
 
+function InfoRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="border-b border-slate-100 py-3 last:border-b-0">
+      <dt className="text-xs font-medium text-slate-500">{label}</dt>
+      <dd className="mt-1 break-all text-sm text-slate-800">{value}</dd>
+    </div>
+  );
+}
+
 export default async function ClientSupportPage() {
   const supabase = await createClient();
   const {
@@ -62,140 +66,159 @@ export default async function ClientSupportPage() {
   }
 
   return (
-    <PortalPage>
-      <PageHeader
-        eyebrow={
-          <BackLinks links={[{ href: "/client/dashboard", label: "Back to Dashboard" }]} />
-        }
-        title="Support"
-        description="Reach the Younity team, review common questions, and find the fastest way to get help."
-      />
+    <div className="support-page flex min-h-screen flex-col">
+      <PortalClientHeader fullName={clientProfile?.full_name} />
 
-      <section className="grid gap-6 py-8 lg:grid-cols-[1fr_1fr]">
-        <Card>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-            Contact Younity
-          </h2>
-          <dl className="mt-5 space-y-4 text-sm">
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Email
-              </dt>
-              <dd className="mt-1 break-all">
-                <a
-                  href={`mailto:${supportChannels.email}`}
-                  className="font-semibold text-[#244285] transition hover:text-[#06111f]"
-                >
-                  {supportChannels.email}
-                </a>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Phone
-              </dt>
-              <dd className="mt-1">
-                <a
-                  href={`tel:${supportChannels.phone.replace(/\s|\(|\)|-/g, "")}`}
-                  className="font-semibold text-[#244285] transition hover:text-[#06111f]"
-                >
-                  {supportChannels.phone}
-                </a>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Office hours
-              </dt>
-              <dd className="mt-1 text-slate-700">{supportChannels.hours}</dd>
-            </div>
-            <div>
-              <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Response time
-              </dt>
-              <dd className="mt-1 text-slate-700">
-                {supportChannels.responseTime}
-              </dd>
-            </div>
-          </dl>
-
-          <div className="mt-6 flex flex-wrap gap-3">
-            <PrimaryButtonLink href="/contact">Contact Form</PrimaryButtonLink>
-            <SecondaryButtonLink href="/">Visit Website</SecondaryButtonLink>
-          </div>
-        </Card>
-
-        <Card>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-            Your contact preferences
-          </h2>
-          {clientProfile ? (
-            <dl className="mt-5 space-y-4 text-sm">
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                  Name
-                </dt>
-                <dd className="mt-1 text-slate-800">{clientProfile.full_name}</dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                  Portal email
-                </dt>
-                <dd className="mt-1 break-all text-slate-800">
-                  {clientProfile.email}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                  Phone on file
-                </dt>
-                <dd className="mt-1 text-slate-800">
-                  {clientProfile.phone || "Not provided"}
-                </dd>
-              </div>
-              <div>
-                <dt className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                  Preferred contact method
-                </dt>
-                <dd className="mt-1 text-slate-800">
-                  {clientProfile.preferred_contact_method || "No preference set"}
-                </dd>
-              </div>
-            </dl>
-          ) : (
-            <p className="mt-5 text-sm leading-6 text-slate-600">
-              Your portal profile is not set up yet. Please contact Younity
-              Consultancy for assistance.
+      <div className={`${brand.pageBackground} flex-1 p-6`}>
+        <div className="mx-auto w-full max-w-6xl space-y-6">
+          <div className="support-fade-up">
+            <Link
+              href="/client/dashboard"
+              prefetch={false}
+              className="text-sm font-medium text-[#244285] transition-colors duration-150 hover:text-[#06111f]"
+            >
+              ← Dashboard
+            </Link>
+            <h1 className="mt-3 text-[20px] font-medium tracking-tight text-[#06111f]">
+              Support
+            </h1>
+            <p className="mt-1 text-[13px] text-slate-500">
+              Reach the Younity team, review common questions, and find the
+              fastest way to get help.
             </p>
-          )}
+          </div>
 
-          {clientProfile ? (
-            <div className="mt-6">
-              <SecondaryButtonLink href="/client/profile">
-                Update Profile
-              </SecondaryButtonLink>
+          <div
+            className="support-fade-up grid gap-5 lg:grid-cols-2"
+            style={{ animationDelay: "40ms" }}
+          >
+            <div className="rounded-xl border-[0.5px] border-[#06111f]/10 bg-white p-5">
+              <h2 className="text-[14px] font-medium text-[#06111f]">
+                Contact Younity
+              </h2>
+              <dl className="mt-4">
+                <div className="border-b border-slate-100 py-3">
+                  <dt className="text-xs font-medium text-slate-500">Email</dt>
+                  <dd className="mt-1 break-all">
+                    <a
+                      href={`mailto:${supportChannels.email}`}
+                      className="text-sm font-medium text-[#244285] transition-colors duration-150 hover:text-[#06111f]"
+                    >
+                      {supportChannels.email}
+                    </a>
+                  </dd>
+                </div>
+                <div className="border-b border-slate-100 py-3">
+                  <dt className="text-xs font-medium text-slate-500">Phone</dt>
+                  <dd className="mt-1">
+                    <a
+                      href={`tel:${supportChannels.phone.replace(/\s|\(|\)|-/g, "")}`}
+                      className="text-sm font-medium text-[#244285] transition-colors duration-150 hover:text-[#06111f]"
+                    >
+                      {supportChannels.phone}
+                    </a>
+                  </dd>
+                </div>
+                <div className="border-b border-slate-100 py-3">
+                  <dt className="text-xs font-medium text-slate-500">
+                    Office hours
+                  </dt>
+                  <dd className="mt-1 text-sm text-slate-700">
+                    {supportChannels.hours}
+                  </dd>
+                </div>
+                <div className="py-3">
+                  <dt className="text-xs font-medium text-slate-500">
+                    Response time
+                  </dt>
+                  <dd className="mt-1 text-sm text-slate-700">
+                    {supportChannels.responseTime}
+                  </dd>
+                </div>
+              </dl>
+              <div className="mt-4 flex flex-wrap gap-3">
+                <Link
+                  href="/contact"
+                  prefetch={false}
+                  className="inline-flex rounded-xl bg-[#244285] px-4 py-2 text-sm font-medium text-white"
+                >
+                  Contact Form
+                </Link>
+                <Link
+                  href="/"
+                  prefetch={false}
+                  className="inline-flex rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-medium text-[#06111f] transition-colors duration-150 hover:border-[#06111f]/25"
+                >
+                  Visit Website
+                </Link>
+              </div>
             </div>
-          ) : null}
-        </Card>
-      </section>
 
-      <Card>
-        <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-          Common questions
-        </h2>
-        <div className="mt-5 divide-y divide-slate-200">
-          {faqItems.map((item) => (
-            <details key={item.question} className="py-4 first:pt-0 last:pb-0">
-              <summary className="cursor-pointer text-sm font-semibold text-slate-950">
-                {item.question}
-              </summary>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {item.answer}
-              </p>
-            </details>
-          ))}
+            <div className="rounded-xl border-[0.5px] border-[#06111f]/10 bg-white p-5">
+              <h2 className="text-[14px] font-medium text-[#06111f]">
+                Your contact preferences
+              </h2>
+              {clientProfile ? (
+                <>
+                  <dl className="mt-4">
+                    <InfoRow label="Name" value={clientProfile.full_name} />
+                    <InfoRow label="Portal email" value={clientProfile.email} />
+                    <InfoRow
+                      label="Phone on file"
+                      value={clientProfile.phone || "Not provided"}
+                    />
+                    <InfoRow
+                      label="Preferred contact method"
+                      value={
+                        clientProfile.preferred_contact_method ||
+                        "No preference set"
+                      }
+                    />
+                  </dl>
+                  <div className="mt-4">
+                    <Link
+                      href="/client/profile"
+                      prefetch={false}
+                      className="inline-flex rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-medium text-[#06111f] transition-colors duration-150 hover:border-[#06111f]/25"
+                    >
+                      Update Profile
+                    </Link>
+                  </div>
+                </>
+              ) : (
+                <p className="mt-4 text-sm leading-6 text-slate-600">
+                  Your portal profile is not set up yet. Please contact Younity
+                  Consultancy for assistance.
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div
+            className="support-fade-up rounded-xl border-[0.5px] border-[#06111f]/10 bg-white p-5"
+            style={{ animationDelay: "80ms" }}
+          >
+            <h2 className="text-[14px] font-medium text-[#06111f]">
+              Common questions
+            </h2>
+            <div className="mt-4 divide-y divide-slate-100">
+              {faqItems.map((item) => (
+                <details
+                  key={item.question}
+                  className="py-4 first:pt-0 last:pb-0"
+                >
+                  <summary className="cursor-pointer text-sm font-medium text-slate-900">
+                    {item.question}
+                  </summary>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    {item.answer}
+                  </p>
+                </details>
+              ))}
+            </div>
+          </div>
         </div>
-      </Card>
-    </PortalPage>
+      </div>
+    </div>
   );
 }

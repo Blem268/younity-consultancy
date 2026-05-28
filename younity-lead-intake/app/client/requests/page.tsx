@@ -1,20 +1,43 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import {
-  BackLinks,
-  Card,
-  EmptyState,
-  getInvoiceStatus,
-  InvoiceStatusBadge,
-  PageHeader,
-  PortalPage,
-  PrimaryButtonLink,
-  RequestStatusBadge,
-} from "../portal-ui";
+import { friendlyPortalText } from "@/lib/client/portal-text";
+import { PortalClientHeader } from "../portal-client-header";
+import { InvoiceStatusBadge, RequestStatusBadge } from "@/app/components/ui/status-badges";
+import { ServiceIcon } from "../service-icon";
+import { brand } from "@/app/components/ui/brand";
+
+const SECTION_CARD =
+  "rounded-xl border-[0.5px] border-[#06111f]/10 bg-white p-4 sm:p-5";
+
+function getInvoiceStatus(value: string | null | undefined) {
+  return value || "Not Ready";
+}
+
+function EmptyState({
+  title,
+  description,
+  action,
+}: {
+  title: string;
+  description?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="rounded-3xl border border-dashed border-[#50A9C0]/30 bg-[#50A9C0]/10 p-6">
+      <p className="text-sm font-medium text-slate-950">{title}</p>
+      {description ? (
+        <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+      ) : null}
+      {action ? <div className="mt-4">{action}</div> : null}
+    </div>
+  );
+}
 
 type ClientProfile = {
   id: string;
+  full_name: string;
 };
 
 type ClientRequest = {
@@ -38,6 +61,25 @@ function formatDate(value: string | null) {
   }).format(new Date(value));
 }
 
+function ChevronIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="h-[14px] w-[14px] shrink-0 text-[#244285]"
+      fill="none"
+      aria-hidden="true"
+    >
+      <path
+        d="M9 6l6 6-6 6"
+        stroke="currentColor"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
 export default async function ClientRequestsPage() {
   const supabase = await createClient();
   const {
@@ -50,7 +92,7 @@ export default async function ClientRequestsPage() {
 
   const { data: clientProfile, error: clientProfileError } = await supabase
     .from("clients")
-    .select("id")
+    .select("id, full_name")
     .eq("user_id", user.id)
     .maybeSingle<ClientProfile>();
 
@@ -60,22 +102,19 @@ export default async function ClientRequestsPage() {
 
   if (!clientProfile) {
     return (
-      <PortalPage>
-        <PageHeader
-          eyebrow={
-            <BackLinks links={[{ href: "/client/dashboard", label: "Back to Dashboard" }]} />
-          }
-          title="Client Requests"
-          description={`Signed in as ${user.email}`}
-        />
-
-        <Card className="mt-8 border-amber-200 bg-amber-50">
-          <p className="text-sm leading-6 text-slate-700">
-            Your portal profile has not been set up yet. Please contact Younity
-            Consultancy.
-          </p>
-        </Card>
-      </PortalPage>
+      <div className="req-list flex min-h-screen flex-col">
+        <PortalClientHeader />
+        <div className={`${brand.pageBackground} flex-1 p-6`}>
+          <div className="mx-auto w-full max-w-6xl">
+            <section className={`${SECTION_CARD} mt-6 border-amber-200 bg-amber-50`}>
+              <EmptyState
+                title="Portal profile pending"
+                description={`Signed in as ${user.email}. Please contact Younity Consultancy.`}
+              />
+            </section>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -93,110 +132,109 @@ export default async function ClientRequestsPage() {
   const clientRequests = requests ?? [];
 
   return (
-    <PortalPage>
-      <PageHeader
-        title="Client Requests"
-        description="Review requests already shared with Younity Consultancy."
-        actions={
-          <PrimaryButtonLink href="/client/requests/new">
-            Submit Request
-          </PrimaryButtonLink>
-        }
-      />
+    <div className="req-list flex min-h-screen flex-col">
+      <PortalClientHeader fullName={clientProfile.full_name} />
 
-      <section className="py-8">
-        {clientRequests.length ? (
-          <div className="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-sm shadow-slate-200/50">
-            <div className="hidden grid-cols-[1.2fr_0.8fr_0.9fr_0.8fr_0.8fr_0.7fr] gap-4 border-b border-[#50A9C0]/20 bg-[#06111f] px-5 py-3 text-xs font-black uppercase tracking-[0.12em] text-white lg:grid">
-              <span>Service</span>
-              <span>Status</span>
-              <span>Invoice Status</span>
-              <span>Created Date</span>
-              <span>Last Updated</span>
-              <span className="text-right">Details</span>
+      <div className={`${brand.pageBackground} flex-1 p-6`}>
+        <div className="mx-auto w-full max-w-6xl space-y-6">
+          <nav
+            className="list-fade-up text-[12px] text-slate-500"
+            style={{ animationDelay: "0ms" }}
+            aria-label="Breadcrumb"
+          >
+            <Link
+              href="/client/dashboard"
+              prefetch={false}
+              className="text-[#244285] hover:text-[#06111f]"
+              style={{ transition: "color 150ms ease" }}
+            >
+              ← Dashboard
+            </Link>
+          </nav>
+
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <h1 className="text-[20px] font-medium tracking-tight text-[#06111f]">
+                Requests
+              </h1>
+              <p className="mt-1 text-[13px] text-slate-500">
+                Review requests already shared with Younity Consultancy.
+              </p>
             </div>
-
-            <div className="divide-y divide-slate-200">
-              {clientRequests.map((request) => {
-                const invoiceStatus = getInvoiceStatus(request.invoice_status);
-
-                return (
-                  <article
-                    key={request.id}
-                    className="grid gap-4 px-5 py-5 lg:grid-cols-[1.2fr_0.8fr_0.9fr_0.8fr_0.8fr_0.7fr] lg:items-center"
-                  >
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:hidden">
-                        Service
-                      </p>
-                      <p className="mt-1 text-sm font-semibold text-slate-950 lg:mt-0">
-                        {request.service}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:hidden">
-                        Status
-                      </p>
-                      <div className="mt-1 lg:mt-0">
-                        <RequestStatusBadge status={request.status} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:hidden">
-                        Invoice Status
-                      </p>
-                      <div className="mt-1 lg:mt-0">
-                        <InvoiceStatusBadge status={invoiceStatus} />
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:hidden">
-                        Created Date
-                      </p>
-                      <p className="mt-1 text-sm text-slate-700 lg:mt-0">
-                        {formatDate(request.created_at)}
-                      </p>
-                    </div>
-
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500 lg:hidden">
-                        Last Updated
-                      </p>
-                      <p className="mt-1 text-sm text-slate-700 lg:mt-0">
-                        {formatDate(request.updated_at)}
-                      </p>
-                    </div>
-
-                    <div className="lg:text-right">
-                      <Link
-                        href={`/client/requests/${request.id}`}
-                        prefetch={false}
-                        className="inline-flex min-h-10 items-center text-sm font-semibold text-[#244285] transition hover:text-[#06111f]"
-                      >
-                        View Details
-                      </Link>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+            <Link
+              href="/client/requests/new"
+              prefetch={false}
+              className="btn-primary inline-flex w-full items-center justify-center rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-medium text-white sm:w-auto"
+            >
+              + New request
+            </Link>
           </div>
-        ) : (
-          <Card>
-            <EmptyState
-              title="No requests have been submitted yet."
-              action={
-                <PrimaryButtonLink href="/client/requests/new">
-                  Submit Request
-                </PrimaryButtonLink>
-              }
-            />
-          </Card>
-        )}
-      </section>
-    </PortalPage>
+
+          {clientRequests.length ? (
+            <div
+              className="list-fade-up overflow-hidden rounded-xl border-[0.5px] border-[#06111f]/10 bg-white"
+              style={{ animationDelay: "60ms" }}
+            >
+              <div className="divide-y divide-[#06111f]/8">
+                {clientRequests.map((request) => {
+                  const invoiceStatus = getInvoiceStatus(request.invoice_status);
+
+                  return (
+                    <Link
+                      key={request.id}
+                      href={`/client/requests/${request.id}`}
+                      prefetch={false}
+                      className="req-row flex items-center gap-4 px-4 py-4"
+                    >
+                      <ServiceIcon service={request.service} />
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13px] font-medium text-[#06111f]">
+                          {friendlyPortalText(request.service)}
+                        </span>
+                        <span className="mt-0.5 block text-[11.5px] text-slate-500">
+                          Submitted {formatDate(request.created_at)}
+                        </span>
+                      </span>
+                      <span className="hidden shrink-0 flex-wrap items-center gap-2 sm:flex">
+                        <RequestStatusBadge status={request.status} />
+                        <InvoiceStatusBadge status={invoiceStatus} />
+                      </span>
+                      <span className="flex shrink-0 flex-col items-end gap-2 sm:min-w-[7.5rem]">
+                        <span className="flex flex-wrap items-center justify-end gap-2 sm:hidden">
+                          <RequestStatusBadge status={request.status} />
+                          <InvoiceStatusBadge status={invoiceStatus} />
+                        </span>
+                        <span className="text-[11.5px] text-slate-500">
+                          Updated {formatDate(request.updated_at)}
+                        </span>
+                        <ChevronIcon />
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ) : (
+            <section
+              className={`${SECTION_CARD} list-fade-up`}
+              style={{ animationDelay: "60ms" }}
+            >
+              <EmptyState
+                title="No requests have been submitted yet."
+                action={
+                  <Link
+                    href="/client/requests/new"
+                    prefetch={false}
+                    className="btn-primary mt-4 inline-flex items-center justify-center rounded-xl bg-[#244285] px-4 py-2.5 text-sm font-medium text-white"
+                  >
+                    + New request
+                  </Link>
+                }
+              />
+            </section>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }

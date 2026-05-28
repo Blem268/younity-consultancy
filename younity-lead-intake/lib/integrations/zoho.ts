@@ -118,8 +118,6 @@ export async function createZohoLead(input: ZohoLeadInput) {
     Assigned_Picklist: "General",
     Lead_Status: "New Website Lead",
 
-    ClickUp_Task_ID: "",
-    Google_Sheet_Row_ID: "",
     Whatsapp_Notify: false,
     Client_Confirmation: false,
 
@@ -157,16 +155,12 @@ export async function createZohoLead(input: ZohoLeadInput) {
 
 export async function updateZohoLeadIntegrationStatus({
   zohoLeadId,
-  clickUpTaskId,
-  googleSheetRowId,
   whatsappNotificationSent = false,
   clientConfirmationSent = false,
   integrationStatus,
   integrationErrorLog = "",
 }: {
   zohoLeadId: string;
-  clickUpTaskId?: string;
-  googleSheetRowId?: string;
   whatsappNotificationSent?: boolean;
   clientConfirmationSent?: boolean;
   integrationStatus: "Complete" | "Partial Success" | "Failed" | "Retry Needed";
@@ -182,8 +176,6 @@ export async function updateZohoLeadIntegrationStatus({
     process.env.ZOHO_API_DOMAIN || "https://www.zohoapis.com";
 
   const updatePayload = {
-    ClickUp_Task_ID: clickUpTaskId || "",
-    Google_Sheet_Row_ID: googleSheetRowId || "",
     Whatsapp_Notify: whatsappNotificationSent,
     Client_Confirmation: clientConfirmationSent,
     Integration_Status: integrationStatus,

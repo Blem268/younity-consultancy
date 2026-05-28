@@ -68,7 +68,7 @@ export const portalHighlights = [
 
 export const supportChannels = {
   email: "info@younityconsultancy.com",
-  phone: "+1 (268) 000-0000",
+  phone: "+1 268 726-5995",
   hours: "Monday to Friday, 9:00 AM – 5:00 PM (AST)",
   responseTime: "We aim to respond within one business day.",
 } as const;

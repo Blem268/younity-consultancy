@@ -35,7 +35,6 @@ type RequestRecord = {
   status: string;
   message: string | null;
   source: string | null;
-  clickup_task_id: string | null;
   billing_type: string | null;
   estimated_fee: number | string | null;
   deposit_required: number | string | null;
@@ -124,7 +123,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
   const requestResult = await supabaseAdmin
     .from("client_requests")
     .select(
-      "id, client_id, service, status, message, source, clickup_task_id, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, invoice_status, zoho_books_invoice_id, created_at, updated_at, clients(id, full_name, email, phone, company, preferred_contact_method)"
+      "id, client_id, service, status, message, source, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, invoice_status, zoho_books_invoice_id, created_at, updated_at, clients(id, full_name, email, phone, company, preferred_contact_method)"
     )
     .eq("id", requestId)
     .maybeSingle<RequestRecord>();
@@ -223,27 +222,19 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
               View client
             </Link>
           ) : null}
-          <Link
-            href="/internal/sync"
-            prefetch={false}
-            className="rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
-          >
-            Run sync controls
-          </Link>
         </>
       }
     >
       <section className="grid gap-5 py-8 lg:grid-cols-[1fr_0.9fr]">
         <AdminCard
           title="Request Summary"
-          description="Operational state, ClickUp task reference, and billing preparation fields."
+          description="Operational state and billing preparation fields."
         >
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
             {[
               ["Status", request.status],
               ["Invoice Status", request.invoice_status || "Not available"],
               ["Source", request.source || "Not available"],
-              ["ClickUp Task ID", request.clickup_task_id || "Not available"],
               ["Billing Type", request.billing_type || "Not available"],
               ["Estimated Fee", formatMoney(request.estimated_fee)],
               ["Deposit Required", formatMoney(request.deposit_required)],

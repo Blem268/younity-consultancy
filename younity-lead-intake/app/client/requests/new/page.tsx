@@ -1,11 +1,8 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import {
-  BackLinks,
-  Card,
-  PageHeader,
-  PortalPage,
-} from "../../portal-ui";
+import { PortalClientHeader } from "../../portal-client-header";
+import { brand } from "@/app/components/ui/brand";
 import { RequestForm } from "./request-form";
 
 type ClientProfile = {
@@ -35,48 +32,68 @@ export default async function NewClientRequestPage() {
 
   if (!clientProfile) {
     return (
-      <PortalPage>
-        <PageHeader
-          eyebrow={
-            <BackLinks links={[{ href: "/client/dashboard", label: "Back to Dashboard" }]} />
-          }
-          title="Submit Request"
-          description={`Signed in as ${user.email}`}
-        />
-
-        <Card className="mt-8 border-amber-200 bg-amber-50">
-          <p className="text-sm leading-6 text-slate-700">
-            Your portal profile has not been set up yet. Please contact Younity
-            Consultancy.
-          </p>
-        </Card>
-      </PortalPage>
+      <div className="req-new flex min-h-screen flex-col">
+        <PortalClientHeader />
+        <div className={`${brand.pageBackground} flex-1 p-6`}>
+          <div className="mx-auto w-full max-w-2xl">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-5">
+              <p className="text-sm font-medium text-amber-900">
+                Your portal profile has not been set up yet. Please contact
+                Younity Consultancy.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
   return (
-    <PortalPage narrow>
-      <PageHeader
-        eyebrow={
-          <BackLinks
-            links={[
-              { href: "/client/dashboard", label: "Back to Dashboard" },
-              { href: "/client/requests", label: "Back to Requests" },
-            ]}
-          />
-        }
-        title="Submit Request"
-        description="Tell us what you need, and the Younity team will review your request."
-      />
+    <div className="req-new flex min-h-screen flex-col">
+      <PortalClientHeader fullName={clientProfile.full_name} />
 
-      <div className="py-8">
-        <Card>
-          <h2 className="text-xl font-semibold tracking-tight text-slate-950">
-            Request Details
-          </h2>
-          <RequestForm />
-        </Card>
+      <div className={`${brand.pageBackground} flex-1 p-6`}>
+        <div className="mx-auto w-full max-w-2xl space-y-6">
+          <div className="new-fade-up">
+            <div className="flex items-center gap-2 text-sm text-slate-500">
+              <Link
+                href="/client/dashboard"
+                prefetch={false}
+                className="font-medium text-[#244285] transition-colors duration-150 hover:text-[#06111f]"
+              >
+                Dashboard
+              </Link>
+              <span>/</span>
+              <Link
+                href="/client/requests"
+                prefetch={false}
+                className="font-medium text-[#244285] transition-colors duration-150 hover:text-[#06111f]"
+              >
+                Requests
+              </Link>
+              <span>/</span>
+              <span className="text-slate-600">New</span>
+            </div>
+            <h1 className="mt-3 text-[20px] font-medium tracking-tight text-[#06111f]">
+              Submit a Request
+            </h1>
+            <p className="mt-1 text-[13px] text-slate-500">
+              Tell us what you need and the Younity team will review your
+              request.
+            </p>
+          </div>
+
+          <div
+            className="new-fade-up rounded-xl border-[0.5px] border-[#06111f]/10 bg-white p-5"
+            style={{ animationDelay: "40ms" }}
+          >
+            <h2 className="text-[14px] font-medium text-[#06111f]">
+              Request Details
+            </h2>
+            <RequestForm />
+          </div>
+        </div>
       </div>
-    </PortalPage>
+    </div>
   );
 }

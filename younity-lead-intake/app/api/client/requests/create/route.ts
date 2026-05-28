@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { createClickUpPortalRequestTask } from "@/lib/integrations/clickup";
 import { sendPortalRequestNotificationEmail } from "@/lib/integrations/email";
 import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { rateLimit } from "@/lib/security/rateLimit";
@@ -183,90 +182,16 @@ export async function POST(request: Request) {
   }
 
   const warnings: string[] = [];
-  let clickUpTaskId = "";
 
-  try {
-    const clickUpTask = await createClickUpPortalRequestTask({
-      clientName: clientProfile.full_name,
-      clientEmail: clientProfile.email,
-      clientPhone: clientProfile.phone,
-      company: clientProfile.company,
-      service,
-      message,
-      preferredContactMethod,
-      urgency,
-      portalRequestId: insertedRequest.id,
-    });
-
-    clickUpTaskId = clickUpTask.id;
-
-    const { error: clickUpUpdateError } = await supabaseAdmin
-      .from("client_requests")
-      .update({
-        clickup_task_id: clickUpTask.id,
-      })
-      .eq("id", insertedRequest.id)
-      .eq("client_id", clientProfile.id);
-
-    if (clickUpUpdateError) {
-      console.error("Client request ClickUp task update failed:", {
-        message: clickUpUpdateError.message,
-        code: clickUpUpdateError.code,
-      });
-      await logWorkflowError({
-        source: "client-request-create.clickup-id-save",
-        severity: "warning",
-        message: "ClickUp task ID could not be saved to the portal request.",
-        context: {
-          error: clickUpUpdateError,
-          clickUpTaskId: clickUpTask.id,
-          service,
-        },
-        relatedClientId: clientProfile.id,
-        relatedRequestId: insertedRequest.id,
-      });
-      warnings.push("ClickUp task ID could not be saved to the portal request.");
-    }
-  } catch (error) {
-    console.error("ClickUp portal request task creation failed:", error);
-    await logWorkflowError({
-      source: "client-request-create.clickup",
-      severity: "error",
-      message: "ClickUp portal request task creation failed.",
-      context: {
-        error,
-        service,
-        urgency,
-      },
-      relatedClientId: clientProfile.id,
-      relatedRequestId: insertedRequest.id,
-    });
-    warnings.push("Internal task creation needs review.");
-  }
-
-  const timelineEntries = [
-    {
+  const { error: updateInsertError } = await supabaseAdmin
+    .from("client_updates")
+    .insert({
       client_id: clientProfile.id,
       request_id: insertedRequest.id,
       title: "Request submitted",
       message: "Your request has been submitted and is now under review.",
       created_by: "Younity Consultancy",
-    },
-  ];
-
-  if (!clickUpTaskId) {
-    timelineEntries.push({
-      client_id: clientProfile.id,
-      request_id: insertedRequest.id,
-      title: "Request received",
-      message: "Your request was received. Our team will review it shortly.",
-      created_by: "Younity Consultancy",
     });
-  }
-
-  const { error: updateInsertError } = await supabaseAdmin
-    .from("client_updates")
-    .insert(timelineEntries);
 
   if (updateInsertError) {
     console.error("Client request timeline insert failed:", {
@@ -297,7 +222,6 @@ export async function POST(request: Request) {
     preferredContactMethod,
     message,
     portalRequestId: insertedRequest.id,
-    clickUpTaskId,
   };
 
   try {
@@ -318,7 +242,6 @@ export async function POST(request: Request) {
           input: notificationInput,
         },
         service,
-        clickUpTaskId,
       },
       relatedClientId: clientProfile.id,
       relatedRequestId: insertedRequest.id,
@@ -344,7 +267,6 @@ export async function POST(request: Request) {
           input: notificationInput,
         },
         service,
-        clickUpTaskId,
       },
       relatedClientId: clientProfile.id,
       relatedRequestId: insertedRequest.id,
@@ -356,7 +278,6 @@ export async function POST(request: Request) {
     success: true,
     message: "Request submitted successfully.",
     requestId: insertedRequest.id,
-    clickUpTaskId,
     ...(warnings.length ? { warnings } : {}),
   });
 }

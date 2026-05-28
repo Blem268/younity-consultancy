@@ -11,7 +11,6 @@ type InternalWhatsAppLeadInput = {
     source: string;
   };
   zohoLeadId?: string;
-  clickUpTaskId?: string;
 };
 
 type InternalWhatsAppDocumentUploadInput = {
@@ -37,7 +36,6 @@ type InternalWhatsAppPortalRequestInput = {
   preferredContactMethod: string;
   message: string;
   portalRequestId: string;
-  clickUpTaskId?: string;
 };
 
 function requireEnv(name: string) {
@@ -53,7 +51,6 @@ function requireEnv(name: string) {
 export async function sendInternalWhatsAppLeadNotification({
   lead,
   zohoLeadId,
-  clickUpTaskId,
 }: InternalWhatsAppLeadInput) {
   const accountSid = requireEnv("TWILIO_ACCOUNT_SID");
   const authToken = requireEnv("TWILIO_AUTH_TOKEN");
@@ -75,7 +72,6 @@ export async function sendInternalWhatsAppLeadNotification({
     `Message: ${lead.message}`,
     "",
     `Zoho Lead ID: ${zohoLeadId || "Not available"}`,
-    `ClickUp Task ID: ${clickUpTaskId || "Not available"}`,
   ].join("\n");
 
   const message = await client.messages.create({
@@ -147,7 +143,6 @@ export async function sendInternalWhatsAppPortalRequestNotification({
   preferredContactMethod,
   message,
   portalRequestId,
-  clickUpTaskId,
 }: InternalWhatsAppPortalRequestInput) {
   const accountSid = requireEnv("TWILIO_ACCOUNT_SID");
   const authToken = requireEnv("TWILIO_AUTH_TOKEN");
@@ -171,7 +166,6 @@ export async function sendInternalWhatsAppPortalRequestNotification({
     `Message: ${message}`,
     "",
     `Portal Request ID: ${portalRequestId}`,
-    `ClickUp Task ID: ${clickUpTaskId || "Not available"}`,
   ].join("\n");
 
   const twilioMessage = await client.messages.create({

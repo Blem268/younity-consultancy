@@ -1,0 +1,81 @@
+# Younity Consultancy — Cursor Project Rules
+
+## Stack
+- Next.js 16 App Router (server components by default, `"use client"` only when needed)
+- TypeScript — strict types throughout
+- Tailwind CSS v4
+- Supabase Auth + Supabase database + Supabase private storage
+- Hosted on Vercel
+
+## Brand colours (never deviate)
+- Dark background: `#06111f`
+- Navy: `#071a33`
+- Blue: `#244285`
+- Accent teal: `#50A9C0`
+- Light background: `#f6f9fc`
+
+## Architecture rules
+
+### Client portal
+- All client-facing pages live under `app/client/`
+- Every page must call `supabase.auth.getUser()` and redirect to `/client/login` if no user
+- All Supabase queries for portal data must be scoped to the logged-in client's `clients.user_id` — never load another client's data
+- Use `friendlyPortalText()` from `lib/client/portal-text.ts` on any text sourced from internal systems before displaying it to clients
+- Never expose raw UUIDs, internal IDs, or `source` field values to clients
+
+### Internal admin
+- All internal pages live under `app/internal/(protected)/`
+- Every internal page/route must verify Supabase Auth AND that the user email is in `INTERNAL_ADMIN_EMAILS`
+- The Supabase service role key (`SUPABASE_SERVICE_ROLE_KEY`) must never be used in client components — server-side only
+
+### API routes
+- Rate limiting is applied to all public-facing write routes via the `public.rate_limits` Supabase table
+- Workflow failures are logged to `public.workflow_errors` — never swallow errors silently in production paths
+
+## Operations backend
+- All request and task management is handled by the custom Younity Operations backend under `app/internal/`
+- Supabase is the source of truth for request status, document metadata, and client data
+- ClickUp has been removed — do not add ClickUp code, env vars, API calls, webhooks, or references
+- Google Sheets has been removed — do not add Google Sheets logging code or references
+
+## Zoho Books
+- Zoho Books is the invoicing system — use it for invoice creation, payment tracking, and billing status
+- Billing status syncs from Zoho Books into Supabase for client-facing display in the portal
+- Zoho Books API credentials are server-only; never expose them in client components or `NEXT_PUBLIC_` variables
+- Zoho CRM and Zoho Books share the same Zoho account — use the same OAuth flow where possible
+
+## Integrations — active
+- Supabase (auth, database, storage)
+- Zoho CRM (lead/client records)
+- Zoho Books (invoicing and billing)
+- Twilio WhatsApp (two-way — outbound notifications to clients, inbound messages from clients to Younity team)
+- Resend (transactional email to clients — paused pending domain verification, do not depend on for blocking workflows)
+
+## Integrations — removed
+- ClickUp — removed. Do not reintroduce.
+- Google Sheets — removed. Do not reintroduce.
+
+## Environment variables
+- `NEXT_PUBLIC_` variables are browser-visible — never put secrets in them
+- Server-only secrets: `SUPABASE_SERVICE_ROLE_KEY`, `ZOHO_CLIENT_SECRET`, `ZOHO_REFRESH_TOKEN`, `ZOHO_BOOKS_CLIENT_SECRET`, `ZOHO_BOOKS_REFRESH_TOKEN`, `TWILIO_AUTH_TOKEN`, `RESEND_API_KEY`, `INTERNAL_SYNC_SECRET`
+- Never read `.env.local` or log secret values
+- `INTERNAL_ADMIN_EMAILS` is a comma-separated allowlist for internal admin access
+
+## Security
+- Private documents are stored in the Supabase `client-documents` bucket — never serve them without a server-side ownership check and short-lived signed URL
+- The public website links only to `/client/login`, never to `/internal/login`
+- The contact form includes a honeypot field (`companyWebsite`) — preserve it
+- All client data mutations go through API routes that validate UUIDs and allowed field values server-side
+
+## Code style
+- Prefer server components; add `"use client"` only when state or browser APIs are required
+- Use `maybeSingle()` not `single()` for Supabase queries that might return no rows
+- Log Supabase errors with `console.error` but do not throw or crash the page — show a graceful empty/error state instead
+- Use the shared UI primitives in `app/client/portal-ui.tsx` (Card, PageHeader, EmptyState, BackLinks, etc.) for all portal pages
+- Use `brand.*` tokens from `app/components/ui/brand.ts` for shared input, button, and card classes
+- Inline SVG icons only — no icon library is installed
+
+## Content
+- Site services and support contact details live in `lib/content/site-content.ts`
+- Portal resource content lives in `lib/content/portal-resources.ts`
+- Do not hardcode contact details (phone, email, hours) directly in components — import from `site-content.ts`

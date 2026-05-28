@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { PublicPageShell } from "@/app/components/site/public-page-shell";
-import { siteServices } from "@/lib/content/site-content";
 
 export default function AboutPage() {
   return (
@@ -18,6 +17,13 @@ export default function AboutPage() {
             back-office and advisory services. We focus on making operations
             work feel organized, transparent, and manageable — especially when
             teams are busy and details matter.
+          </p>
+          <p className="mt-3 flex items-center gap-2 text-sm text-white/50">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" className="h-4 w-4 shrink-0 text-[#50A9C0]" aria-hidden="true">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+              <circle cx="12" cy="10" r="3" />
+            </svg>
+            Based in Antigua, West Indies · Serving regional and international clients
           </p>
         </div>
       </section>
@@ -64,23 +70,52 @@ export default function AboutPage() {
 
       <section className="bg-[#f6f9fc]">
         <div className="mx-auto w-full max-w-6xl px-6 py-14 lg:px-8">
-          <h2 className="text-2xl font-black tracking-tight text-[#06111f]">
-            Services we provide
-          </h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {siteServices.map((service) => (
-              <article
-                key={service.title}
-                className="rounded-3xl bg-white p-6 shadow-sm"
-              >
-                <h3 className="text-base font-black text-[#06111f]">
-                  {service.title}
-                </h3>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  {service.description}
+          <div className="grid gap-8 lg:grid-cols-2">
+            <div>
+              <p className="mb-3 text-sm font-black uppercase tracking-[0.3em] text-[#50A9C0]">
+                Our story
+              </p>
+              <h2 className="text-2xl font-black tracking-tight text-[#06111f]">
+                Built on the belief that operations should feel manageable.
+              </h2>
+              <p className="mt-4 text-sm leading-7 text-slate-600">
+                Younity was founded to give growing businesses the kind of
+                back-office support that is usually only available to larger
+                organizations — responsive, structured, and delivered by real
+                people who care about getting the details right.
+              </p>
+              <p className="mt-3 text-sm leading-7 text-slate-600">
+                We combine operational discipline with clear communication so
+                clients always know what is happening, what is needed next, and
+                where to find it.
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <p className="mb-3 text-sm font-black uppercase tracking-[0.3em] text-[#50A9C0]">
+                  Who we work with
                 </p>
-              </article>
-            ))}
+                <h2 className="text-2xl font-black tracking-tight text-[#06111f]">
+                  Small and growing businesses that need a steady partner.
+                </h2>
+              </div>
+              <ul className="space-y-3">
+                {[
+                  "Business owners managing rapid growth",
+                  "Teams that need reliable back-office support",
+                  "Founders who want a calm, organized operation",
+                  "Businesses navigating compliance and tax requirements",
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3 rounded-2xl bg-white px-4 py-3 shadow-sm">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="mt-0.5 h-4 w-4 shrink-0 text-[#50A9C0]" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                    <span className="text-sm leading-6 text-slate-700">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
         </div>
       </section>
