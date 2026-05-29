@@ -11,6 +11,7 @@ import { PortalNav } from "./portal-nav";
 function usesStandalonePortalChrome(pathname: string) {
   if (
     pathname === "/client/login" ||
+    pathname === "/client/set-password" ||
     pathname === "/client/dashboard" ||
     pathname === "/client/requests" ||
     pathname === "/client/requests/new" ||
