@@ -18,8 +18,9 @@ create table if not exists public.client_requests (
   id uuid primary key default gen_random_uuid(),
   client_id uuid references public.clients(id) on delete cascade,
   service text not null,
-  status text not null default 'Submitted',
+  status text not null default 'Open',
   message text,
+  priority text,
   source text default 'Client Portal',
   clickup_task_id text,
   zoho_lead_id text,
@@ -64,10 +65,13 @@ create table if not exists public.client_invoices (
   request_id uuid references public.client_requests(id) on delete set null,
   invoice_number text,
   amount numeric(12,2),
-  status text default 'Not Ready',
+  billing_type text,
+  status text default 'Draft',
   due_date date,
   zoho_books_invoice_id text,
-  created_at timestamptz default now()
+  notes text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
 alter table public.clients enable row level security;

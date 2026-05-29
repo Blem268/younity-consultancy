@@ -18,6 +18,7 @@ export function ClientAdminForm({
   preferredContactMethod,
   zohoLeadId,
   zohoContactId,
+  driveFolderUrl,
 }: {
   clientId: string;
   fullName: string;
@@ -26,6 +27,7 @@ export function ClientAdminForm({
   preferredContactMethod: string | null;
   zohoLeadId: string | null;
   zohoContactId: string | null;
+  driveFolderUrl: string | null;
 }) {
   const router = useRouter();
   const [fullNameValue, setFullNameValue] = useState(fullName);
@@ -36,6 +38,7 @@ export function ClientAdminForm({
   );
   const [zohoLeadIdValue, setZohoLeadIdValue] = useState(zohoLeadId || "");
   const [zohoContactIdValue, setZohoContactIdValue] = useState(zohoContactId || "");
+  const [driveFolderUrlValue, setDriveFolderUrlValue] = useState(driveFolderUrl || "");
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -56,6 +59,7 @@ export function ClientAdminForm({
         preferredContactMethod: preferredContactValue,
         zohoLeadId: zohoLeadIdValue,
         zohoContactId: zohoContactIdValue,
+        driveFolderUrl: driveFolderUrlValue,
       }),
     });
     const result = (await response.json()) as { message?: string };
@@ -133,6 +137,17 @@ export function ClientAdminForm({
           />
         </label>
       </div>
+
+      <label className="block text-sm font-medium text-slate-800">
+        Google Drive folder URL
+        <input
+          type="url"
+          value={driveFolderUrlValue}
+          onChange={(event) => setDriveFolderUrlValue(event.target.value)}
+          placeholder="https://drive.google.com/drive/folders/..."
+          className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
+        />
+      </label>
 
       <div aria-live="polite" className={isError ? "text-red-700" : "text-[#244285]"}>
         {message ? <p className="text-sm font-medium">{message}</p> : null}

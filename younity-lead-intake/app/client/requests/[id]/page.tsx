@@ -55,6 +55,7 @@ type ClientRequest = {
   service: string;
   status: string;
   message: string | null;
+  priority: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -349,14 +350,37 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
     );
   }
 
-  const { data: request, error: requestError } = await supabase
+  const requestLookupWithPriority = await supabase
     .from("client_requests")
-    .select("id, service, status, message, created_at, updated_at")
+    .select("id, service, status, message, priority, created_at, updated_at")
     .eq("id", requestId)
     .eq("client_id", clientProfile.id)
     .maybeSingle<ClientRequest>();
 
-  if (requestError) {
+  const missingPriority =
+    requestLookupWithPriority.error?.message?.toLowerCase().includes("priority") ||
+    requestLookupWithPriority.error?.code === "42703";
+
+  const requestLookup =
+    requestLookupWithPriority.error && missingPriority
+      ? await supabase
+          .from("client_requests")
+          .select("id, service, status, message, created_at, updated_at")
+          .eq("id", requestId)
+          .eq("client_id", clientProfile.id)
+          .maybeSingle<ClientRequest>()
+      : requestLookupWithPriority;
+
+  const requestError = requestLookup.error;
+
+  const request = requestLookup.data
+    ? {
+        ...requestLookup.data,
+        priority: requestLookup.data.priority ?? null,
+      }
+    : null;
+
+  if (requestError && !missingPriority) {
     logSupabaseError("Client request lookup failed:", requestError);
     return (
       <RequestNotFoundState title="We could not load this request right now. Please try again or contact Younity Consultancy." />
@@ -365,7 +389,13 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
 
   if (!request) {
     return (
-      <RequestNotFoundState title="Request not found or you do not have access to this request." />
+      <RequestNotFoundState
+        title={
+          requestError && !missingPriority
+            ? "We could not load this request right now. Please try again or contact Younity Consultancy."
+            : "Request not found or you do not have access to this request."
+        }
+      />
     );
   }
 
@@ -453,6 +483,10 @@ export default async function ClientRequestDetailPage({ params }: PageProps) {
               <DetailRow
                 label="Status"
                 value={<RequestStatusBadge status={request.status} />}
+              />
+              <DetailRow
+                label="Priority"
+                value={request.priority || "Normal"}
               />
               <DetailRow
                 label="Message"

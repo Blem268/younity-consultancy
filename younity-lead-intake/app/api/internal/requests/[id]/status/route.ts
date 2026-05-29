@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getInternalAdminUser } from "@/lib/internal/adminAuth";
+import { createDraftInvoiceForRequest } from "@/lib/internal/createDraftInvoice";
 import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -13,11 +14,16 @@ const allowedStatuses = new Set<string>([
   "Ready for Billing",
   "Completed",
   "Closed",
+  // "Complete" kept for backward compat with any data Cursor wrote
+  "Complete",
 ]);
 
 type RequestRecord = {
   id: string;
   client_id: string;
+  invoice_status: string | null;
+  billing_type: string | null;
+  estimated_fee: number | string | null;
 };
 
 type StatusBody = {
@@ -68,7 +74,7 @@ export async function POST(
   const supabaseAdmin = createAdminClient();
   const { data: existingRequest, error: lookupError } = await supabaseAdmin
     .from("client_requests")
-    .select("id, client_id")
+    .select("id, client_id, invoice_status, billing_type, estimated_fee")
     .eq("id", requestId)
     .maybeSingle<RequestRecord>();
 
@@ -117,6 +123,61 @@ export async function POST(
       { message: "Request status could not be updated." },
       { status: 500 }
     );
+  }
+
+  // Auto-billing pipeline: Completed / Complete → Ready for Billing + draft invoice
+  if (status === "Completed" || status === "Complete") {
+    const { error: invoiceStatusError } = await supabaseAdmin
+      .from("client_requests")
+      .update({
+        invoice_status: "Ready for Billing",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existingRequest.id);
+
+    if (invoiceStatusError) {
+      console.error("Auto invoice_status update failed:", {
+        message: invoiceStatusError.message,
+        code: invoiceStatusError.code,
+      });
+      await logWorkflowError({
+        source: "auto_billing_transition",
+        severity: "warning",
+        message:
+          "Request marked Complete but invoice_status could not be set to Ready for Billing.",
+        context: { error: invoiceStatusError, requestId },
+        relatedClientId: existingRequest.client_id,
+        relatedRequestId: existingRequest.id,
+      });
+    }
+
+    const fee =
+      typeof existingRequest.estimated_fee === "number"
+        ? existingRequest.estimated_fee
+        : existingRequest.estimated_fee
+          ? Number(existingRequest.estimated_fee)
+          : null;
+
+    const draftResult = await createDraftInvoiceForRequest(supabaseAdmin, {
+      clientId: existingRequest.client_id,
+      requestId: existingRequest.id,
+      amount: Number.isFinite(fee ?? NaN) ? fee : null,
+      billingType: existingRequest.billing_type,
+      notes: "Auto-created when request was marked Complete.",
+    });
+
+    if (draftResult.error) {
+      console.error("Auto invoice insert failed:", draftResult.error);
+      await logWorkflowError({
+        source: "auto_billing_transition",
+        severity: "warning",
+        message:
+          "Request marked Complete but draft invoice could not be auto-created.",
+        context: { error: draftResult.error, requestId },
+        relatedClientId: existingRequest.client_id,
+        relatedRequestId: existingRequest.id,
+      });
+    }
   }
 
   if (note || visibleToClient) {

@@ -140,24 +140,39 @@ export async function POST(request: Request) {
   }
 
   const supabaseAdmin = createAdminClient();
-  const { data: insertedRequest, error: requestInsertError } =
-    await supabaseAdmin
+  const insertBase = {
+    client_id: clientProfile.id,
+    service,
+    status: "Open",
+    message,
+    source: "Client Portal",
+    billing_type: "To Be Reviewed",
+    estimated_fee: null,
+    deposit_required: null,
+    amount_paid: 0,
+    balance_due: null,
+    invoice_status: "Not Ready",
+  };
+
+  let insertResult = await supabaseAdmin
+    .from("client_requests")
+    .insert({ ...insertBase, priority: urgency })
+    .select("id")
+    .single<InsertedRequest>();
+
+  if (
+    insertResult.error &&
+    (insertResult.error.message?.toLowerCase().includes("priority") ||
+      insertResult.error.code === "42703")
+  ) {
+    insertResult = await supabaseAdmin
       .from("client_requests")
-      .insert({
-        client_id: clientProfile.id,
-        service,
-        status: "Submitted",
-        message,
-        source: "Client Portal",
-        billing_type: "To Be Reviewed",
-        estimated_fee: null,
-        deposit_required: null,
-        amount_paid: 0,
-        balance_due: null,
-        invoice_status: "Not Ready",
-      })
+      .insert(insertBase)
       .select("id")
       .single<InsertedRequest>();
+  }
+
+  const { data: insertedRequest, error: requestInsertError } = insertResult;
 
   if (requestInsertError) {
     console.error("Client request insert failed:", {

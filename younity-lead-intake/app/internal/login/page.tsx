@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AdminLoginForm } from "./admin-login-form";
-import { isInternalAdminEmail } from "@/lib/internal/adminAuth";
+import { requireInternalAdmin } from "@/lib/internal/adminAuth";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function InternalLoginPage() {
@@ -10,8 +10,11 @@ export default async function InternalLoginPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  if (user && isInternalAdminEmail(user.email)) {
-    redirect("/internal");
+  if (user) {
+    const admin = await requireInternalAdmin();
+    if (admin.isAdmin) {
+      redirect("/internal");
+    }
   }
 
   if (user) {

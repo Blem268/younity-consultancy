@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { friendlyPortalText } from "@/lib/client/portal-text";
+import { isBillingPhaseRequestStatus } from "@/lib/requestWorkflow";
 import { PortalClientHeader } from "../portal-client-header";
 import { InvoiceStatusBadge, RequestStatusBadge } from "@/app/components/ui/status-badges";
 import { ServiceIcon } from "../service-icon";
@@ -129,7 +130,9 @@ export default async function ClientRequestsPage() {
     console.error("Client requests lookup failed:", requestsError);
   }
 
-  const clientRequests = requests ?? [];
+  const clientRequests = (requests ?? []).filter(
+    (request) => !isBillingPhaseRequestStatus(request.status)
+  );
 
   return (
     <div className="req-list flex min-h-screen flex-col">
@@ -158,7 +161,7 @@ export default async function ClientRequestsPage() {
                 Requests
               </h1>
               <p className="mt-1 text-[13px] text-slate-500">
-                Review requests already shared with Younity Consultancy.
+                Active requests in progress. Completed work is handled through billing.
               </p>
             </div>
             <Link

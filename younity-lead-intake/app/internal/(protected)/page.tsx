@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import { ACTIVE_REQUEST_STATUS_NOT_IN } from "@/lib/requestWorkflow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AccessDenied,
@@ -44,16 +45,22 @@ const BOARD_COLUMNS: {
   dot: string;
 }[] = [
   {
-    key: "submitted",
-    label: "Submitted",
-    statuses: ["Submitted"],
+    key: "open",
+    label: "Open",
+    statuses: ["Open", "Submitted"],
     dot: "bg-[#244285]",
   },
   {
     key: "in-progress",
-    label: "In Progress",
-    statuses: ["In Progress"],
+    label: "In progress",
+    statuses: ["in-progress", "In Progress"],
     dot: "bg-[#50A9C0]",
+  },
+  {
+    key: "review",
+    label: "Review",
+    statuses: ["Review", "Under Review", "Internal Review"],
+    dot: "bg-violet-400",
   },
   {
     key: "waiting",
@@ -95,7 +102,7 @@ export default async function BoardPage({ searchParams }: PageProps) {
     .select(
       "id, service, status, invoice_status, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, created_at, updated_at, clients(full_name, company, email)"
     )
-    .not("status", "in", '("Completed","Closed")')
+    .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN)
     .order("created_at", { ascending: false })
     .limit(300)
     .returns<BoardRequest[]>();
@@ -119,9 +126,7 @@ export default async function BoardPage({ searchParams }: PageProps) {
     ? (requests.find((r) => r.id === selectedId) ?? null)
     : null;
 
-  const totalActive = requests.filter(
-    (r) => !["Completed", "Closed"].includes(r.status)
-  ).length;
+  const totalActive = requests.length;
 
   return (
     <InternalPage
@@ -129,13 +134,22 @@ export default async function BoardPage({ searchParams }: PageProps) {
       title="Board"
       description="Active client requests across all workflow stages."
       actions={
-        <Link
-          href="/internal/requests"
-          prefetch={false}
-          className="rounded-xl bg-[#244285] px-4 py-2 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
-        >
-          All requests
-        </Link>
+        <>
+          <Link
+            href="/internal/billing?filter=draft"
+            prefetch={false}
+            className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
+          >
+            Billing
+          </Link>
+          <Link
+            href="/internal/requests"
+            prefetch={false}
+            className="rounded-xl bg-[#244285] px-4 py-2 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
+          >
+            All requests
+          </Link>
+        </>
       }
     >
       {requestsError ? (

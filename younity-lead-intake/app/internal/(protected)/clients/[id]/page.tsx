@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import { ACTIVE_REQUEST_STATUS_NOT_IN } from "@/lib/requestWorkflow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { ClientAdminForm } from "./client-admin-form";
 import {
@@ -33,6 +34,7 @@ type ClientRecord = {
   preferred_contact_method: string | null;
   zoho_lead_id: string | null;
   zoho_contact_id: string | null;
+  drive_folder_url: string | null;
   created_at: string | null;
   updated_at: string | null;
 };
@@ -87,7 +89,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
       supabaseAdmin
         .from("clients")
         .select(
-          "id, full_name, email, phone, company, preferred_contact_method, zoho_lead_id, zoho_contact_id, created_at, updated_at"
+          "id, full_name, email, phone, company, preferred_contact_method, zoho_lead_id, zoho_contact_id, drive_folder_url, created_at, updated_at"
         )
         .eq("id", clientId)
         .maybeSingle<ClientRecord>(),
@@ -95,6 +97,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
         .from("client_requests")
         .select("id, service, status, invoice_status, created_at")
         .eq("client_id", clientId)
+        .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN)
         .order("created_at", { ascending: false })
         .limit(20)
         .returns<ClientRequestRecord[]>(),
@@ -177,6 +180,34 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
           title="Client Details"
           description="Portal profile and CRM reference fields for internal review."
         >
+          {client.drive_folder_url ? (
+            <div className="mt-4">
+              <a
+                href={client.drive_folder_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-4 w-4 flex-shrink-0"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M9.56 3h4.88L21 15h-4.88L9.56 3Z"
+                    fill="#0066DA"
+                  />
+                  <path d="M3 15 6.44 9h4.88L8.02 15H3Z" fill="#00AC47" />
+                  <path
+                    d="m8.02 15 3 5.5H19l-2.88-5.5H8.02Z"
+                    fill="#FFBA00"
+                  />
+                </svg>
+                Open Drive folder
+              </a>
+            </div>
+          ) : null}
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
             {[
               ["Email", client.email],
@@ -212,6 +243,7 @@ export default async function InternalClientDetailPage({ params }: PageProps) {
             preferredContactMethod={client.preferred_contact_method}
             zohoLeadId={client.zoho_lead_id}
             zohoContactId={client.zoho_contact_id}
+            driveFolderUrl={client.drive_folder_url}
           />
         </AdminCard>
       </section>

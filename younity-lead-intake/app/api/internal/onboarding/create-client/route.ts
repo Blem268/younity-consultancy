@@ -67,6 +67,8 @@ export async function POST(request: Request) {
   }
 
   const supabaseAdmin = createAdminClient();
+
+  // Check for existing client profile
   const { data: existingClient, error: existingClientError } = await supabaseAdmin
     .from("clients")
     .select("id")
@@ -74,7 +76,7 @@ export async function POST(request: Request) {
     .maybeSingle<{ id: string }>();
 
   if (existingClientError) {
-    console.error("Internal onboarding duplicate lookup failed:", {
+    console.error("Onboarding duplicate lookup failed:", {
       message: existingClientError.message,
       code: existingClientError.code,
     });
@@ -91,6 +93,34 @@ export async function POST(request: Request) {
     );
   }
 
+  // Step 1 — Send portal invite. This creates the Supabase auth user
+  // and emails the client a sign-in link.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "";
+  const { data: inviteData, error: inviteError } = await supabaseAdmin.auth.admin.inviteUserByEmail(
+    email,
+    {
+      data: { full_name: fullName },
+      redirectTo: siteUrl ? `${siteUrl}/client/dashboard` : undefined,
+    }
+  );
+
+  if (inviteError) {
+    console.error("Onboarding invite failed:", {
+      message: inviteError.message,
+    });
+    // If the auth user already exists, we still create the client record
+    // but flag it so admin knows the invite wasn't sent.
+    if (!inviteError.message.toLowerCase().includes("already")) {
+      return NextResponse.json(
+        { message: "Portal invite could not be sent. Please try again." },
+        { status: 500 }
+      );
+    }
+  }
+
+  const authUserId = inviteData?.user?.id ?? null;
+
+  // Step 2 — Create the client profile, linked to the auth user if available
   const { data: createdClient, error: insertError } = await supabaseAdmin
     .from("clients")
     .insert({
@@ -101,13 +131,13 @@ export async function POST(request: Request) {
       preferred_contact_method: preferredContactMethod,
       zoho_lead_id: getOptionalString(body.zohoLeadId),
       zoho_contact_id: getOptionalString(body.zohoContactId),
-      user_id: null,
+      user_id: authUserId,
     })
     .select("id")
     .single<{ id: string }>();
 
   if (insertError) {
-    console.error("Internal onboarding client create failed:", {
+    console.error("Onboarding client insert failed:", {
       message: insertError.message,
       code: insertError.code,
     });
@@ -125,9 +155,14 @@ export async function POST(request: Request) {
     );
   }
 
+  const inviteSent = !!authUserId;
+
   return NextResponse.json({
     success: true,
     clientId: createdClient.id,
-    message: "Client profile created.",
+    inviteSent,
+    message: inviteSent
+      ? `Client profile created and portal invite sent to ${email}.`
+      : `Client profile created. The invite email could not be sent — the address may already have a portal account.`,
   });
 }

@@ -1,5 +1,10 @@
 import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import {
+  ACTIVE_REQUEST_STATUS_NOT_IN,
+  BILLING_PHASE_REQUEST_STATUSES,
+  isBillingPhaseRequestStatus,
+} from "@/lib/requestWorkflow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AccessDenied,
@@ -229,13 +234,13 @@ export default async function AnalyticsPage() {
     supabaseAdmin
       .from("client_requests")
       .select("id", { count: "exact", head: true })
-      .in("status", ["Completed", "Closed"]),
+      .in("status", [...BILLING_PHASE_REQUEST_STATUSES]),
 
     // Open requests count
     supabaseAdmin
       .from("client_requests")
       .select("id", { count: "exact", head: true })
-      .not("status", "in", '("Completed","Closed")'),
+      .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN),
 
     // All requests for service distribution + top clients
     supabaseAdmin
@@ -249,6 +254,7 @@ export default async function AnalyticsPage() {
     supabaseAdmin
       .from("client_requests")
       .select("id, service, status, created_at, clients(full_name, company)")
+      .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN)
       .order("created_at", { ascending: false })
       .limit(10)
       .returns<RecentRequest[]>(),
@@ -272,7 +278,7 @@ export default async function AnalyticsPage() {
 
   const activeClientIds = new Set(
     allRequests
-      .filter((r) => !["Completed", "Closed"].includes(r.status))
+      .filter((r) => !isBillingPhaseRequestStatus(r.status))
       .map((r) => r.client_id)
       .filter(Boolean)
   );

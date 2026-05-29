@@ -1,21 +1,20 @@
 import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import {
+  clientRequestDetailSelectWithPriority,
+  clientRequestDetailSelectWithoutPriority,
+  isMissingPriorityColumnError,
+} from "@/lib/internal/clientRequestSelect";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { AddClientUpdateForm } from "./add-client-update-form";
-import { RequestBillingForm } from "./request-billing-form";
 import { RequestDocumentForm } from "./request-document-form";
 import { RequestStatusForm } from "./request-status-form";
 import { DocumentStatusForm } from "../../documents/document-status-form";
 import {
   AccessDenied,
   AdminCard,
-  clientLabel,
   DocumentStatusBadge,
   EmptyCard,
-  formatDate,
   formatDateTime,
-  formatMoney,
-  InvoiceStatusBadge,
   InternalPage,
   isUuid,
   logInternalQueryError,
@@ -34,23 +33,14 @@ type RequestRecord = {
   service: string;
   status: string;
   message: string | null;
-  source: string | null;
-  billing_type: string | null;
-  estimated_fee: number | string | null;
-  deposit_required: number | string | null;
-  amount_paid: number | string | null;
-  balance_due: number | string | null;
-  invoice_status: string | null;
-  zoho_books_invoice_id: string | null;
+  priority: string | null;
   created_at: string | null;
   updated_at: string | null;
   clients: {
     id: string;
     full_name: string | null;
     email: string | null;
-    phone: string | null;
     company: string | null;
-    preferred_contact_method: string | null;
   } | null;
 };
 
@@ -76,14 +66,6 @@ type UpdateRecord = {
   message: string;
   created_by: string | null;
   created_at: string | null;
-};
-
-type InvoiceRecord = {
-  id: string;
-  invoice_number: string | null;
-  amount: number | string | null;
-  status: string | null;
-  due_date: string | null;
 };
 
 function isDocumentNeeded(document: DocumentRecord) {
@@ -120,19 +102,57 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
   }
 
   const supabaseAdmin = createAdminClient();
-  const requestResult = await supabaseAdmin
+  const requestResultWithPriority = await supabaseAdmin
     .from("client_requests")
-    .select(
-      "id, client_id, service, status, message, source, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, invoice_status, zoho_books_invoice_id, created_at, updated_at, clients(id, full_name, email, phone, company, preferred_contact_method)"
-    )
+    .select(clientRequestDetailSelectWithPriority)
     .eq("id", requestId)
     .maybeSingle<RequestRecord>();
+
+  const requestResult =
+    requestResultWithPriority.error &&
+    isMissingPriorityColumnError(requestResultWithPriority.error)
+      ? await supabaseAdmin
+          .from("client_requests")
+          .select(clientRequestDetailSelectWithoutPriority)
+          .eq("id", requestId)
+          .maybeSingle<RequestRecord>()
+      : requestResultWithPriority;
 
   if (requestResult.error) {
     logInternalQueryError("Internal request detail", requestResult.error);
   }
 
-  const request = requestResult.data;
+  const request = requestResult.data
+    ? {
+        ...requestResult.data,
+        priority: requestResult.data.priority ?? null,
+      }
+    : null;
+
+  if (!request && requestResult.error) {
+    return (
+      <InternalPage
+        active="requests"
+        title="Internal Request Detail"
+        actions={
+          <Link
+            href="/internal/requests"
+            prefetch={false}
+            className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
+          >
+            Back to requests
+          </Link>
+        }
+      >
+        <section className="py-8">
+          <EmptyCard>
+            This request could not be loaded. Check the server logs or confirm your
+            Supabase connection.
+          </EmptyCard>
+        </section>
+      </InternalPage>
+    );
+  }
 
   if (!request) {
     return (
@@ -156,7 +176,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
     );
   }
 
-  const [documentsResult, updatesResult, invoicesResult] = await Promise.all([
+  const [documentsResult, updatesResult] = await Promise.all([
     supabaseAdmin
       .from("client_documents")
       .select(
@@ -171,12 +191,6 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
       .eq("request_id", request.id)
       .order("created_at", { ascending: false })
       .returns<UpdateRecord[]>(),
-    supabaseAdmin
-      .from("client_invoices")
-      .select("id, invoice_number, amount, status, due_date")
-      .eq("request_id", request.id)
-      .order("created_at", { ascending: false })
-      .returns<InvoiceRecord[]>(),
   ]);
 
   if (documentsResult.error) {
@@ -187,13 +201,8 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
     logInternalQueryError("Internal request updates", updatesResult.error);
   }
 
-  if (invoicesResult.error) {
-    logInternalQueryError("Internal request invoices", invoicesResult.error);
-  }
-
   const documents = documentsResult.data ?? [];
   const updates = updatesResult.data ?? [];
-  const invoices = invoicesResult.data ?? [];
   const documentsRequested = documents.filter(isDocumentNeeded);
   const uploadedDocuments = documents.filter(
     (document) => document.status !== "Requested" || isRealUploadedDocument(document)
@@ -203,7 +212,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
     <InternalPage
       active="requests"
       title={request.service}
-      description="Internal request record with client, document, update, and billing context."
+      description="Client request with documents and timeline."
       actions={
         <>
           <Link
@@ -225,22 +234,17 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
         </>
       }
     >
-      <section className="grid gap-5 py-8 lg:grid-cols-[1fr_0.9fr]">
+      <section className="py-8">
         <AdminCard
           title="Request Summary"
-          description="Operational state and billing preparation fields."
+          description="Core request details from the client portal."
         >
+          <div className="mt-4 border-b border-slate-100 pb-4">
+            <RequestStatusForm requestId={request.id} currentStatus={request.status} />
+          </div>
           <dl className="mt-5 grid gap-4 sm:grid-cols-2">
             {[
-              ["Status", request.status],
-              ["Invoice Status", request.invoice_status || "Not available"],
-              ["Source", request.source || "Not available"],
-              ["Billing Type", request.billing_type || "Not available"],
-              ["Estimated Fee", formatMoney(request.estimated_fee)],
-              ["Deposit Required", formatMoney(request.deposit_required)],
-              ["Amount Paid", formatMoney(request.amount_paid)],
-              ["Balance Due", formatMoney(request.balance_due)],
-              ["Invoice ID", request.zoho_books_invoice_id || "Not available"],
+              ["Priority", request.priority || "Not set"],
               ["Created", formatDateTime(request.created_at)],
               ["Updated", formatDateTime(request.updated_at)],
             ].map(([label, value]) => (
@@ -265,71 +269,11 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
             </div>
           ) : null}
         </AdminCard>
-
-        <AdminCard
-          title="Client Summary"
-          description="Portal identity and preferred contact context."
-        >
-          {request.clients ? (
-            <div className="mt-5 space-y-3 text-sm text-slate-700">
-              <p className="text-base font-semibold text-slate-950">
-                {clientLabel(request.clients)}
-              </p>
-              <p>{request.clients.email || "Email unavailable"}</p>
-              <p>{request.clients.phone || "Phone unavailable"}</p>
-              <p>{request.clients.preferred_contact_method || "Preferred contact unavailable"}</p>
-              <Link
-                href={`/internal/clients/${request.clients.id}`}
-                prefetch={false}
-                className="inline-flex font-semibold text-[#244285] transition hover:text-[#06111f]"
-              >
-                View client profile
-              </Link>
-            </div>
-          ) : (
-            <p className="mt-5 text-sm text-slate-600">Client unavailable.</p>
-          )}
-        </AdminCard>
       </section>
 
-      <section className="grid gap-5 pb-8 lg:grid-cols-2">
+      <section className="pb-8">
         <AdminCard
-          title="Admin Action: Update Status"
-          description="Change the client-visible request status without altering sync behavior."
-        >
-          <RequestStatusForm
-            requestId={request.id}
-            currentStatus={request.status}
-          />
-        </AdminCard>
-
-        <AdminCard
-          title="Billing and Manual Invoice Status"
-          description="Keep billing preparation fields readable for operations."
-        >
-          <RequestBillingForm
-            requestId={request.id}
-            billingType={request.billing_type}
-            estimatedFee={request.estimated_fee}
-            depositRequired={request.deposit_required}
-            amountPaid={request.amount_paid}
-            balanceDue={request.balance_due}
-            invoiceStatus={request.invoice_status}
-            invoiceId={request.zoho_books_invoice_id}
-          />
-        </AdminCard>
-      </section>
-
-      <section className="grid gap-5 pb-8 lg:grid-cols-2">
-        <AdminCard
-          title="Admin Action: Add Client Update"
-          description="Post a short update to the client portal timeline."
-        >
-          <AddClientUpdateForm requestId={request.id} />
-        </AdminCard>
-
-        <AdminCard
-          title="Admin Action: Request Document"
+          title="Request Document"
           description="Ask the client for another document related to this request."
         >
           <RequestDocumentForm requestId={request.id} />
@@ -348,10 +292,7 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
           ) : documentsRequested.length ? (
             <div className="mt-4 divide-y divide-slate-200">
               {documentsRequested.map((document) => (
-                <div
-                  key={document.id}
-                  className="py-4"
-                >
+                <div key={document.id} className="py-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div>
                       <p className="break-words font-semibold text-slate-950">
@@ -488,41 +429,6 @@ export default async function InternalRequestDetailPage({ params }: PageProps) {
             </div>
           ) : (
             <EmptyCard>No updates have been posted for this request.</EmptyCard>
-          )}
-        </AdminCard>
-      </section>
-
-      <section className="pb-8">
-        <AdminCard
-          title="Invoice Records"
-          description="Manual invoice records currently stored for portal visibility."
-        >
-          {invoicesResult.error ? (
-            <p className="mt-5 text-sm text-slate-600">
-              Invoice records are unavailable right now.
-            </p>
-          ) : invoices.length ? (
-            <div className="mt-4 grid gap-3 md:grid-cols-2">
-              {invoices.map((invoice) => (
-                <div
-                  key={invoice.id}
-                  className="rounded-md border border-slate-200 bg-slate-50 p-4"
-                >
-                  <p className="font-semibold text-slate-950">
-                    {invoice.invoice_number || "Invoice number pending"}
-                  </p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    <InvoiceStatusBadge>
-                      {invoice.status || "Status unavailable"}
-                    </InvoiceStatusBadge>
-                    <MutedBadge>{formatMoney(invoice.amount)}</MutedBadge>
-                    <MutedBadge>Due {formatDate(invoice.due_date)}</MutedBadge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <EmptyCard>No invoice records are linked to this request.</EmptyCard>
           )}
         </AdminCard>
       </section>

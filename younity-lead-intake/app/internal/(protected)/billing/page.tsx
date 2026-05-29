@@ -691,11 +691,18 @@ export default async function BillingPage({ searchParams }: PageProps) {
 
                 {/* Actions */}
                 <div className="space-y-2 border-t border-slate-100 px-5 py-4">
+                  <Link
+                    href={`/internal/billing/${selectedInvoice.id}`}
+                    prefetch={false}
+                    className="block w-full rounded-xl bg-[#244285] px-4 py-2.5 text-center text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
+                  >
+                    View full invoice
+                  </Link>
                   {selectedInvoice.client_requests?.id ? (
                     <Link
                       href={`/internal/requests/${selectedInvoice.client_requests.id}`}
                       prefetch={false}
-                      className="block w-full rounded-xl bg-[#244285] px-4 py-2.5 text-center text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
+                      className="block w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-center text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
                     >
                       View request
                     </Link>

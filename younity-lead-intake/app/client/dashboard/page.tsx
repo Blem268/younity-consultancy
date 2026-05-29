@@ -8,9 +8,24 @@ import {
 } from "@/lib/client/portal-text";
 import { PortalClientHeader } from "../portal-client-header";
 import { brand } from "@/app/components/ui/brand";
-import { RequestStatusBadge } from "@/app/components/ui/status-badges";
+import {
+  ACTIVE_REQUEST_STATUS_NOT_IN,
+  isBillingPhaseRequestStatus,
+} from "@/lib/requestWorkflow";
+import {
+  InvoiceStatusBadge,
+  RequestStatusBadge,
+} from "@/app/components/ui/status-badges";
+import {
+  getInvoiceDisplayStatusForToday,
+  getInvoiceSecondaryDetail,
+  getInvoiceSubtitle,
+  loadOutstandingClientPortalInvoices,
+} from "@/lib/invoices/clientPortalInvoices";
 import { getGreeting, splitName } from "@/lib/client/portal-profile";
 import { ServiceIcon } from "../service-icon";
+
+export const dynamic = "force-dynamic";
 
 type ClientProfile = {
   id: string;
@@ -34,15 +49,18 @@ type RequestedDocument = {
   client_requests: { service: string } | null;
 };
 
-function formatMoney(value: number | null | undefined) {
-  if (value === null || value === undefined || !Number.isFinite(value) || value <= 0) {
+function formatMoney(value: number | string | null | undefined) {
+  const amount =
+    typeof value === "number" ? value : value !== null && value !== "" ? Number(value) : NaN;
+
+  if (!Number.isFinite(amount) || amount <= 0) {
     return "XCD 0.00";
   }
 
   return `XCD ${new Intl.NumberFormat("en", {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
-  }).format(value)}`;
+  }).format(amount)}`;
 }
 
 function sumBalanceDue(
@@ -176,6 +194,7 @@ export default async function ClientDashboardPage() {
 
   const { firstName } = splitName(clientProfile.full_name);
   const greeting = getGreeting(new Date().getHours());
+  const today = new Date().toISOString().slice(0, 10);
 
   const [
     activeRequestsResult,
@@ -188,8 +207,7 @@ export default async function ClientDashboardPage() {
       .from("client_requests")
       .select("id", { count: "exact", head: true })
       .eq("client_id", clientProfile.id)
-      .neq("status", "Completed")
-      .neq("status", "Closed"),
+      .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN),
     supabase
       .from("client_documents")
       .select("id", { count: "exact", head: true })
@@ -242,10 +260,19 @@ export default async function ClientDashboardPage() {
     console.error("Billing requests lookup failed:", billingRequestsResult.error);
   }
 
+  const { invoices: outstandingInvoices, error: outstandingInvoicesError } =
+    await loadOutstandingClientPortalInvoices(supabase, clientProfile.id);
+
+  if (outstandingInvoicesError) {
+    console.error("Outstanding invoices lookup failed:", outstandingInvoicesError);
+  }
+
   const activeRequestCount = activeRequestsResult.count ?? 0;
   const documentsNeededCount = documentsRequestedResult.count ?? 0;
   const balanceDueTotal = sumBalanceDue(billingRequestsResult.data ?? []);
-  const recentRequests = recentRequestsResult.data ?? [];
+  const recentRequests = (recentRequestsResult.data ?? []).filter(
+    (request) => !isBillingPhaseRequestStatus(request.status)
+  );
   const priorityDocument = requestedDocumentsResult.data?.[0];
   const recentRequestIds = recentRequests.map((request) => request.id);
 
@@ -467,9 +494,90 @@ export default async function ClientDashboardPage() {
             </div>
           </section>
 
+          <section>
+            <div
+              className="dash-fade-up mb-3 flex items-center justify-between"
+              style={{ animationDelay: "220ms" }}
+            >
+              <h2 className="text-sm font-medium text-[#06111f]">
+                Outstanding invoices
+              </h2>
+              <Link
+                href="/client/invoices"
+                prefetch={false}
+                className="text-xs font-medium text-[#244285] transition hover:text-[#06111f]"
+              >
+                View all →
+              </Link>
+            </div>
+
+            <div
+              className="dash-fade-up overflow-hidden rounded-xl border-[0.5px] border-[#06111f]/10 bg-white"
+              style={{ animationDelay: "240ms" }}
+            >
+              {outstandingInvoicesError ? (
+                <div className="p-6">
+                  <EmptyState
+                    title="Outstanding invoices unavailable"
+                    description="Please refresh the page. If this continues, contact Younity Consultancy."
+                  />
+                </div>
+              ) : outstandingInvoices.length ? (
+                <div className="divide-y divide-[#06111f]/8">
+                  {outstandingInvoices.map((invoice) => {
+                    const displayStatus = getInvoiceDisplayStatusForToday(
+                      invoice,
+                      today
+                    );
+                    const serviceName = invoice.service ?? "Other";
+
+                    return (
+                      <Link
+                        key={invoice.id}
+                        href={
+                          invoice.request_id
+                            ? `/client/requests/${invoice.request_id}`
+                            : "/client/invoices"
+                        }
+                        prefetch={false}
+                        className="req-row flex items-center gap-4 px-4 py-4"
+                      >
+                        <ServiceIcon service={serviceName} />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-medium text-[#06111f]">
+                            {friendlyPortalText(serviceName)}
+                          </span>
+                          <span className="mt-0.5 block text-xs text-slate-500">
+                            {getInvoiceSubtitle(invoice)}
+                          </span>
+                          <span className="mt-1 block text-xs text-slate-500">
+                            {getInvoiceSecondaryDetail(
+                              displayStatus,
+                              invoice.amount
+                            )}
+                          </span>
+                        </span>
+                        <span className="flex shrink-0 flex-col items-end gap-2">
+                          <InvoiceStatusBadge status={displayStatus} />
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="p-6">
+                  <EmptyState
+                    title="No outstanding invoices yet"
+                    description="Invoices will appear here when billing is ready for your requests."
+                  />
+                </div>
+              )}
+            </div>
+          </section>
+
           <section
             className="dash-fade-up grid gap-3 sm:grid-cols-2"
-            style={{ animationDelay: "240ms" }}
+            style={{ animationDelay: "280ms" }}
           >
             <Link
               href="/client/requests/new"
@@ -479,11 +587,11 @@ export default async function ClientDashboardPage() {
               + New request
             </Link>
             <Link
-              href="/client/documents"
+              href="/client/updates"
               prefetch={false}
               className="btn btn-secondary inline-flex min-h-11 items-center justify-center rounded-xl border border-[#06111f]/15 bg-white px-4 py-3 text-sm font-medium text-[#06111f]"
             >
-              ↑ Upload document
+              View updates
             </Link>
           </section>
         </div>

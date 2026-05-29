@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getInternalAdminUser } from "@/lib/internal/adminAuth";
+import { createDraftInvoiceForRequest } from "@/lib/internal/createDraftInvoice";
 import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { createAdminClient } from "@/lib/supabase/admin";
 
@@ -17,6 +18,8 @@ const allowedInvoiceStatuses = new Set([
 type RequestRecord = {
   id: string;
   client_id: string;
+  billing_type: string | null;
+  estimated_fee: number | string | null;
 };
 
 type BillingBody = {
@@ -134,7 +137,7 @@ export async function POST(
   const supabaseAdmin = createAdminClient();
   const { data: existingRequest, error: lookupError } = await supabaseAdmin
     .from("client_requests")
-    .select("id, client_id")
+    .select("id, client_id, billing_type, estimated_fee")
     .eq("id", requestId)
     .maybeSingle<RequestRecord>();
 
@@ -184,6 +187,43 @@ export async function POST(
       { message: "Billing information could not be updated." },
       { status: 500 }
     );
+  }
+
+  // Auto-create draft invoice when status moves to "Ready for Billing"
+  if (invoiceStatus === "Ready for Billing") {
+    const fee = moneyFields.find(([f]) => f === "estimated_fee")?.[1];
+    const resolvedBillingType =
+      (billingType !== undefined ? billingType : existingRequest.billing_type) ?? null;
+    const resolvedFee =
+      (fee?.provided ? fee.value : null) ??
+      (typeof existingRequest.estimated_fee === "number"
+        ? existingRequest.estimated_fee
+        : Number(existingRequest.estimated_fee) || null);
+
+    const draftResult = await createDraftInvoiceForRequest(supabaseAdmin, {
+      clientId: existingRequest.client_id,
+      requestId: existingRequest.id,
+      amount: resolvedFee ?? null,
+      billingType: resolvedBillingType,
+      notes: `Auto-created when request "${existingRequest.id}" was marked Ready for Billing.`,
+    });
+
+    if (draftResult.error) {
+      console.error("Auto invoice insert failed:", draftResult.error);
+      await logWorkflowError({
+        source: "billing_auto_invoice",
+        severity: "warning",
+        message:
+          "Billing status set to Ready for Billing but draft invoice could not be auto-created.",
+        context: {
+          error: draftResult.error,
+          requestId,
+          clientId: existingRequest.client_id,
+        },
+        relatedClientId: existingRequest.client_id,
+        relatedRequestId: existingRequest.id,
+      });
+    }
   }
 
   if (note || visibleToClient) {

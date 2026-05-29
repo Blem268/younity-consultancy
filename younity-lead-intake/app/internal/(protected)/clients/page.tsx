@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import { ACTIVE_REQUEST_STATUS_NOT_IN } from "@/lib/requestWorkflow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AccessDenied,
@@ -29,6 +30,7 @@ type ClientRecord = {
   phone: string | null;
   company: string | null;
   preferred_contact_method: string | null;
+  drive_folder_url: string | null;
   created_at: string | null;
 };
 
@@ -89,7 +91,7 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
 
   let clientsQuery = supabaseAdmin
     .from("clients")
-    .select("id, full_name, email, phone, company, preferred_contact_method, created_at")
+    .select("id, full_name, email, phone, company, preferred_contact_method, drive_folder_url, created_at")
     .order("created_at", { ascending: false })
     .limit(200);
 
@@ -132,7 +134,7 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
           .from("client_requests")
           .select("client_id")
           .in("client_id", clientIds)
-          .not("status", "in", '("Completed","Closed")')
+          .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN)
           .returns<CountRecord[]>(),
         supabaseAdmin
           .from("client_documents")
@@ -145,6 +147,7 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
               .from("client_requests")
               .select("id, service, status, invoice_status, created_at")
               .eq("client_id", selectedId)
+              .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN)
               .order("created_at", { ascending: false })
               .limit(4)
               .returns<RecentRequest[]>()
@@ -584,6 +587,26 @@ export default async function InternalClientsPage({ searchParams }: PageProps) {
                   >
                     View full profile
                   </Link>
+                  {selectedClient.drive_folder_url ? (
+                    <a
+                      href={selectedClient.drive_folder_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        className="h-4 w-4 flex-shrink-0"
+                        fill="none"
+                        xmlns="http://www.w3.org/2000/svg"
+                      >
+                        <path d="M9.56 3h4.88L21 15h-4.88L9.56 3Z" fill="#0066DA" />
+                        <path d="M3 15 6.44 9h4.88L8.02 15H3Z" fill="#00AC47" />
+                        <path d="m8.02 15 3 5.5H19l-2.88-5.5H8.02Z" fill="#FFBA00" />
+                      </svg>
+                      Open Drive folder
+                    </a>
+                  ) : null}
                   <Link
                     href={`/internal/requests?search=${encodeURIComponent(selectedClient.full_name)}`}
                     prefetch={false}

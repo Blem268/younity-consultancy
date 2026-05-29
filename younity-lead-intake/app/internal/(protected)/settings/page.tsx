@@ -10,6 +10,7 @@ import {
   logInternalQueryError,
   StatusBadge,
 } from "../internal-ui";
+import { InviteAdminForm } from "./invite-admin-form";
 
 type PageProps = {
   searchParams: Promise<{ tab?: string | string[] }>;
@@ -20,6 +21,8 @@ type SettingsTab = "notifications" | "integrations" | "admins" | "errors";
 type InternalAdminRecord = {
   id: string;
   email: string;
+  full_name: string | null;
+  role: string;
   created_at: string | null;
 };
 
@@ -231,59 +234,77 @@ function IntegrationsSection() {
   );
 }
 
+function RoleBadge({ role }: { role: string }) {
+  return role === "super_admin" ? (
+    <span className="inline-flex rounded-full bg-[#244285]/10 px-2.5 py-0.5 text-xs font-semibold text-[#244285]">
+      Super admin
+    </span>
+  ) : (
+    <span className="inline-flex rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
+      Admin
+    </span>
+  );
+}
+
 function AdminsSection({
   admins,
   queryError,
+  isSuperAdmin,
 }: {
   admins: InternalAdminRecord[];
   queryError: boolean;
+  isSuperAdmin: boolean;
 }) {
-  if (queryError) {
-    return (
-      <p className="text-sm font-semibold text-red-700">
-        Unable to load admin users. Check the internal_admins table and try
-        again.
-      </p>
-    );
-  }
-
-  if (admins.length === 0) {
-    return <EmptyCard>No admin users found.</EmptyCard>;
-  }
-
   return (
-    <section className="space-y-4">
-      <div className="overflow-hidden rounded-[10px] border border-slate-200/80 bg-white shadow-sm">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-slate-100 bg-slate-50 text-xs font-black uppercase tracking-[0.1em] text-slate-500">
-            <tr>
-              <th className="px-4 py-3">Email</th>
-              <th className="px-4 py-3">Added</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {admins.map((admin) => (
-              <tr key={admin.id}>
-                <td className="px-4 py-4 font-medium text-[#06111f]">
-                  {admin.email}
-                </td>
-                <td className="px-4 py-4 text-slate-600">
-                  {formatDateTime(admin.created_at)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-        <p className="text-sm leading-6 text-amber-900">
-          Admin access is controlled server-side via the{" "}
-          <code className="rounded bg-amber-100 px-1 py-0.5 text-xs">
-            internal_admins
-          </code>{" "}
-          table. To add or remove admins, update the table directly in Supabase
-          or via a migration.
-        </p>
+    <section className="space-y-6">
+      {/* Add staff form — super admin only */}
+      {isSuperAdmin ? <InviteAdminForm /> : null}
+
+      {/* Current admin list */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-[#06111f]">
+          Current admin users
+        </h3>
+
+        {queryError ? (
+          <p className="text-sm font-semibold text-red-700">
+            Unable to load admin users. Check the internal_admins table and try
+            again.
+          </p>
+        ) : admins.length === 0 ? (
+          <EmptyCard>No admin users found.</EmptyCard>
+        ) : (
+          <div className="overflow-hidden rounded-[10px] border border-slate-200/80 bg-white shadow-sm">
+            <table className="w-full text-left text-sm">
+              <thead className="border-b border-slate-100 bg-slate-50 text-xs font-black uppercase tracking-[0.1em] text-slate-500">
+                <tr>
+                  <th className="px-4 py-3">Name</th>
+                  <th className="px-4 py-3">Email</th>
+                  <th className="px-4 py-3">Role</th>
+                  <th className="px-4 py-3">Added</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {admins.map((admin) => (
+                  <tr key={admin.id} className="hover:bg-slate-50">
+                    <td className="px-4 py-3.5 font-semibold text-[#06111f]">
+                      {admin.full_name ?? (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3.5 text-slate-600">{admin.email}</td>
+                    <td className="px-4 py-3.5">
+                      <RoleBadge role={admin.role} />
+                    </td>
+                    <td className="px-4 py-3.5 text-xs text-slate-500">
+                      {formatDateTime(admin.created_at)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -366,7 +387,7 @@ export default async function InternalSettingsPage({ searchParams }: PageProps) 
   ] = await Promise.all([
     supabaseAdmin
       .from("internal_admins")
-      .select("id, email, created_at")
+      .select("id, email, full_name, role, created_at")
       .order("created_at", { ascending: true }),
     supabaseAdmin
       .from("workflow_errors")
@@ -410,6 +431,7 @@ export default async function InternalSettingsPage({ searchParams }: PageProps) 
         <AdminsSection
           admins={adminRecords}
           queryError={Boolean(adminsError)}
+          isSuperAdmin={admin.isSuperAdmin}
         />
       ) : null}
       {tab === "errors" ? (

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import { ACTIVE_REQUEST_STATUS_NOT_IN } from "@/lib/requestWorkflow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AccessDenied,
@@ -85,6 +86,7 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
     .select(
       "id, service, status, invoice_status, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, created_at, updated_at, clients(full_name, company, email)"
     )
+    .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -119,7 +121,16 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
     <InternalPage
       active="requests"
       title="Internal Requests"
-      description="Review submitted client requests, operational status, and billing preparation fields."
+      description="Active client requests in progress. Completed work appears under Billing."
+      actions={
+        <Link
+          href="/internal/billing?filter=draft"
+          prefetch={false}
+          className="rounded-xl bg-[#244285] px-4 py-2 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
+        >
+          Billing
+        </Link>
+      }
     >
       <form className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[0.8fr_0.8fr_1fr_1fr_auto]">
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
