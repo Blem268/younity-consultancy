@@ -1,409 +1,352 @@
 import Link from "next/link";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import { ACTIVE_REQUEST_STATUS_NOT_IN } from "@/lib/requestWorkflow";
+import { createAdminClient } from "@/lib/supabase/admin";
 import {
-  AdminCard,
   AccessDenied,
+  clientLabel,
   EmptyCard,
   formatDateTime,
+  formatMoney,
   InvoiceStatusBadge,
   InternalPage,
+  logInternalQueryError,
   MutedBadge,
   StatusBadge,
 } from "./internal-ui";
-import { brand } from "@/app/components/ui/brand";
 
-type CardValue = string | number;
-
-type SummaryCard = {
-  title: string;
-  value: CardValue;
-  description: string;
+type PageProps = {
+  searchParams: Promise<{ id?: string | string[] }>;
 };
 
-type WorkflowErrorItem = {
-  id: string;
-  created_at: string | null;
-  source: string;
-  severity: string;
-  message: string;
-};
-
-type ClientRequestItem = {
+type BoardRequest = {
   id: string;
   service: string;
   status: string;
   invoice_status: string | null;
+  billing_type: string | null;
+  estimated_fee: number | string | null;
+  deposit_required: number | string | null;
+  amount_paid: number | string | null;
+  balance_due: number | string | null;
   created_at: string | null;
+  updated_at: string | null;
   clients: {
     full_name: string | null;
     company: string | null;
+    email: string | null;
   } | null;
 };
 
-type ClientDocumentItem = {
-  id: string;
-  document_type: string;
-  file_name: string;
-  status: string;
-  uploaded_at: string | null;
-  clients: {
-    full_name: string | null;
-    company: string | null;
-  } | null;
-};
+const BOARD_COLUMNS: {
+  key: string;
+  label: string;
+  statuses: string[];
+  dot: string;
+}[] = [
+  {
+    key: "open",
+    label: "Open",
+    statuses: ["Open", "Submitted"],
+    dot: "bg-[#244285]",
+  },
+  {
+    key: "in-progress",
+    label: "In progress",
+    statuses: ["in-progress", "In Progress"],
+    dot: "bg-[#50A9C0]",
+  },
+  {
+    key: "review",
+    label: "Review",
+    statuses: ["Review", "Under Review", "Internal Review"],
+    dot: "bg-violet-400",
+  },
+  {
+    key: "waiting",
+    label: "Waiting",
+    statuses: ["Waiting", "Waiting on Client", "Waiting on Documents"],
+    dot: "bg-amber-400",
+  },
+  {
+    key: "other",
+    label: "Other",
+    statuses: [],
+    dot: "bg-slate-400",
+  },
+];
 
-function clientLabel(
-  client: { full_name: string | null; company: string | null } | null
-) {
-  if (!client) {
-    return "Client unavailable";
-  }
-
-  return client.company || client.full_name || "Client unavailable";
+function getInitials(label: string) {
+  return label
+    .split(" ")
+    .slice(0, 2)
+    .map((w) => w[0] ?? "")
+    .join("")
+    .toUpperCase();
 }
 
-function logDashboardQueryError(cardTitle: string, error: unknown) {
-  if (!error || typeof error !== "object") {
-    console.error("Internal dashboard query failed:", { cardTitle });
-    return;
-  }
-
-  const maybeError = error as { message?: unknown; code?: unknown };
-  console.error("Internal dashboard query failed:", {
-    cardTitle,
-    message:
-      typeof maybeError.message === "string" ? maybeError.message : undefined,
-    code: typeof maybeError.code === "string" ? maybeError.code : undefined,
-  });
-}
-
-async function getCountCard(
-  title: string,
-  description: string,
-  query: PromiseLike<{ count: number | null; error: unknown }>
-): Promise<SummaryCard> {
-  const result = await query;
-
-  if (result.error) {
-    logDashboardQueryError(title, result.error);
-    return {
-      title,
-      value: "Unavailable",
-      description,
-    };
-  }
-
-  return {
-    title,
-    value: result.count ?? 0,
-    description,
-  };
-}
-
-export default async function InternalDashboardPage() {
+export default async function BoardPage({ searchParams }: PageProps) {
   const admin = await requireInternalAdmin();
 
   if (!admin.isAdmin) {
-    return <AccessDenied title="Younity Internal Dashboard" />;
+    return <AccessDenied title="Board" />;
   }
+
+  const params = await searchParams;
+  const selectedId = Array.isArray(params.id) ? params.id[0] : params.id ?? null;
 
   const supabaseAdmin = createAdminClient();
-  const nowDate = new Date();
-  const sevenDaysAgoDate = new Date(nowDate);
-  sevenDaysAgoDate.setUTCDate(nowDate.getUTCDate() - 7);
-  const sevenDaysAgo = sevenDaysAgoDate.toISOString();
-  const now = nowDate.toISOString();
 
-  const [
-    openWorkflowErrorsCard,
-    recentClientRequestsCard,
-    documentsUploadedCard,
-    documentsNeededCard,
-    documentsNeedingReviewCard,
-    activeClientRequestsCard,
-    readyForBillingCard,
-    rateLimitRecordsCard,
-    workflowErrorsResult,
-    clientRequestsResult,
-    clientDocumentsResult,
-  ] = await Promise.all([
-    getCountCard(
-      "Open Workflow Errors",
-      "Unresolved workflow failures that may need retry or manual resolution.",
-      supabaseAdmin
-        .from("workflow_errors")
-        .select("id", { count: "exact", head: true })
-        .eq("resolved", false)
-    ),
-    getCountCard(
-      "Recent Client Requests",
-      "Requests submitted in the last 7 days across the client portal.",
-      supabaseAdmin
-        .from("client_requests")
-        .select("id", { count: "exact", head: true })
-        .gte("created_at", sevenDaysAgo)
-    ),
-    getCountCard(
-      "Documents Uploaded",
-      "Client files uploaded in the last 7 days through secure storage.",
-      supabaseAdmin
-        .from("client_documents")
-        .select("id", { count: "exact", head: true })
-        .gte("uploaded_at", sevenDaysAgo)
-        .neq("file_path", "pending")
-    ),
-    getCountCard(
-      "Documents Needed",
-      "Structured document requests still waiting on client upload or replacement.",
-      supabaseAdmin
-        .from("client_documents")
-        .select("id", { count: "exact", head: true })
-        .in("status", ["Requested", "Needs Replacement"])
-    ),
-    getCountCard(
-      "Documents Needing Review",
-      "Submitted or received client files waiting for internal review.",
-      supabaseAdmin
-        .from("client_documents")
-        .select("id", { count: "exact", head: true })
-        .in("status", ["Submitted", "Received"])
-    ),
-    getCountCard(
-      "Active Client Requests",
-      "Requests still moving through the operations workflow.",
-      supabaseAdmin
-        .from("client_requests")
-        .select("id", { count: "exact", head: true })
-        .not("status", "in", '("Completed","Closed")')
-    ),
-    getCountCard(
-      "Ready for Billing",
-      "Requests marked ready for manual invoice preparation.",
-      supabaseAdmin
-        .from("client_requests")
-        .select("id", { count: "exact", head: true })
-        .eq("invoice_status", "Ready for Billing")
-    ),
-    getCountCard(
-      "Rate Limit Records",
-      "Active Supabase-backed rate-limit windows protecting public actions.",
-      supabaseAdmin
-        .from("rate_limits")
-        .select("id", { count: "exact", head: true })
-        .gt("expires_at", now)
-    ),
-    supabaseAdmin
-      .from("workflow_errors")
-      .select("id, created_at, source, severity, message")
-      .eq("resolved", false)
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .returns<WorkflowErrorItem[]>(),
-    supabaseAdmin
-      .from("client_requests")
-      .select("id, service, status, invoice_status, created_at, clients(full_name, company)")
-      .order("created_at", { ascending: false })
-      .limit(5)
-      .returns<ClientRequestItem[]>(),
-    supabaseAdmin
-      .from("client_documents")
-      .select("id, document_type, file_name, status, uploaded_at, clients(full_name, company)")
-      .order("uploaded_at", { ascending: false })
-      .limit(5)
-      .returns<ClientDocumentItem[]>(),
-  ]);
+  const { data: requestsData, error: requestsError } = await supabaseAdmin
+    .from("client_requests")
+    .select(
+      "id, service, status, invoice_status, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, created_at, updated_at, clients(full_name, company, email)"
+    )
+    .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN)
+    .order("created_at", { ascending: false })
+    .limit(300)
+    .returns<BoardRequest[]>();
 
-  const summaryCards = [
-    openWorkflowErrorsCard,
-    recentClientRequestsCard,
-    documentsUploadedCard,
-    documentsNeededCard,
-    documentsNeedingReviewCard,
-    activeClientRequestsCard,
-    readyForBillingCard,
-    rateLimitRecordsCard,
-  ];
-
-  if (workflowErrorsResult.error) {
-    logDashboardQueryError("Recent workflow errors", workflowErrorsResult.error);
+  if (requestsError) {
+    logInternalQueryError("Board requests", requestsError);
   }
 
-  if (clientRequestsResult.error) {
-    logDashboardQueryError("Recent client requests", clientRequestsResult.error);
-  }
+  const requests = requestsData ?? [];
 
-  if (clientDocumentsResult.error) {
-    logDashboardQueryError("Recent document uploads", clientDocumentsResult.error);
-  }
+  const knownStatuses = new Set(BOARD_COLUMNS.flatMap((col) => col.statuses));
+  const columns = BOARD_COLUMNS.map((col) => ({
+    ...col,
+    items:
+      col.key === "other"
+        ? requests.filter((r) => !knownStatuses.has(r.status))
+        : requests.filter((r) => col.statuses.includes(r.status)),
+  }));
 
-  const workflowErrors = workflowErrorsResult.data ?? [];
-  const clientRequests = clientRequestsResult.data ?? [];
-  const clientDocuments = clientDocumentsResult.data ?? [];
-  const quickActions = [
-    { label: "Manage Clients", href: "/internal/clients" },
-    { label: "Manage Requests", href: "/internal/requests" },
-    { label: "Manage Documents", href: "/internal/documents" },
-    { label: "Run Syncs", href: "/internal/sync" },
-    { label: "Workflow Errors", href: "/internal/errors" },
-    { label: "Public Website", href: "/" },
-    { label: "Test Lead Form", href: "/contact" },
-  ];
+  const selectedRequest = selectedId
+    ? (requests.find((r) => r.id === selectedId) ?? null)
+    : null;
+
+  const totalActive = requests.length;
 
   return (
     <InternalPage
-      active="dashboard"
-      title="Younity Internal Dashboard"
-      description="Operations, workflow health, billing readiness, and client portal activity."
+      active="board"
+      title="Board"
+      description="Active client requests across all workflow stages."
+      actions={
+        <>
+          <Link
+            href="/internal/billing?filter=draft"
+            prefetch={false}
+            className="rounded-xl border border-[#06111f]/15 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
+          >
+            Billing
+          </Link>
+          <Link
+            href="/internal/requests"
+            prefetch={false}
+            className="rounded-xl bg-[#244285] px-4 py-2 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
+          >
+            All requests
+          </Link>
+        </>
+      }
     >
-        <section className="grid gap-4 py-8 sm:grid-cols-2 xl:grid-cols-3">
-          {summaryCards.map((card) => (
-            <article
-              key={card.title}
-              className={brand.statCard}
-            >
-              <p className="text-sm font-black uppercase tracking-[0.12em] text-slate-500">{card.title}</p>
-              <p className="mt-3 text-4xl font-black tracking-tight text-[#06111f]">
-                {card.value}
-              </p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                {card.description}
-              </p>
-            </article>
-          ))}
-        </section>
-
-        <section className="grid gap-5 lg:grid-cols-2">
-          <AdminCard
-            title="Recent Workflow Errors"
-            description="Newest unresolved failures from workflow logging."
-            actions={
-              <Link
-                href="/internal/errors"
-                prefetch={false}
-                className="text-sm font-semibold text-[#244285] transition hover:text-[#06111f]"
-              >
-                View all
-              </Link>
-            }
-          >
-            {workflowErrorsResult.error ? (
-              <p className="mt-5 text-sm text-slate-600">
-                Workflow errors are unavailable right now.
-              </p>
-            ) : workflowErrors.length ? (
-              <div className="divide-y divide-slate-200">
-                {workflowErrors.map((workflowError) => (
-                  <div key={workflowError.id} className="py-4">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <StatusBadge>{workflowError.severity}</StatusBadge>
-                      <MutedBadge>{formatDateTime(workflowError.created_at)}</MutedBadge>
-                    </div>
-                    <p className="mt-2 text-sm font-semibold text-slate-950">
-                      {workflowError.message}
-                    </p>
-                    <p className="mt-1 break-words text-sm text-slate-600">
-                      {workflowError.source}
-                    </p>
+      {requestsError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-5">
+          <p className="text-sm font-medium text-red-700">
+            Board data is unavailable right now.
+          </p>
+        </div>
+      ) : (
+        <div className="flex min-h-full gap-6">
+          {/* Kanban columns */}
+          <div className="min-w-0 flex-1 overflow-x-auto">
+            <p className="mb-4 text-xs font-semibold text-slate-500">
+              {totalActive} active request{totalActive === 1 ? "" : "s"}
+            </p>
+            <div className="flex gap-4 pb-6" style={{ minWidth: "fit-content" }}>
+              {columns.map((col) => (
+                <div key={col.key} className="w-[268px] flex-shrink-0">
+                  {/* Column header */}
+                  <div className="mb-3 flex items-center gap-2 px-1">
+                    <span className={`h-2 w-2 rounded-full ${col.dot}`} />
+                    <span className="text-xs font-black uppercase tracking-[0.15em] text-slate-500">
+                      {col.label}
+                    </span>
+                    <span className="ml-auto rounded-full bg-slate-200 px-2 py-0.5 text-xs font-semibold text-slate-600">
+                      {col.items.length}
+                    </span>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyCard>No unresolved workflow errors. The active workflow queue is clear.</EmptyCard>
-            )}
-          </AdminCard>
 
-          <AdminCard
-            title="Quick Actions"
-            description="Common internal routes for daily operations."
-          >
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              {quickActions.map((action) => (
-                <Link
-                  key={action.href}
-                  href={action.href}
-                  prefetch={false}
-                  className="rounded-md border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800 transition hover:border-[#50A9C0]/30 hover:bg-[#50A9C0]/10 hover:text-[#06111f]"
-                >
-                  {action.label}
-                </Link>
+                  {/* Cards */}
+                  <div className="space-y-2.5">
+                    {col.items.length === 0 ? (
+                      <EmptyCard>No {col.label.toLowerCase()} requests</EmptyCard>
+                    ) : (
+                      col.items.map((request) => {
+                        const label = request.clients
+                          ? clientLabel(request.clients)
+                          : "Unknown client";
+                        const isSelected = request.id === selectedId;
+
+                        return (
+                          <Link
+                            key={request.id}
+                            href={isSelected ? "/internal" : `?id=${request.id}`}
+                            prefetch={false}
+                            scroll={false}
+                            className={`block rounded-[10px] border bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${
+                              isSelected
+                                ? "border-[#50A9C0]/50 ring-1 ring-[#50A9C0]/30"
+                                : "border-slate-200/80"
+                            }`}
+                          >
+                            <p className="line-clamp-2 text-sm font-semibold text-[#06111f]">
+                              {request.service}
+                            </p>
+                            <div className="mt-2.5 flex items-center gap-2">
+                              <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#244285]/10 text-[9px] font-black text-[#244285]">
+                                {getInitials(label)}
+                              </div>
+                              <p className="truncate text-xs text-slate-600">
+                                {label}
+                              </p>
+                            </div>
+                            {request.invoice_status ? (
+                              <div className="mt-2.5">
+                                <InvoiceStatusBadge>
+                                  {request.invoice_status}
+                                </InvoiceStatusBadge>
+                              </div>
+                            ) : null}
+                            <p className="mt-2.5 text-xs text-slate-400">
+                              {formatDateTime(request.created_at)}
+                            </p>
+                          </Link>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
               ))}
             </div>
-          </AdminCard>
-        </section>
+          </div>
 
-        <section className="grid gap-5 py-8 lg:grid-cols-2">
-          <AdminCard
-            title="Recent Client Requests"
-            description="Latest submitted requests with status and billing readiness."
-          >
-            {clientRequestsResult.error ? (
-              <p className="mt-5 text-sm text-slate-600">
-                Client requests are unavailable right now.
-              </p>
-            ) : clientRequests.length ? (
-              <div className="divide-y divide-slate-200">
-                {clientRequests.map((request) => (
-                  <div key={request.id} className="py-4">
-                    <p className="text-sm font-semibold text-slate-950">
-                      {request.service}
+          {/* Detail panel */}
+          {selectedRequest ? (
+            <aside className="w-[340px] flex-shrink-0">
+              <div className="rounded-[10px] border border-slate-200/80 bg-white shadow-sm">
+                {/* Panel header */}
+                <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4">
+                  <div className="min-w-0">
+                    <p className="line-clamp-2 text-sm font-semibold text-[#06111f]">
+                      {selectedRequest.service}
                     </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {clientLabel(request.clients)}
+                    <p className="mt-0.5 truncate text-xs text-slate-500">
+                      {selectedRequest.clients
+                        ? clientLabel(selectedRequest.clients)
+                        : "Client unavailable"}
                     </p>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                      <StatusBadge>{request.status}</StatusBadge>
+                  </div>
+                  <Link
+                    href="/internal"
+                    prefetch={false}
+                    scroll={false}
+                    className="flex-shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                  >
+                    ✕
+                  </Link>
+                </div>
+
+                <div className="space-y-5 px-5 py-5">
+                  {/* Status */}
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Status
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <StatusBadge>{selectedRequest.status}</StatusBadge>
                       <InvoiceStatusBadge>
-                        {request.invoice_status || "Invoice status unavailable"}
+                        {selectedRequest.invoice_status || "Invoice status unavailable"}
                       </InvoiceStatusBadge>
                     </div>
-                    <p className="mt-3 text-xs text-slate-500">
-                      Created {formatDateTime(request.created_at)}
-                    </p>
-                    <p className="mt-1 break-all text-xs text-slate-500">
-                      Request ID: {request.id}
-                    </p>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <EmptyCard>No recent client requests in the current dashboard window.</EmptyCard>
-            )}
-          </AdminCard>
 
-          <AdminCard
-            title="Recent Document Uploads"
-            description="Newest client uploads, kept behind admin document routes."
-          >
-            {clientDocumentsResult.error ? (
-              <p className="mt-5 text-sm text-slate-600">
-                Document uploads are unavailable right now.
-              </p>
-            ) : clientDocuments.length ? (
-              <div className="divide-y divide-slate-200">
-                {clientDocuments.map((document) => (
-                  <div key={document.id} className="py-4">
-                    <p className="break-words text-sm font-semibold text-slate-950">
-                      {document.file_name}
+                  {/* Client */}
+                  {selectedRequest.clients ? (
+                    <div>
+                      <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                        Client
+                      </p>
+                      <p className="text-sm font-semibold text-slate-800">
+                        {clientLabel(selectedRequest.clients)}
+                      </p>
+                      {selectedRequest.clients.email ? (
+                        <p className="mt-0.5 break-all text-xs text-slate-500">
+                          {selectedRequest.clients.email}
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : null}
+
+                  {/* Billing */}
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Billing
                     </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {document.document_type}
-                    </p>
-                    <p className="mt-1 text-sm text-slate-600">
-                      {clientLabel(document.clients)}
-                    </p>
-                    <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold">
-                      <StatusBadge>{document.status}</StatusBadge>
-                      <MutedBadge>Uploaded {formatDateTime(document.uploaded_at)}</MutedBadge>
+                    {selectedRequest.billing_type ? (
+                      <div className="mb-2">
+                        <MutedBadge>{selectedRequest.billing_type}</MutedBadge>
+                      </div>
+                    ) : null}
+                    <div className="space-y-1 text-sm text-slate-600">
+                      <p>
+                        <span className="text-slate-400">Estimated </span>
+                        {formatMoney(selectedRequest.estimated_fee)}
+                      </p>
+                      <p>
+                        <span className="text-slate-400">Deposit </span>
+                        {formatMoney(selectedRequest.deposit_required)}
+                      </p>
+                      <p>
+                        <span className="text-slate-400">Paid </span>
+                        {formatMoney(selectedRequest.amount_paid)}
+                      </p>
+                      <p>
+                        <span className="text-slate-400">Balance </span>
+                        {formatMoney(selectedRequest.balance_due)}
+                      </p>
                     </div>
                   </div>
-                ))}
+
+                  {/* Dates */}
+                  <div>
+                    <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">
+                      Dates
+                    </p>
+                    <div className="space-y-1 text-xs text-slate-500">
+                      <p>Created {formatDateTime(selectedRequest.created_at)}</p>
+                      <p>Updated {formatDateTime(selectedRequest.updated_at)}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="border-t border-slate-100 px-5 py-4">
+                  <Link
+                    href={`/internal/requests/${selectedRequest.id}`}
+                    prefetch={false}
+                    className="block w-full rounded-xl bg-[#244285] px-4 py-2.5 text-center text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
+                  >
+                    View full detail
+                  </Link>
+                </div>
               </div>
-            ) : (
-              <EmptyCard>No recent document uploads in the current dashboard window.</EmptyCard>
-            )}
-          </AdminCard>
-        </section>
+            </aside>
+          ) : null}
+        </div>
+      )}
     </InternalPage>
   );
 }

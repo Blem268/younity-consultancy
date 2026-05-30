@@ -1,10 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import {
-  addClickUpDocumentUploadComment,
-  attachFileToClickUpTask,
-} from "@/lib/integrations/clickup";
 import { sendDocumentUploadNotificationEmail } from "@/lib/integrations/email";
 import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { rateLimit } from "@/lib/security/rateLimit";
@@ -50,7 +46,6 @@ type LinkedRequest = {
   id: string;
   service: string;
   status: string;
-  clickup_task_id: string | null;
 };
 
 type InsertedDocument = {
@@ -251,7 +246,7 @@ export async function POST(request: Request) {
 
     const { data, error: linkedRequestError } = await supabase
       .from("client_requests")
-      .select("id, service, status, clickup_task_id")
+      .select("id, service, status")
       .eq("id", requestId)
       .eq("client_id", clientProfile.id)
       .maybeSingle<LinkedRequest>();
@@ -438,83 +433,6 @@ export async function POST(request: Request) {
       relatedDocumentId: insertedDocument.id,
     });
     notificationWarnings.push("Document uploaded, but the WhatsApp notification failed.");
-  }
-
-  if (linkedRequest?.clickup_task_id) {
-    let clickUpAttachmentSucceeded = false;
-
-    try {
-      await attachFileToClickUpTask({
-        taskId: linkedRequest.clickup_task_id,
-        file: fileValue,
-      });
-      clickUpAttachmentSucceeded = true;
-    } catch (error) {
-      console.error("ClickUp document attachment failed:", error);
-      await logWorkflowError({
-        source: "client-document-upload.clickup-attachment",
-        severity: "warning",
-        message: "ClickUp document attachment failed.",
-        retryable: true,
-        retryStatus: "ready",
-        context: {
-          error,
-          retryType: "clickup_attachment",
-          retryPayload: {
-            taskId: linkedRequest.clickup_task_id,
-            bucket: "client-documents",
-            storagePath,
-            fileName: fileValue.name,
-            contentType: fileValue.type,
-          },
-          clickUpTaskId: linkedRequest.clickup_task_id,
-          requestId: linkedRequest.id,
-          documentId: insertedDocument.id,
-        },
-        relatedClientId: clientProfile.id,
-        relatedRequestId: linkedRequest.id,
-        relatedDocumentId: insertedDocument.id,
-      });
-      notificationWarnings.push("Document saved, but the ClickUp file attachment failed.");
-    }
-
-    try {
-      await addClickUpDocumentUploadComment({
-        ...notificationInput,
-        clickUpTaskId: linkedRequest.clickup_task_id,
-        documentId: insertedDocument.id,
-        clickUpAttachmentSucceeded,
-      });
-    } catch (error) {
-      console.error("ClickUp document upload comment failed:", error);
-      await logWorkflowError({
-        source: "client-document-upload.clickup-comment",
-        severity: "warning",
-        message: "ClickUp document upload comment failed.",
-        retryable: true,
-        retryStatus: "ready",
-        context: {
-          error,
-          retryType: "clickup_comment",
-          retryPayload: {
-            commentKind: "document_upload",
-            input: {
-              ...notificationInput,
-              clickUpTaskId: linkedRequest.clickup_task_id,
-              documentId: insertedDocument.id,
-              clickUpAttachmentSucceeded,
-            },
-          },
-          clickUpTaskId: linkedRequest.clickup_task_id,
-          requestId: linkedRequest.id,
-          documentId: insertedDocument.id,
-        },
-        relatedClientId: clientProfile.id,
-        relatedRequestId: linkedRequest.id,
-        relatedDocumentId: insertedDocument.id,
-      });
-      notificationWarnings.push("Document saved, but the ClickUp comment failed.");
-    }
   }
 
   return NextResponse.json({

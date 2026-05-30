@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { createClickUpPortalRequestTask } from "@/lib/integrations/clickup";
 import { sendPortalRequestNotificationEmail } from "@/lib/integrations/email";
 import { logWorkflowError } from "@/lib/internal/workflowErrors";
 import { rateLimit } from "@/lib/security/rateLimit";
@@ -39,7 +38,7 @@ type RequestBody = {
   message?: unknown;
   preferredContactMethod?: unknown;
   urgency?: unknown;
-  // Accepted for older clients only. New Request no longer sends or uses this.
+  // Accepted for older clients only. The current request form does not use this.
   billingNotes?: unknown;
 };
 
@@ -141,24 +140,39 @@ export async function POST(request: Request) {
   }
 
   const supabaseAdmin = createAdminClient();
-  const { data: insertedRequest, error: requestInsertError } =
-    await supabaseAdmin
+  const insertBase = {
+    client_id: clientProfile.id,
+    service,
+    status: "Open",
+    message,
+    source: "Client Portal",
+    billing_type: "To Be Reviewed",
+    estimated_fee: null,
+    deposit_required: null,
+    amount_paid: 0,
+    balance_due: null,
+    invoice_status: "Not Ready",
+  };
+
+  let insertResult = await supabaseAdmin
+    .from("client_requests")
+    .insert({ ...insertBase, priority: urgency })
+    .select("id")
+    .single<InsertedRequest>();
+
+  if (
+    insertResult.error &&
+    (insertResult.error.message?.toLowerCase().includes("priority") ||
+      insertResult.error.code === "42703")
+  ) {
+    insertResult = await supabaseAdmin
       .from("client_requests")
-      .insert({
-        client_id: clientProfile.id,
-        service,
-        status: "Submitted",
-        message,
-        source: "Client Portal",
-        billing_type: "To Be Reviewed",
-        estimated_fee: null,
-        deposit_required: null,
-        amount_paid: 0,
-        balance_due: null,
-        invoice_status: "Not Ready",
-      })
+      .insert(insertBase)
       .select("id")
       .single<InsertedRequest>();
+  }
+
+  const { data: insertedRequest, error: requestInsertError } = insertResult;
 
   if (requestInsertError) {
     console.error("Client request insert failed:", {
@@ -183,90 +197,16 @@ export async function POST(request: Request) {
   }
 
   const warnings: string[] = [];
-  let clickUpTaskId = "";
 
-  try {
-    const clickUpTask = await createClickUpPortalRequestTask({
-      clientName: clientProfile.full_name,
-      clientEmail: clientProfile.email,
-      clientPhone: clientProfile.phone,
-      company: clientProfile.company,
-      service,
-      message,
-      preferredContactMethod,
-      urgency,
-      portalRequestId: insertedRequest.id,
-    });
-
-    clickUpTaskId = clickUpTask.id;
-
-    const { error: clickUpUpdateError } = await supabaseAdmin
-      .from("client_requests")
-      .update({
-        clickup_task_id: clickUpTask.id,
-      })
-      .eq("id", insertedRequest.id)
-      .eq("client_id", clientProfile.id);
-
-    if (clickUpUpdateError) {
-      console.error("Client request ClickUp task update failed:", {
-        message: clickUpUpdateError.message,
-        code: clickUpUpdateError.code,
-      });
-      await logWorkflowError({
-        source: "client-request-create.clickup-id-save",
-        severity: "warning",
-        message: "ClickUp task ID could not be saved to the portal request.",
-        context: {
-          error: clickUpUpdateError,
-          clickUpTaskId: clickUpTask.id,
-          service,
-        },
-        relatedClientId: clientProfile.id,
-        relatedRequestId: insertedRequest.id,
-      });
-      warnings.push("ClickUp task ID could not be saved to the portal request.");
-    }
-  } catch (error) {
-    console.error("ClickUp portal request task creation failed:", error);
-    await logWorkflowError({
-      source: "client-request-create.clickup",
-      severity: "error",
-      message: "ClickUp portal request task creation failed.",
-      context: {
-        error,
-        service,
-        urgency,
-      },
-      relatedClientId: clientProfile.id,
-      relatedRequestId: insertedRequest.id,
-    });
-    warnings.push("Internal task creation needs review.");
-  }
-
-  const timelineEntries = [
-    {
+  const { error: updateInsertError } = await supabaseAdmin
+    .from("client_updates")
+    .insert({
       client_id: clientProfile.id,
       request_id: insertedRequest.id,
       title: "Request submitted",
       message: "Your request has been submitted and is now under review.",
       created_by: "Younity Consultancy",
-    },
-  ];
-
-  if (!clickUpTaskId) {
-    timelineEntries.push({
-      client_id: clientProfile.id,
-      request_id: insertedRequest.id,
-      title: "Request received",
-      message: "Your request was received. Our team will review it shortly.",
-      created_by: "Younity Consultancy",
     });
-  }
-
-  const { error: updateInsertError } = await supabaseAdmin
-    .from("client_updates")
-    .insert(timelineEntries);
 
   if (updateInsertError) {
     console.error("Client request timeline insert failed:", {
@@ -297,7 +237,6 @@ export async function POST(request: Request) {
     preferredContactMethod,
     message,
     portalRequestId: insertedRequest.id,
-    clickUpTaskId,
   };
 
   try {
@@ -318,7 +257,6 @@ export async function POST(request: Request) {
           input: notificationInput,
         },
         service,
-        clickUpTaskId,
       },
       relatedClientId: clientProfile.id,
       relatedRequestId: insertedRequest.id,
@@ -344,7 +282,6 @@ export async function POST(request: Request) {
           input: notificationInput,
         },
         service,
-        clickUpTaskId,
       },
       relatedClientId: clientProfile.id,
       relatedRequestId: insertedRequest.id,
@@ -356,7 +293,6 @@ export async function POST(request: Request) {
     success: true,
     message: "Request submitted successfully.",
     requestId: insertedRequest.id,
-    clickUpTaskId,
     ...(warnings.length ? { warnings } : {}),
   });
 }

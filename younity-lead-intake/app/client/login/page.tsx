@@ -50,18 +50,18 @@ export default function ClientLoginPage() {
               priority
             />
             <div>
-              <p className="text-xl font-black tracking-wide text-white">
-                YOUNITY
+              <p className="text-xl font-medium tracking-wide text-white">
+                Younity
               </p>
-              <p className="text-xs font-bold uppercase tracking-[0.3em] text-white/80">
-                CONSULTANCY
+              <p className="text-xs font-medium tracking-[0.25em] text-white/70">
+                Consultancy
               </p>
             </div>
           </div>
-          <p className="text-sm font-black uppercase tracking-[0.3em] text-[#50A9C0]">
+          <p className="text-sm font-medium tracking-[0.15em] text-[#50A9C0]">
             Client Portal
           </p>
-          <h1 className="mt-3 text-3xl font-black tracking-tight text-white">
+          <h1 className="mt-3 text-3xl font-medium tracking-tight text-white">
             Secure client access
           </h1>
           <p className="mt-3 text-sm leading-6 text-white/70">
@@ -130,14 +130,25 @@ export default function ClientLoginPage() {
           </div>
         </form>
 
-        <footer className="relative z-10 mt-6 flex justify-center">
-          <Link
-            href="/internal/login"
-            prefetch={false}
-            className="rounded-xl border border-white/15 px-4 py-2 text-xs font-black uppercase tracking-[0.12em] text-white/70 transition hover:border-[#50A9C0]/60 hover:bg-white/10 hover:text-[#50A9C0] focus:outline-none focus:ring-2 focus:ring-[#50A9C0]/50"
-          >
-            Admin Portal
-          </Link>
+        <footer className="relative z-10 mt-6 space-y-4">
+          <div className="flex justify-center">
+            <Link
+              href="/"
+              prefetch={false}
+              className="text-sm font-medium text-[#50A9C0] transition-colors duration-150 hover:text-white"
+            >
+              ← Back to website
+            </Link>
+          </div>
+          <div className="flex justify-center">
+            <Link
+              href="/internal/login"
+              prefetch={false}
+              className="rounded-xl border border-white/15 px-4 py-2 text-xs font-medium text-white/70 transition-colors duration-150 hover:border-[#50A9C0]/60 hover:bg-white/10 hover:text-[#50A9C0] focus:outline-none focus:ring-2 focus:ring-[#50A9C0]/50"
+            >
+              Admin Portal
+            </Link>
+          </div>
         </footer>
       </div>
     </main>

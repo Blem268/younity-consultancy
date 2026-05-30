@@ -14,28 +14,25 @@ Do not commit real values. `NEXT_PUBLIC_` variables can be visible in the browse
 
 | Variable | Purpose | Used By | Visibility |
 | --- | --- | --- | --- |
-| `ZOHO_CLIENT_ID` | Zoho OAuth client ID. | Zoho integration token refresh. | Server-only |
-| `ZOHO_CLIENT_SECRET` | Zoho OAuth client secret. | Zoho integration token refresh. | Server-only |
-| `ZOHO_REFRESH_TOKEN` | Refresh token used to obtain Zoho access tokens. | Zoho integration token refresh. | Server-only |
-| `ZOHO_ACCOUNTS_URL` | Zoho accounts/token endpoint base URL for the account data center. | Zoho integration token refresh. | Server-only |
-| `ZOHO_API_DOMAIN` | Zoho CRM API domain for the account data center. | Zoho lead create/update calls. | Server-only |
+| `ZOHO_CLIENT_ID` | Zoho OAuth client ID. | Zoho CRM integration token refresh. | Server-only |
+| `ZOHO_CLIENT_SECRET` | Zoho OAuth client secret. | Zoho CRM integration token refresh. | Server-only |
+| `ZOHO_REFRESH_TOKEN` | Refresh token used to obtain Zoho CRM access tokens. | Zoho CRM integration token refresh. | Server-only |
+| `ZOHO_ACCOUNTS_URL` | Zoho accounts/token endpoint base URL for the account data center. | Zoho CRM integration token refresh. | Server-only |
+| `ZOHO_API_DOMAIN` | Zoho CRM API domain for the account data center. | Zoho CRM lead create/update calls. | Server-only |
 
-## ClickUp
+## Zoho Books
 
-| Variable | Purpose | Used By | Visibility |
-| --- | --- | --- | --- |
-| `CLICKUP_API_TOKEN` | ClickUp API token for task creation, comments, and task reads. | ClickUp integration. | Server-only |
-| `CLICKUP_LIST_ID` | Target ClickUp list for lead and portal request tasks. Use `901713882310` for Client Services -> Services -> Client Requests. | ClickUp task creation. | Server-only |
-| `CLICKUP_TEAM_ID` | ClickUp Workspace/team ID used when registering API webhooks. | Admin-only ClickUp webhook registration route. | Server-only |
-| `CLICKUP_WEBHOOK_SECRET` | Secret used to verify incoming ClickUp webhook `X-Signature` HMAC signatures. | `/api/webhooks/clickup`. | Server-only |
-
-`CLICKUP_WEBHOOK_SECRET` must never be exposed to client components or browser responses. ClickUp returns the webhook signing secret during webhook registration; capture it only through a secure server-side setup flow and store it in the deployment environment. Manual ClickUp status and billing sync remains available at `/internal/sync` as a fallback if webhook delivery is paused or misconfigured.
-
-## Google Sheets
+Zoho Books is the invoicing and billing system. It shares the same Zoho account as Zoho CRM and uses the same OAuth infrastructure. If CRM and Books are on the same Zoho organisation, `ZOHO_CLIENT_ID` and `ZOHO_ACCOUNTS_URL` may be reused; separate credentials are listed here in case the accounts differ.
 
 | Variable | Purpose | Used By | Visibility |
 | --- | --- | --- | --- |
-| `GOOGLE_SHEETS_WEB_APP_URL` | Apps Script web app URL for lead logging. | Google Sheets integration. | Server-only |
+| `ZOHO_BOOKS_CLIENT_ID` | Zoho Books OAuth client ID. | Zoho Books integration token refresh. | Server-only |
+| `ZOHO_BOOKS_CLIENT_SECRET` | Zoho Books OAuth client secret. | Zoho Books integration token refresh. | Server-only |
+| `ZOHO_BOOKS_REFRESH_TOKEN` | Refresh token for Zoho Books API access. | Zoho Books integration token refresh. | Server-only |
+| `ZOHO_BOOKS_ORGANISATION_ID` | Zoho Books organisation ID — required in all API request headers. | All Zoho Books API calls. | Server-only |
+| `ZOHO_BOOKS_API_DOMAIN` | Zoho Books API domain for the account data center (e.g. `https://www.zohoapis.com`). | Zoho Books API calls. | Server-only |
+
+Invoice status syncs from Zoho Books into `client_requests` in Supabase for client-facing display in the portal. Never expose Zoho Books credentials in client components or `NEXT_PUBLIC_` variables.
 
 ## Resend
 
@@ -45,23 +42,25 @@ Do not commit real values. `NEXT_PUBLIC_` variables can be visible in the browse
 | `RESEND_FROM_EMAIL` | Verified Resend sender address, for example `Younity Consultancy <hello@younityanu.com>`. Must use a verified Resend domain in production. | Email integration. | Server-only |
 | `LEAD_NOTIFICATION_EMAIL` | Internal recipient for lead, request, and document notifications. | Email integration. | Server-only |
 
-`onboarding@resend.dev` is for Resend testing only and should not be used in production. Verify the sending domain in Resend before sending client emails to real recipients.
+`onboarding@resend.dev` is for Resend testing only and must not be used in production. Verify the sending domain in Resend before sending client emails to real recipients. Resend is currently paused pending domain verification — do not make blocking workflows depend on it until verified.
 
 ## Twilio WhatsApp
+
+Twilio is used for two-way WhatsApp messaging: outbound notifications to clients (request updates, document requests, invoice ready) and inbound messages from clients back to the Younity team. A Twilio Business WhatsApp number is required — the sandbox is not suitable for production client messaging.
 
 | Variable | Purpose | Used By | Visibility |
 | --- | --- | --- | --- |
 | `TWILIO_ACCOUNT_SID` | Twilio account identifier. | WhatsApp integration. | Server-only |
 | `TWILIO_AUTH_TOKEN` | Twilio auth token. | WhatsApp integration. | Server-only |
-| `TWILIO_WHATSAPP_FROM` | Twilio WhatsApp sender, such as a sandbox or approved sender. | WhatsApp integration. | Server-only |
-| `WHATSAPP_INTERNAL_TO` | Internal WhatsApp recipient. | WhatsApp integration. | Server-only |
+| `TWILIO_WHATSAPP_FROM` | Twilio Business WhatsApp sender number. | WhatsApp integration. | Server-only |
+| `WHATSAPP_INTERNAL_TO` | Internal Younity WhatsApp number — receives inbound client replies forwarded by the webhook. | WhatsApp integration. | Server-only |
 
 ## Internal Sync
 
 | Variable | Purpose | Used By | Visibility |
 | --- | --- | --- | --- |
 | `INTERNAL_SYNC_SECRET` | Secret shared by internal sync runner endpoints and sync APIs. | Internal sync routes. | Server-only |
-| `INTERNAL_ADMIN_EMAILS` | Comma-separated allowlist for `/internal/sync`. | Internal sync page and runner routes. | Server-only |
+| `INTERNAL_ADMIN_EMAILS` | Comma-separated allowlist for `/internal` protected routes. | Internal admin pages and runner routes. | Server-only |
 
 ## Rate Limiting
 
@@ -73,4 +72,4 @@ No additional rate-limiting environment variables are required. The rate limit u
 
 | Variable | Purpose | Used By | Visibility |
 | --- | --- | --- | --- |
-| `NEXT_PUBLIC_SITE_URL` | Production site URL used for server-side internal sync runner fetches and ClickUp webhook endpoint registration. | Internal sync runner routes, ClickUp webhook registration. | Public |
+| `NEXT_PUBLIC_SITE_URL` | Production site URL used for server-side internal sync runner fetches. | Internal sync runner routes. | Public |

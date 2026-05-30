@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireInternalAdmin } from "@/lib/internal/adminAuth";
+import { ACTIVE_REQUEST_STATUS_NOT_IN } from "@/lib/requestWorkflow";
 import { createAdminClient } from "@/lib/supabase/admin";
 import {
   AccessDenied,
@@ -40,7 +41,6 @@ type RequestRecord = {
   deposit_required: number | string | null;
   amount_paid: number | string | null;
   balance_due: number | string | null;
-  clickup_task_id: string | null;
   created_at: string | null;
   updated_at: string | null;
   clients: {
@@ -84,8 +84,9 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
   let requestsQuery = supabaseAdmin
     .from("client_requests")
     .select(
-      "id, service, status, invoice_status, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, clickup_task_id, created_at, updated_at, clients(full_name, company, email)"
+      "id, service, status, invoice_status, billing_type, estimated_fee, deposit_required, amount_paid, balance_due, created_at, updated_at, clients(full_name, company, email)"
     )
+    .not("status", "in", ACTIVE_REQUEST_STATUS_NOT_IN)
     .order("created_at", { ascending: false })
     .limit(100);
 
@@ -120,7 +121,16 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
     <InternalPage
       active="requests"
       title="Internal Requests"
-      description="Review submitted client requests, operational status, and ClickUp billing preparation fields."
+      description="Active client requests in progress. Completed work appears under Billing."
+      actions={
+        <Link
+          href="/internal/billing?filter=draft"
+          prefetch={false}
+          className="rounded-xl bg-[#244285] px-4 py-2 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110"
+        >
+          Billing
+        </Link>
+      }
     >
       <form className="mt-6 grid gap-3 rounded-3xl border border-slate-200 bg-white p-4 shadow-sm lg:grid-cols-[0.8fr_0.8fr_1fr_1fr_auto]">
         <label className="grid gap-1 text-sm font-semibold text-slate-800">
@@ -228,7 +238,6 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Billing</th>
                   <th className="px-4 py-3">Fees</th>
-                  <th className="px-4 py-3">ClickUp</th>
                   <th className="px-4 py-3">Dates</th>
                   <th className="px-4 py-3 text-right">Details</th>
                 </tr>
@@ -272,9 +281,6 @@ export default async function InternalRequestsPage({ searchParams }: PageProps) 
                       <p className="mt-1">Deposit {formatMoney(request.deposit_required)}</p>
                       <p className="mt-1">Paid {formatMoney(request.amount_paid)}</p>
                       <p className="mt-1">Balance {formatMoney(request.balance_due)}</p>
-                    </td>
-                    <td className="px-4 py-4 text-slate-600">
-                      {request.clickup_task_id || "Not available"}
                     </td>
                     <td className="px-4 py-4 text-slate-600">
                       <p>Created {formatDateTime(request.created_at)}</p>

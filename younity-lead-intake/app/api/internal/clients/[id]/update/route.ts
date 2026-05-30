@@ -17,6 +17,7 @@ type ClientUpdateBody = {
   preferredContactMethod?: unknown;
   zohoLeadId?: unknown;
   zohoContactId?: unknown;
+  driveFolderUrl?: unknown;
 };
 
 function isUuid(value: string) {
@@ -73,6 +74,7 @@ export async function POST(
     preferred_contact_method: preferredContactMethod,
     zoho_lead_id: getOptionalString(body.zohoLeadId),
     zoho_contact_id: getOptionalString(body.zohoContactId),
+    drive_folder_url: getOptionalString(body.driveFolderUrl),
   };
 
   for (const [field, value] of Object.entries(fieldMap)) {

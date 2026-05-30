@@ -2,18 +2,34 @@ import { NextResponse } from "next/server";
 import { redirect } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { isStaleRefreshTokenError } from "@/lib/supabase/authErrors";
+
+export type AdminRole = "admin" | "super_admin";
+
+type AdminRecord = {
+  email: string;
+  role: AdminRole;
+  full_name: string | null;
+};
 
 type InternalAdminResult =
   | {
       user: User;
       isAdmin: true;
+      role: AdminRole;
+      isSuperAdmin: boolean;
+      fullName: string | null;
     }
   | {
       user: User;
       isAdmin: false;
+      role: null;
+      isSuperAdmin: false;
+      fullName: null;
     };
 
+// Emergency fallback — used only if the database lookup fails
 export function getAllowedInternalAdminEmails() {
   return (process.env.INTERNAL_ADMIN_EMAILS || "")
     .split(",")
@@ -21,11 +37,28 @@ export function getAllowedInternalAdminEmails() {
     .filter(Boolean);
 }
 
-export function isInternalAdminEmail(email: string | null | undefined) {
-  const allowedEmails = getAllowedInternalAdminEmails();
-  const userEmail = email?.toLowerCase() || "";
+async function lookupAdminRecord(email: string): Promise<AdminRecord | null> {
+  try {
+    const supabaseAdmin = createAdminClient();
+    const { data, error } = await supabaseAdmin
+      .from("internal_admins")
+      .select("email, role, full_name")
+      .eq("email", email.toLowerCase())
+      .maybeSingle<AdminRecord>();
 
-  return allowedEmails.length > 0 && allowedEmails.includes(userEmail);
+    if (error) {
+      console.error("Admin table lookup failed:", {
+        message: error.message,
+        code: error.code,
+      });
+      return null;
+    }
+
+    return data;
+  } catch {
+    console.error("Admin table lookup threw unexpectedly.");
+    return null;
+  }
 }
 
 async function getUserSafely() {
@@ -59,28 +92,57 @@ export async function requireInternalAdmin(): Promise<InternalAdminResult> {
     redirect("/internal/login");
   }
 
-  if (!isInternalAdminEmail(user.email)) {
+  const email = user.email ?? "";
+
+  // Primary check — database
+  const adminRecord = await lookupAdminRecord(email);
+
+  if (adminRecord) {
     return {
       user,
-      isAdmin: false,
+      isAdmin: true,
+      role: adminRecord.role,
+      isSuperAdmin: adminRecord.role === "super_admin",
+      fullName: adminRecord.full_name,
+    };
+  }
+
+  // Emergency fallback — env var (database unavailable or email not in table)
+  const fallbackEmails = getAllowedInternalAdminEmails();
+  if (fallbackEmails.length > 0 && fallbackEmails.includes(email.toLowerCase())) {
+    return {
+      user,
+      isAdmin: true,
+      role: "admin",
+      isSuperAdmin: false,
+      fullName: null,
     };
   }
 
   return {
     user,
-    isAdmin: true,
+    isAdmin: false,
+    role: null,
+    isSuperAdmin: false,
+    fullName: null,
   };
 }
 
+export async function requireSuperAdmin(): Promise<InternalAdminResult> {
+  const result = await requireInternalAdmin();
+
+  if (!result.isAdmin || !result.isSuperAdmin) {
+    redirect("/internal");
+  }
+
+  return result;
+}
+
+// ─── API route helpers ─────────────────────────────────────────────────────────
+
 type InternalAdminApiResult =
-  | {
-      user: User;
-      errorResponse: null;
-    }
-  | {
-      user: null;
-      errorResponse: NextResponse;
-    };
+  | { user: User; role: AdminRole; isSuperAdmin: boolean; errorResponse: null }
+  | { user: null; role: null; isSuperAdmin: false; errorResponse: NextResponse };
 
 export async function getInternalAdminUser(): Promise<InternalAdminApiResult> {
   const {
@@ -88,38 +150,42 @@ export async function getInternalAdminUser(): Promise<InternalAdminApiResult> {
     error,
   } = await getUserSafely();
 
-  if (isStaleRefreshTokenError(error)) {
+  if (isStaleRefreshTokenError(error) || !user) {
     return {
       user: null,
-      errorResponse: NextResponse.json(
-        { message: "Unauthorized." },
-        { status: 401 }
-      ),
+      role: null,
+      isSuperAdmin: false,
+      errorResponse: NextResponse.json({ message: "Unauthorized." }, { status: 401 }),
     };
   }
 
-  if (!user) {
+  const email = user.email ?? "";
+  const adminRecord = await lookupAdminRecord(email);
+
+  if (adminRecord) {
     return {
-      user: null,
-      errorResponse: NextResponse.json(
-        { message: "Unauthorized." },
-        { status: 401 }
-      ),
+      user,
+      role: adminRecord.role,
+      isSuperAdmin: adminRecord.role === "super_admin",
+      errorResponse: null,
     };
   }
 
-  if (!isInternalAdminEmail(user.email)) {
+  // Fallback
+  const fallbackEmails = getAllowedInternalAdminEmails();
+  if (fallbackEmails.length > 0 && fallbackEmails.includes(email.toLowerCase())) {
     return {
-      user: null,
-      errorResponse: NextResponse.json(
-        { message: "Forbidden." },
-        { status: 403 }
-      ),
+      user,
+      role: "admin",
+      isSuperAdmin: false,
+      errorResponse: null,
     };
   }
 
   return {
-    user,
-    errorResponse: null,
+    user: null,
+    role: null,
+    isSuperAdmin: false,
+    errorResponse: NextResponse.json({ message: "Forbidden." }, { status: 403 }),
   };
 }

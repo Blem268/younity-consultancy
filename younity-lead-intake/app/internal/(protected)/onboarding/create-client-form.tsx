@@ -10,16 +10,21 @@ const preferredContactOptions = [
   "No Preference",
 ];
 
+const INPUT =
+  "mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25";
+
 export function CreateClientForm() {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
+  const [inviteSent, setInviteSent] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setMessage("");
     setIsError(false);
+    setInviteSent(false);
     setIsSubmitting(true);
 
     const formData = new FormData(event.currentTarget);
@@ -36,17 +41,15 @@ export function CreateClientForm() {
         zohoContactId: formData.get("zohoContactId"),
       }),
     });
+
     const result = (await response.json()) as {
       message?: string;
-      clientId?: string;
+      inviteSent?: boolean;
     };
 
-    setMessage(
-      result.clientId
-        ? `${result.message || "Client profile created."} ID: ${result.clientId}`
-        : result.message || "Client profile could not be created."
-    );
+    setMessage(result.message || "An unexpected error occurred.");
     setIsError(!response.ok);
+    setInviteSent(result.inviteSent === true);
     setIsSubmitting(false);
 
     if (response.ok) {
@@ -59,48 +62,29 @@ export function CreateClientForm() {
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-medium text-slate-800">
-          Full Name
-          <input
-            name="fullName"
-            required
-            className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
-          />
+          Full name <span className="text-red-500">*</span>
+          <input name="fullName" required className={INPUT} />
         </label>
         <label className="block text-sm font-medium text-slate-800">
-          Email
-          <input
-            name="email"
-            type="email"
-            required
-            className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
-          />
+          Email address <span className="text-red-500">*</span>
+          <input name="email" type="email" required className={INPUT} />
         </label>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-medium text-slate-800">
           Phone
-          <input
-            name="phone"
-            className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
-          />
+          <input name="phone" className={INPUT} />
         </label>
         <label className="block text-sm font-medium text-slate-800">
           Company
-          <input
-            name="company"
-            className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
-          />
+          <input name="company" className={INPUT} />
         </label>
       </div>
 
       <label className="block text-sm font-medium text-slate-800">
-        Preferred Contact Method
-        <select
-          name="preferredContactMethod"
-          defaultValue="No Preference"
-          className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
-        >
+        Preferred contact method
+        <select name="preferredContactMethod" defaultValue="No Preference" className={INPUT}>
           {preferredContactOptions.map((option) => (
             <option key={option} value={option}>
               {option}
@@ -112,31 +96,41 @@ export function CreateClientForm() {
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm font-medium text-slate-800">
           Zoho Lead ID
-          <input
-            name="zohoLeadId"
-            className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
-          />
+          <input name="zohoLeadId" className={INPUT} placeholder="Optional" />
         </label>
         <label className="block text-sm font-medium text-slate-800">
           Zoho Contact ID
-          <input
-            name="zohoContactId"
-            className="mt-2 block w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-950 outline-none transition focus:border-[#50A9C0] focus:ring-2 focus:ring-[#50A9C0]/25"
-          />
+          <input name="zohoContactId" className={INPUT} placeholder="Optional" />
         </label>
       </div>
 
-      <div aria-live="polite" className={isError ? "text-red-700" : "text-[#244285]"}>
-        {message ? <p className="text-sm font-medium">{message}</p> : null}
-      </div>
+      {message ? (
+        <div
+          aria-live="polite"
+          className={`rounded-lg border px-4 py-3 text-sm ${
+            isError
+              ? "border-red-200 bg-red-50 text-red-700"
+              : inviteSent
+              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+              : "border-amber-200 bg-amber-50 text-amber-800"
+          }`}
+        >
+          {message}
+        </div>
+      ) : null}
 
       <button
         type="submit"
         disabled={isSubmitting}
         className="inline-flex items-center justify-center rounded-xl bg-[#244285] px-5 py-3 text-sm font-black uppercase tracking-[0.08em] text-white transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-400"
       >
-        {isSubmitting ? "Creating..." : "Create Client Profile"}
+        {isSubmitting ? "Creating..." : "Create client + send invite"}
       </button>
+
+      <p className="text-xs text-slate-500">
+        A portal invite email will be sent automatically to the client's address.
+        They can set their password and access their portal immediately.
+      </p>
     </form>
   );
 }

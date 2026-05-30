@@ -13,8 +13,6 @@ type Lead = {
 type LeadEmailInput = {
   lead: Lead;
   zohoLeadId?: string;
-  clickUpTaskId?: string;
-  clickUpTaskUrl?: string;
 };
 
 type DocumentUploadNotificationInput = {
@@ -40,7 +38,6 @@ type PortalRequestNotificationInput = {
   preferredContactMethod: string;
   message: string;
   portalRequestId: string;
-  clickUpTaskId?: string;
 };
 
 function getResendClient() {
@@ -66,8 +63,6 @@ function getResendFromEmail() {
 export async function sendLeadNotificationEmail({
   lead,
   zohoLeadId,
-  clickUpTaskId,
-  clickUpTaskUrl,
 }: LeadEmailInput) {
   const notificationEmail = process.env.LEAD_NOTIFICATION_EMAIL;
 
@@ -98,12 +93,6 @@ export async function sendLeadNotificationEmail({
 
         <h3>Integration Details</h3>
         <p><strong>Zoho Lead ID:</strong> ${zohoLeadId || "Not available"}</p>
-        <p><strong>ClickUp Task ID:</strong> ${clickUpTaskId || "Not available"}</p>
-        <p><strong>ClickUp Task URL:</strong> ${
-          clickUpTaskUrl
-            ? `<a href="${clickUpTaskUrl}">${clickUpTaskUrl}</a>`
-            : "Not available"
-        }</p>
       </div>
     `,
   });
@@ -240,7 +229,6 @@ export async function sendPortalRequestNotificationEmail({
   preferredContactMethod,
   message,
   portalRequestId,
-  clickUpTaskId,
 }: PortalRequestNotificationInput) {
   const notificationEmail = process.env.LEAD_NOTIFICATION_EMAIL;
 
@@ -273,7 +261,6 @@ export async function sendPortalRequestNotificationEmail({
 
         <h3>Integration Details</h3>
         <p><strong>Portal Request ID:</strong> ${portalRequestId}</p>
-        <p><strong>ClickUp Task ID:</strong> ${clickUpTaskId || "Not available"}</p>
       </div>
     `,
   });

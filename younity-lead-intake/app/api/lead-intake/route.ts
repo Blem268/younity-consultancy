@@ -1,7 +1,5 @@
 import { NextResponse } from "next/server";
 import { leadSchema } from "@/lib/validators/leadSchema";
-import { appendLeadToSheet } from "@/lib/integrations/googleSheets";
-import { createClickUpLeadTask } from "@/lib/integrations/clickup";
 import {
   createZohoLead,
   updateZohoLeadIntegrationStatus,
@@ -60,8 +58,6 @@ export async function POST(request: Request) {
 
   const lead = parsed.data;
 
-  let clickUpTaskId = "";
-  let clickUpTaskUrl = "";
   let zohoLeadId = "";
   let whatsappNotificationSent = false;
   let clientConfirmationSent = false;
@@ -105,73 +101,11 @@ export async function POST(request: Request) {
   }
 
   try {
-    console.log("Creating ClickUp task...");
-
-    const clickUpTask = await createClickUpLeadTask({
-      lead,
-    });
-
-    clickUpTaskId = clickUpTask.id;
-    clickUpTaskUrl = clickUpTask.url || "";
-  } catch (error) {
-    console.error("ClickUp task creation failed:", error);
-    await logWorkflowError({
-      source: "lead-intake.clickup",
-      severity: "error",
-      message: "ClickUp lead task creation failed.",
-      context: {
-        error,
-        leadEmail: lead.email,
-        service: lead.service,
-        zohoLeadId,
-      },
-    });
-    integrationErrors.push("ClickUp task creation failed.");
-  }
-
-  try {
-    console.log("Appending lead to Google Sheet...");
-
-    await appendLeadToSheet({
-      lead,
-      clickUpTaskId,
-      status: integrationErrors.length ? "Partial Success" : "Received",
-    });
-
-    console.log("Google Sheet log successful.");
-  } catch (error) {
-    console.error("Google Sheet log failed:", error);
-    await logWorkflowError({
-      source: "lead-intake.google-sheets",
-      severity: "warning",
-      message: "Google Sheets lead logging failed.",
-      retryable: true,
-      retryStatus: "ready",
-      context: {
-        error,
-        retryType: "google_sheets_log",
-        retryPayload: {
-          lead,
-          zohoLeadId,
-          clickUpTaskId,
-          status: integrationErrors.length ? "Partial Success" : "Received",
-        },
-        leadEmail: lead.email,
-        service: lead.service,
-        clickUpTaskId,
-      },
-    });
-    integrationErrors.push("Google Sheet log failed.");
-  }
-
-  try {
     console.log("Sending lead email notification...");
 
     await sendLeadNotificationEmail({
       lead,
       zohoLeadId,
-      clickUpTaskId,
-      clickUpTaskUrl,
     });
 
     console.log("Email notification sent.");
@@ -191,13 +125,10 @@ export async function POST(request: Request) {
           input: {
             lead,
             zohoLeadId,
-            clickUpTaskId,
-            clickUpTaskUrl,
           },
         },
         leadEmail: lead.email,
         service: lead.service,
-        clickUpTaskId,
       },
     });
     integrationErrors.push("Email notification failed.");
@@ -243,7 +174,6 @@ export async function POST(request: Request) {
     await sendInternalWhatsAppLeadNotification({
       lead,
       zohoLeadId,
-      clickUpTaskId,
     });
 
     whatsappNotificationSent = true;
@@ -265,12 +195,10 @@ export async function POST(request: Request) {
           input: {
             lead,
             zohoLeadId,
-            clickUpTaskId,
           },
         },
         leadEmail: lead.email,
         service: lead.service,
-        clickUpTaskId,
       },
     });
     integrationErrors.push("WhatsApp notification failed.");
@@ -281,7 +209,6 @@ export async function POST(request: Request) {
 
     await updateZohoLeadIntegrationStatus({
       zohoLeadId,
-      clickUpTaskId,
       whatsappNotificationSent,
       clientConfirmationSent,
       integrationStatus: integrationErrors.length ? "Partial Success" : "Complete",
@@ -298,7 +225,6 @@ export async function POST(request: Request) {
       context: {
         error,
         zohoLeadId,
-        clickUpTaskId,
         integrationErrorCount: integrationErrors.length,
       },
     });
@@ -308,7 +234,6 @@ export async function POST(request: Request) {
   if (integrationErrors.length) {
     console.error("Lead intake partial failure:", {
       zohoLeadId,
-      clickUpTaskId,
       integrationErrorCount: integrationErrors.length,
     });
   }

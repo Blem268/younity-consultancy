@@ -13,8 +13,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Younity Client Portal",
-  description: "Secure client portal for Younity Consultancy.",
+  title: {
+    default: "Younity Consultancy",
+    template: "%s | Younity Consultancy",
+  },
+  description:
+    "Business operations support and secure client portal for Younity Consultancy.",
   manifest: "/manifest.webmanifest",
   icons: {
     icon: [

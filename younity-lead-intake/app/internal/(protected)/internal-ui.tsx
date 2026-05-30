@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { brand } from "@/app/components/ui/brand";
 import {
   Badge,
   type BadgeTone,
@@ -10,11 +9,16 @@ import {
 } from "@/app/components/ui/status-badges";
 
 export type InternalNavKey =
-  | "dashboard"
+  | "board"
   | "clients"
+  | "documents"
+  | "billing"
+  | "analytics"
+  | "settings"
+  // Legacy keys kept for backward compatibility
+  | "dashboard"
   | "onboarding"
   | "requests"
-  | "documents"
   | "sync"
   | "errors";
 
@@ -125,13 +129,12 @@ export function WorkflowSeverityBadge({ severity }: { severity: string }) {
 
 export function AccessDenied({ title }: { title: string }) {
   return (
-    <section className="py-8">
-      <AdminCard title={title}>
-        <p className="text-sm leading-6 text-slate-600">
-          You do not have access to this internal page.
-        </p>
-      </AdminCard>
-    </section>
+    <div className="flex-shrink-0 border-b border-slate-200 bg-white px-6 py-5">
+      <h1 className="text-xl font-black tracking-tight text-[#06111f]">{title}</h1>
+      <p className="mt-4 text-sm leading-6 text-slate-600">
+        You do not have access to this internal page.
+      </p>
+    </div>
   );
 }
 
@@ -149,32 +152,33 @@ export function InternalPage({
 }) {
   return (
     <>
-      <div className="border-b border-[#50A9C0]/20 py-6">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+      <header className="flex-shrink-0 border-b border-slate-200 bg-white px-6 py-5">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
-            <p className="text-xs font-black uppercase tracking-[0.3em] text-[#50A9C0]">
-              Younity Consultancy
-            </p>
-            <h1 className="mt-4 text-3xl font-black tracking-tight text-[#06111f] sm:text-4xl">
+            <h1 className="text-xl font-black tracking-tight text-[#06111f]">
               {title}
             </h1>
             {description ? (
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              <p className="mt-1 max-w-2xl text-sm leading-6 text-slate-500">
                 {description}
               </p>
             ) : null}
           </div>
-          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+          {actions ? (
+            <div className="flex flex-shrink-0 flex-wrap gap-2">{actions}</div>
+          ) : null}
         </div>
+      </header>
+      <div className="flex-1 overflow-y-auto bg-[#f6f9fc] px-6 py-6">
+        {children}
       </div>
-      {children}
     </>
   );
 }
 
 export function EmptyCard({ children }: { children: ReactNode }) {
   return (
-    <div className={brand.empty}>
+    <div className="rounded-lg border border-dashed border-[#50A9C0]/30 bg-[#50A9C0]/5 p-6">
       <p className="text-sm font-semibold text-slate-950">{children}</p>
     </div>
   );
@@ -194,21 +198,29 @@ export function AdminCard({
   className?: string;
 }) {
   return (
-    <article className={`${brand.card} p-5 ${className}`}>
+    <article
+      className={`rounded-[10px] border border-slate-200/80 bg-white p-5 shadow-sm ${className}`}
+    >
       {title || actions ? (
-        <div className="flex flex-col gap-3 border-b border-slate-200 pb-4 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
           <div>
             {title ? (
-              <h2 className="text-lg font-semibold tracking-tight">{title}</h2>
+              <h2 className="text-base font-semibold tracking-tight text-[#06111f]">
+                {title}
+              </h2>
             ) : null}
             {description ? (
-              <p className="mt-1 text-sm leading-6 text-slate-600">{description}</p>
+              <p className="mt-1 text-sm leading-6 text-slate-500">
+                {description}
+              </p>
             ) : null}
           </div>
-          {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
+          {actions ? (
+            <div className="flex flex-shrink-0 flex-wrap gap-2">{actions}</div>
+          ) : null}
         </div>
       ) : null}
-      <div className={title || actions ? "mt-5" : ""}>{children}</div>
+      <div className={title || actions ? "mt-4" : ""}>{children}</div>
     </article>
   );
 }
