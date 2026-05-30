@@ -1,22 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
-/**
- * Universal auth confirmation page.
- *
- * Handles both token formats Supabase may send:
- *   1. PKCE code  — ?code=XXXX   (newer Supabase projects / sign-in flows)
- *   2. Hash tokens — #access_token=...&refresh_token=...  (invite / magic link)
- *
- * After establishing a session it calls /api/auth/link-client to ensure
- * clients.user_id is linked, then routes:
- *   - invite / recovery → /client/set-password
- *   - everything else  → /client/dashboard
- */
-export default function AuthConfirmPage() {
+function AuthConfirmInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [status, setStatus] = useState("Verifying your link…");
@@ -27,8 +15,6 @@ export default function AuthConfirmPage() {
     async function confirm() {
       const code = searchParams.get("code");
       const typeParam = searchParams.get("type") ?? "";
-
-      let userId: string | null = null;
       let authType = typeParam;
 
       if (code) {
@@ -38,7 +24,6 @@ export default function AuthConfirmPage() {
           setStatus("This link has expired or is invalid. Please contact Younity to be re-invited.");
           return;
         }
-        userId = data.session.user.id;
       } else {
         // Implicit / hash flow — read tokens from URL fragment
         const hash = window.location.hash.substring(1);
@@ -64,7 +49,6 @@ export default function AuthConfirmPage() {
           return;
         }
 
-        userId = data.session.user.id;
         // Clean tokens out of the URL bar
         window.history.replaceState(null, "", window.location.pathname);
       }
@@ -101,10 +85,24 @@ export default function AuthConfirmPage() {
           </a>
         ) : (
           <div className="mx-auto mt-4 h-1 w-16 overflow-hidden rounded-full bg-slate-200">
-            <div className="animate-[progress_1.5s_ease-in-out_infinite] h-full w-8 rounded-full bg-[#50A9C0]" />
+            <div className="h-full w-8 animate-pulse rounded-full bg-[#50A9C0]" />
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+export default function AuthConfirmPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-[#f6f9fc]">
+          <p className="text-sm text-slate-500">Verifying your link…</p>
+        </div>
+      }
+    >
+      <AuthConfirmInner />
+    </Suspense>
   );
 }
