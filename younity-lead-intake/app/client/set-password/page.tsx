@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 
@@ -14,43 +14,6 @@ export default function SetPasswordPage() {
   const [message, setMessage] = useState("");
   const [isError, setIsError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [sessionReady, setSessionReady] = useState(false);
-
-  // On mount, read the access_token + refresh_token from the URL hash
-  // and exchange them for a live session before the form is usable.
-  useEffect(() => {
-    const supabase = createClient();
-
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    const accessToken = params.get("access_token");
-    const refreshToken = params.get("refresh_token");
-
-    if (accessToken && refreshToken) {
-      supabase.auth
-        .setSession({ access_token: accessToken, refresh_token: refreshToken })
-        .then(({ error }) => {
-          if (error) {
-            setMessage("Your invite link has expired. Please contact Younity to be re-invited.");
-            setIsError(true);
-          } else {
-            setSessionReady(true);
-            // Clean the tokens out of the URL bar without triggering a reload
-            window.history.replaceState(null, "", window.location.pathname);
-          }
-        });
-    } else {
-      // No tokens in hash — check if there's already a session (e.g. page refresh)
-      supabase.auth.getSession().then(({ data }) => {
-        if (data.session) {
-          setSessionReady(true);
-        } else {
-          setMessage("Your invite link has expired or is invalid. Please contact Younity to be re-invited.");
-          setIsError(true);
-        }
-      });
-    }
-  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -75,7 +38,9 @@ export default function SetPasswordPage() {
     const { error } = await supabase.auth.updateUser({ password });
 
     if (error) {
-      setMessage(error.message ?? "Password could not be set. Please try again.");
+      setMessage(
+        error.message ?? "Password could not be set. Please try again."
+      );
       setIsError(true);
       setIsSubmitting(false);
       return;
@@ -100,63 +65,55 @@ export default function SetPasswordPage() {
         </div>
 
         <div className="rounded-2xl border border-slate-200/80 bg-white p-6 shadow-sm">
-          {!sessionReady && !isError ? (
-            <div className="py-4 text-center text-sm text-slate-500">
-              Verifying your invite link…
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <label className="block text-sm font-medium text-slate-700">
-                New password
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={8}
-                  autoComplete="new-password"
-                  placeholder="At least 8 characters"
-                  disabled={!sessionReady}
-                  className={INPUT}
-                />
-              </label>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <label className="block text-sm font-medium text-slate-700">
+              New password
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={8}
+                autoComplete="new-password"
+                placeholder="At least 8 characters"
+                className={INPUT}
+              />
+            </label>
 
-              <label className="block text-sm font-medium text-slate-700">
-                Confirm password
-                <input
-                  type="password"
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  required
-                  autoComplete="new-password"
-                  placeholder="Re-enter your password"
-                  disabled={!sessionReady}
-                  className={INPUT}
-                />
-              </label>
+            <label className="block text-sm font-medium text-slate-700">
+              Confirm password
+              <input
+                type="password"
+                value={confirm}
+                onChange={(e) => setConfirm(e.target.value)}
+                required
+                autoComplete="new-password"
+                placeholder="Re-enter your password"
+                className={INPUT}
+              />
+            </label>
 
-              {message ? (
-                <div
-                  aria-live="polite"
-                  className={`rounded-xl border px-4 py-3 text-sm ${
-                    isError
-                      ? "border-red-200 bg-red-50 text-red-700"
-                      : "border-emerald-200 bg-emerald-50 text-emerald-800"
-                  }`}
-                >
-                  {message}
-                </div>
-              ) : null}
-
-              <button
-                type="submit"
-                disabled={isSubmitting || !sessionReady}
-                className="w-full rounded-xl bg-[#244285] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-slate-400"
+            {message ? (
+              <div
+                aria-live="polite"
+                className={`rounded-xl border px-4 py-3 text-sm ${
+                  isError
+                    ? "border-red-200 bg-red-50 text-red-700"
+                    : "border-emerald-200 bg-emerald-50 text-emerald-800"
+                }`}
               >
-                {isSubmitting ? "Setting password…" : "Set password & continue"}
-              </button>
-            </form>
-          )}
+                {message}
+              </div>
+            ) : null}
+
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="w-full rounded-xl bg-[#244285] px-5 py-3 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:brightness-110 disabled:cursor-not-allowed disabled:translate-y-0 disabled:bg-slate-400"
+            >
+              {isSubmitting ? "Setting password…" : "Set password & continue"}
+            </button>
+          </form>
         </div>
 
         <p className="mt-6 text-center text-xs text-slate-400">

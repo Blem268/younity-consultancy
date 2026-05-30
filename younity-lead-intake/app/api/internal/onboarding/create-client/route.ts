@@ -100,7 +100,7 @@ export async function POST(request: Request) {
     email,
     {
       data: { full_name: fullName },
-      redirectTo: siteUrl ? `${siteUrl}/client/set-password` : undefined,
+      redirectTo: siteUrl ? `${siteUrl}/auth/callback?type=invite&next=/client/set-password` : undefined,
     }
   );
 
